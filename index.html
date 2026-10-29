@@ -780,8 +780,8 @@
         <h2>Admin Login</h2>
         <p id="adminLoginMessage" role="status">Enter Admin credentials...</p>
         <form id="adminLoginForm">
-          <label for="adminUsername">Username</label>
-          <input id="adminUsername" required autocomplete="username" />
+          <label for="adminUsername">Admin Email</label>
+          <input id="adminUsername" type="email" required autocomplete="username" placeholder="Admin email" />
           <label for="adminPassword">Password</label>
           <input
             id="adminPassword"
@@ -933,6 +933,53 @@
           throw new Error(message || ("Supabase request failed: " + response.status));
         }
         return data;
+      }
+      function getAdminAccessToken() {
+        try { return sessionStorage.getItem("apniBus_admin_access_token_v1") || ""; }
+        catch { return ""; }
+      }
+      async function adminAuthRequest(path, options = {}) {
+        const response = await fetch(SUPABASE_URL.replace(/\/$/, "") + path, {
+          ...options,
+          headers: {
+            apikey: SUPABASE_PUBLISHABLE_KEY,
+            "Content-Type": "application/json",
+            ...(options.headers || {}),
+          },
+        });
+        const raw = await response.text();
+        let data = null;
+        try { data = raw ? JSON.parse(raw) : null; } catch { data = raw; }
+        if (!response.ok) {
+          throw new Error(data?.msg || data?.message || data?.error_description || data?.message || (typeof data === "string" ? data : "Request failed: " + response.status));
+        }
+        return data;
+      }
+      async function loadAdminBookingsFromSupabase() {
+        const token = getAdminAccessToken();
+        if (!token) throw new Error("Admin session expire ho gaya. Dobara login karein.");
+        const response = await fetch(SUPABASE_URL.replace(/\/$/, "") + "/rest/v1/bookings?select=id,pnr,bus_id,customer_name,customer_phone,customer_email,journey_date,seats,passenger_details,total_fare,status,created_at,cancelled_at,buses(bus_name,source,destination)&order=created_at.desc", {
+          headers: { apikey: SUPABASE_PUBLISHABLE_KEY, Authorization: "Bearer " + token }
+        });
+        const raw = await response.text();
+        let rows = null;
+        try { rows = raw ? JSON.parse(raw) : null; } catch { rows = raw; }
+        if (!response.ok) throw new Error(rows?.message || rows?.details || (typeof rows === "string" ? rows : "Bookings load nahi hui: " + response.status));
+        return Array.isArray(rows) ? rows : [];
+      }
+      async function cancelAdminBookingOnSupabase(pnr) {
+        const token = getAdminAccessToken();
+        const response = await fetch(SUPABASE_URL.replace(/\/$/, "") + "/rest/v1/bookings?pnr=eq." + encodeURIComponent(pnr) + "&status=eq.confirmed", {
+          method: "PATCH",
+          headers: { apikey: SUPABASE_PUBLISHABLE_KEY, Authorization: "Bearer " + token, "Content-Type": "application/json", Prefer: "return=representation" },
+          body: JSON.stringify({ status: "cancelled", cancelled_at: new Date().toISOString() })
+        });
+        const raw = await response.text();
+        let data = null;
+        try { data = raw ? JSON.parse(raw) : null; } catch { data = raw; }
+        if (!response.ok) throw new Error(data?.message || data?.details || (typeof data === "string" ? data : "Cancellation failed: " + response.status));
+        if (!Array.isArray(data) || !data.length) throw new Error("Booking update nahi hui. Booking shayad pehle hi cancel hai.");
+        return data[0];
       }
       async function getBookedSeatsFromSupabase(busId, date) {
         const data = await supabaseRpc("get_booked_seats", {
@@ -1714,87 +1761,71 @@
           };
           busContainer.appendChild(card);
         });
-        const totalBookings = bookings.length;
-        addText(
-          "p",
-          "Total bookings: " +
-            totalBookings +
-            " | Active bookings: " +
-            activeBookings().length,
-          bookingContainer,
-        );
-        if (!totalBookings) {
-          addText("p", "Abhi koi booking nahi hai.", bookingContainer);
-          return;
-        }
-        bookings
-          .slice()
-          .reverse()
-          .forEach((booking) => {
+        bookingContainer.textContent = "Supabase bookings load ho rahi hain...";
+        loadAdminBookingsFromSupabase().then(function (remoteBookings) {
+          bookingContainer.replaceChildren();
+          const totalActive = remoteBookings.filter((b) => b.status === "confirmed").length;
+          addText("p", "Total bookings: " + remoteBookings.length + " | Active bookings: " + totalActive, bookingContainer);
+          if (!remoteBookings.length) {
+            addText("p", "Supabase mein abhi koi booking nahi hai.", bookingContainer);
+            return;
+          }
+          remoteBookings.forEach(function (row) {
+            const busInfo = row.buses || {};
+            const booking = {
+              id: row.pnr,
+              busId: row.bus_id,
+              bus: busInfo.bus_name || "Bus #" + row.bus_id,
+              from: busInfo.source || "",
+              to: busInfo.destination || "",
+              date: row.journey_date,
+              seats: Array.isArray(row.seats) ? row.seats.map(Number) : [],
+              people: Array.isArray(row.passenger_details) ? row.passenger_details : [],
+              total: Number(row.total_fare || 0),
+              status: row.status,
+              customerName: row.customer_name,
+              customerPhone: row.customer_phone,
+              customerEmail: row.customer_email,
+              createdAt: row.created_at,
+            };
             const card = document.createElement("div");
             card.className = "booking";
             addText("h3", "PNR: " + booking.id, card);
-            const status = addText(
-              "p",
-              "Status: " + statusOf(booking).toUpperCase(),
-              card,
-            );
-            status.className =
-              statusOf(booking) === "cancelled" ? "cancelled" : "status";
+            const status = addText("p", "Status: " + String(row.status || "unknown").toUpperCase(), card);
+            status.className = row.status === "cancelled" ? "cancelled" : "status";
+            addText("p", "Customer: " + (row.customer_name || "—"), card);
+            addText("p", "Mobile: " + (row.customer_phone || "—"), card);
             addText("p", "Bus: " + booking.bus, card);
-            addText(
-              "p",
-              "Route: " + booking.from + " → " + booking.to,
-              card,
-            );
+            addText("p", "Route: " + booking.from + " → " + booking.to, card);
             addText("p", "Date: " + booking.date, card);
-            addText("p", "Seats: " + (booking.seats || []).join(", "), card);
-            addText(
-              "p",
-              "Passengers: " +
-                (booking.people || []).map((p) => p.name).join(", "),
-              card,
-            );
+            addText("p", "Seats: " + booking.seats.join(", "), card);
+            addText("p", "Passengers: " + booking.people.map((p) => p.name || "").filter(Boolean).join(", "), card);
             addText("p", "Fare: " + money(booking.total), card);
-            const viewButton = addText("button", "View Ticket", card);
-            viewButton.type = "button";
-            viewButton.onclick = function () {
-              renderTicket(booking);
-              $("adminPanel").hidden = true;
-              $("ticketPanel").hidden = false;
-              $("ticketPanel").scrollIntoView({ behavior: "smooth" });
-            };
-            if (statusOf(booking) === "confirmed") {
+            addText("p", "Booked: " + (row.created_at ? new Date(row.created_at).toLocaleString() : "—"), card);
+            if (row.status === "confirmed") {
               const cancelButton = addText("button", "Cancel Booking", card);
               cancelButton.className = "danger";
               cancelButton.type = "button";
-              cancelButton.onclick = function () {
-                if (
-                  !confirm(
-                    "Admin demo: PNR " +
-                      booking.id +
-                      " ki booking cancel karein?",
-                  )
-                )
-                  return;
-                const oldStatus = booking.status;
-                const oldTime = booking.cancelledAt;
-                booking.status = "cancelled";
-                booking.cancelledAt = new Date().toISOString();
-                if (!save()) {
-                  booking.status = oldStatus;
-                  if (oldTime === undefined) {
-                    delete booking.cancelledAt;
-                  } else {
-                    booking.cancelledAt = oldTime;
-                  }
-                  return;
+              cancelButton.onclick = async function () {
+                if (!confirm("PNR " + booking.id + " ki booking cancel karein?")) return;
+                cancelButton.disabled = true;
+                try {
+                  await cancelAdminBookingOnSupabase(booking.id);
+                  alert("Booking Supabase mein cancel ho gayi.");
+                  renderAdmin();
+                } catch (error) {
+                  alert("Cancellation error: " + error.message);
+                  cancelButton.disabled = false;
                 }
-                renderAdmin();
               };
             }
             bookingContainer.appendChild(card);
           });
+        }).catch(function (error) {
+          bookingContainer.replaceChildren();
+          addText("p", "Supabase bookings load nahi hui: " + error.message, bookingContainer);
+          addText("p", "SQL policies aur Admin login setup check karein.", bookingContainer);
+        });
       }
       /* ===============================
    STEP 7B: DATA EXPORT & BACKUP
@@ -2323,7 +2354,7 @@
         // Page refresh par saved demo session check karein.
         refreshAuthStatus();
       })();
-      /* ADMIN LOGIN / LOGOUT — DEMO ONLY */
+      /* ADMIN LOGIN / LOGOUT — SUPABASE AUTH */
       (function initAdminAuth() {
         const ADMIN_SESSION_KEY = "apniBus_admin_session_v1";
         const adminLoginPanel = document.getElementById("adminLoginPanel");
@@ -2331,99 +2362,54 @@
         const adminTab = document.getElementById("adminTab");
         const loginForm = document.getElementById("adminLoginForm");
         const message = document.getElementById("adminLoginMessage");
-        // Demo credentials — production mein use na karein.
-        const DEMO_USERNAME = "admin";
-        const DEMO_PASSWORD = "Admin123";
         function isAdminLoggedIn() {
-          try {
-            return sessionStorage.getItem(ADMIN_SESSION_KEY) === "true";
-          } catch {
-            return false;
-          }
+          return !!getAdminAccessToken() && sessionStorage.getItem(ADMIN_SESSION_KEY) === "true";
         }
         function hideOtherPanels() {
-          [
-            "searchPanel",
-            "results",
-            "seatPanel",
-            "passengerPanel",
-            "ticketPanel",
-            "pnrPanel",
-            "cancelPanel",
-            "dashboardPanel",
-            "authPanel",
-          ].forEach((id) => {
-            const panel = document.getElementById(id);
-            if (panel) panel.hidden = true;
+          ["searchPanel","results","seatPanel","passengerPanel","ticketPanel","pnrPanel","cancelPanel","dashboardPanel","authPanel"].forEach((id) => {
+            const panel = document.getElementById(id); if (panel) panel.hidden = true;
           });
         }
         function openAdminLogin() {
-          hideOtherPanels();
-          adminPanel.hidden = true;
-          adminLoginPanel.hidden = false;
-          message.textContent = "Enter Admin credentials...";
+          hideOtherPanels(); adminPanel.hidden = true; adminLoginPanel.hidden = false;
+          message.textContent = "Apna Supabase Admin email aur password daalein.";
         }
         function openAdminPanel() {
-          if (!isAdminLoggedIn()) {
-            openAdminLogin();
-            return;
-          }
-          hideOtherPanels();
-          adminLoginPanel.hidden = true;
-          adminPanel.hidden = false;
-          if (typeof renderAdmin === "function") {
-            renderAdmin();
-          }
+          if (!isAdminLoggedIn()) { openAdminLogin(); return; }
+          hideOtherPanels(); adminLoginPanel.hidden = true; adminPanel.hidden = false; renderAdmin();
         }
-        loginForm.addEventListener("submit", function (event) {
+        loginForm.addEventListener("submit", async function (event) {
           event.preventDefault();
-          const username = document
-            .getElementById("adminUsername")
-            .value.trim();
+          const email = document.getElementById("adminUsername").value.trim().toLowerCase();
           const password = document.getElementById("adminPassword").value;
-          if (username !== DEMO_USERNAME || password !== DEMO_PASSWORD) {
-            message.textContent = "Username ya password galat hai.";
-            return;
-          }
+          const submit = loginForm.querySelector('button[type="submit"]');
+          submit.disabled = true; message.textContent = "Login ho raha hai...";
           try {
+            const data = await adminAuthRequest("/auth/v1/token?grant_type=password", { method: "POST", body: JSON.stringify({ email, password }) });
+            if (!data.access_token || !data.user?.id) throw new Error("Login token nahi mila.");
+            sessionStorage.setItem("apniBus_admin_access_token_v1", data.access_token);
             sessionStorage.setItem(ADMIN_SESSION_KEY, "true");
-          } catch {
-            message.textContent = "Browser session storage available nahi hai.";
-            return;
-          }
-          loginForm.reset();
-          openAdminPanel();
+            loginForm.reset();
+            openAdminPanel();
+          } catch (error) {
+            message.textContent = "Admin login fail: " + error.message;
+          } finally { submit.disabled = false; }
         });
         adminTab.addEventListener("click", openAdminPanel);
         const backButton = document.getElementById("adminLoginBackBtn");
-        if (backButton) {
-          backButton.addEventListener("click", function () {
-            adminLoginPanel.hidden = true;
-            adminPanel.hidden = true;
-            showCustomer();
-            window.scrollTo({ top: 0, behavior: "smooth" });
-          });
-        }
-        // Logout button Admin Panel mein add karein.
+        if (backButton) backButton.addEventListener("click", function () {
+          adminLoginPanel.hidden = true; adminPanel.hidden = true; showCustomer(); window.scrollTo({ top: 0, behavior: "smooth" });
+        });
         const logoutButton = document.createElement("button");
-        logoutButton.type = "button";
-        logoutButton.textContent = "Admin Logout";
-        logoutButton.id = "adminLogoutBtn";
-        logoutButton.addEventListener("click", function () {
-          try {
-            sessionStorage.removeItem(ADMIN_SESSION_KEY);
-          } catch {
-            message.textContent = "Logout fail hua.";
-            return;
-          }
-          adminPanel.hidden = true;
-          openAdminLogin();
-          message.textContent = "Admin logout successful.";
+        logoutButton.type = "button"; logoutButton.textContent = "Admin Logout"; logoutButton.id = "adminLogoutBtn";
+        logoutButton.addEventListener("click", async function () {
+          const token = getAdminAccessToken();
+          try { if (token) await adminAuthRequest("/auth/v1/logout", { method: "POST", headers: { Authorization: "Bearer " + token } }); } catch (_) {}
+          try { sessionStorage.removeItem(ADMIN_SESSION_KEY); sessionStorage.removeItem("apniBus_admin_access_token_v1"); } catch (_) {}
+          adminPanel.hidden = true; openAdminLogin(); message.textContent = "Admin logout ho gaya.";
         });
         adminPanel.prepend(logoutButton);
-        // Page refresh par admin panel tabhi khule jab session active ho.
-        adminPanel.hidden = true;
-        adminLoginPanel.hidden = true;
+        adminPanel.hidden = true; adminLoginPanel.hidden = true;
       })();
     </script>
   </body>
