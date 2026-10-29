@@ -737,7 +737,7 @@
         <form id="passengerForm">
           <div id="passengers"></div>
           <p id="bookingSummary" class="summary"></p>
-          <button type="submit">Book Demo Ticket</button>
+          <button type="submit">Book Ticket</button>
         </form>
       </section>
       <section id="ticketPanel" hidden>
@@ -751,6 +751,8 @@
         <form id="pnrForm">
           <label>Enter PNR</label>
           <input id="lookupPnr" required placeholder="Enter your PNR" />
+          <label>Passenger Mobile Number (used at booking)</label>
+          <input id="lookupPhone" type="text" inputmode="numeric" maxlength="10" minlength="10" pattern="[6-9][0-9]{9}" required placeholder="10-digit mobile number" />
           <button type="submit">Find Booking</button>
         </form>
         <div id="pnrResult"></div>
@@ -909,6 +911,60 @@
       }
       let buses = read("apniBus_buses_v2", defaultBuses);
       let bookings = read("apniBus_bookings_v2", []);
+      async function supabaseRpc(functionName, payload) {
+        if (!isSupabaseConfigured) throw new Error("Supabase settings missing.");
+        const response = await fetch(
+          SUPABASE_URL.replace(/\/$/, "") + "/rest/v1/rpc/" + functionName,
+          {
+            method: "POST",
+            headers: {
+              apikey: SUPABASE_PUBLISHABLE_KEY,
+              Authorization: "Bearer " + SUPABASE_PUBLISHABLE_KEY,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          },
+        );
+        const body = await response.text();
+        let data = null;
+        try { data = body ? JSON.parse(body) : null; } catch { data = body; }
+        if (!response.ok) {
+          const message = data && typeof data === "object" ? (data.message || data.details || data.hint || JSON.stringify(data)) : String(data || response.statusText);
+          throw new Error(message || ("Supabase request failed: " + response.status));
+        }
+        return data;
+      }
+      async function getBookedSeatsFromSupabase(busId, date) {
+        const data = await supabaseRpc("get_booked_seats", {
+          p_bus_id: Number(busId),
+          p_journey_date: date,
+        });
+        return Array.isArray(data) ? data.map(Number) : [];
+      }
+      function bookingFromRemote(row) {
+        if (!row) return null;
+        const passengers = Array.isArray(row.passenger_details) ? row.passenger_details : [];
+        return {
+          customerEmail: null,
+          id: row.pnr,
+          busId: row.bus_id,
+          bus: row.bus_name || "Bus",
+          from: row.source || "",
+          to: row.destination || "",
+          date: row.journey_date,
+          seats: Array.isArray(row.seats) ? row.seats.map(Number) : [],
+          people: passengers.map((person) => ({
+            name: String(person.name || ""),
+            age: Number(person.age || 0),
+            phone: String(person.phone || ""),
+          })),
+          total: Number(row.total_fare || 0),
+          status: row.status || "confirmed",
+          createdAt: row.created_at || null,
+          cancelledAt: row.cancelled_at || null,
+        };
+      }
+
       async function loadBusesFromSupabase() {
         if (!isSupabaseConfigured) {
           console.info("Supabase is not configured yet; demo buses are being used.");
@@ -1117,7 +1173,7 @@
         });
       }
       restrictMobile($("cancelPhone"));
-      $("searchForm").onsubmit = function (e) {
+      $("searchForm").onsubmit = async function (e) {
         e.preventDefault();
         if (busesLoading) {
           alert("Bus list load ho rahi hai. 2-3 second baad dobara Search karein.");
@@ -1127,77 +1183,88 @@
         to = $("to").value.trim();
         journeyDate = $("date").value;
         if (from.toLowerCase() === to.toLowerCase()) {
-          alert("From aur To alag chunein.");
-          return;
+          alert("From aur To alag chunein."); return;
         }
-        if (journeyDate < today()) {
-          alert("Past date select nahi kar sakte.");
-          return;
+        if (!journeyDate || journeyDate < today()) {
+          alert("Valid journey date select karein."); return;
         }
-        $("busList").replaceChildren();
-        const matches = buses.filter(
-          (b) =>
-            b.from.trim().toLowerCase() === from.toLowerCase() &&
-            b.to.trim().toLowerCase() === to.toLowerCase(),
+        const busList = $("busList");
+        busList.replaceChildren();
+        const matches = buses.filter((b) =>
+          b.from.trim().toLowerCase() === from.toLowerCase() &&
+          b.to.trim().toLowerCase() === to.toLowerCase()
         );
-        if (!matches.length) {
-          addText("p", "Is route par koi bus nahi mili.", $("busList"));
+        if (!matches.length) addText("p", "Is route par koi bus nahi mili.", busList);
+        try {
+          for (const b of matches) {
+            const booked = await getBookedSeatsFromSupabase(b.id, journeyDate);
+            const card = document.createElement("div");
+            card.className = "bus";
+            addText("h3", b.name, card);
+            addText("p", b.type + " | " + b.departure + " - " + b.arrival, card);
+            addText("p", from + " → " + to, card);
+            addText("h3", money(b.fare) + " per seat", card);
+            const available = (b.totalSeats || 20) - booked.length;
+            addText("p", Math.max(0, available) + " seats available", card);
+            const btn = addText("button", "Select Seats", card);
+            btn.type = "button";
+            btn.disabled = available <= 0;
+            btn.onclick = () => openSeats(b, card);
+            busList.appendChild(card);
+          }
+        } catch (error) {
+          console.error(error);
+          alert("Seat availability load nahi hui. Supabase get_booked_seats function aur permissions check karein. Details: " + error.message);
+          return;
         }
-        matches.forEach((b) => {
-          const card = document.createElement("div");
-          card.className = "bus";
-          addText("h3", b.name, card);
-          addText("p", b.type + " | " + b.departure + " - " + b.arrival, card);
-          addText("p", from + " → " + to, card);
-          addText("h3", money(b.fare) + " per seat", card);
-          const available = (b.totalSeats || 20) - bookedSeats(b.id, journeyDate).length;
-          addText("p", Math.max(0, available) + " seats available", card);
-          const btn = addText("button", "Select Seats", card);
-          btn.type = "button";
-          btn.onclick = () => openSeats(b, card);
-          $("busList").appendChild(card);
-        });
         $("results").hidden = false;
         $("seatPanel").hidden = true;
         $("passengerPanel").hidden = true;
         $("ticketPanel").hidden = true;
         $("results").scrollIntoView({ behavior: "smooth" });
       };
-      function openSeats(selectedBus, card) {
+      async function openSeats(selectedBus, card) {
         bus = selectedBus;
         seats = [];
-        $("busInfo").textContent =
-          bus.name + " | " + money(bus.fare) + " per seat";
+        $("busInfo").textContent = bus.name + " | " + money(bus.fare) + " per seat";
         const list = $("seatList");
         list.replaceChildren();
-        const booked = bookedSeats(bus.id, journeyDate);
-        for (let i = 1; i <= (bus.totalSeats || 20); i++) {
-          const btn = addText("button", "Seat " + i, list);
-          btn.type = "button";
-          btn.className = "seat";
-          if (booked.includes(i)) {
-            btn.disabled = true;
-          } else {
-            btn.onclick = () => {
-              if (seats.includes(i)) {
-                seats = seats.filter((s) => s !== i);
-                btn.classList.remove("selected");
-              } else {
-                seats.push(i);
-                btn.classList.add("selected");
-              }
-              updateTotal();
-            };
+        $("seatPanel").hidden = false;
+        addText("p", "Seat availability refresh ho rahi hai…", list);
+        try {
+          const booked = await getBookedSeatsFromSupabase(bus.id, journeyDate);
+          list.replaceChildren();
+          for (let i = 1; i <= (bus.totalSeats || 20); i++) {
+            const btn = addText("button", "Seat " + i, list);
+            btn.type = "button";
+            btn.className = "seat";
+            if (booked.includes(i)) {
+              btn.disabled = true;
+              btn.title = "Already booked";
+            } else {
+              btn.onclick = () => {
+                if (seats.includes(i)) {
+                  seats = seats.filter((seat) => seat !== i);
+                  btn.classList.remove("selected");
+                } else {
+                  seats.push(i);
+                  btn.classList.add("selected");
+                }
+                updateTotal();
+              };
+            }
           }
+        } catch (error) {
+          list.replaceChildren();
+          addText("p", "Seat map load nahi hua: " + error.message, list);
+          alert("Seat availability load nahi hui. Supabase setup check karein.");
+          return;
         }
         updateTotal();
         $("passengerPanel").hidden = true;
         $("ticketPanel").hidden = true;
         $("seatPanel").hidden = false;
-        // Selected bus ke just neeche seat map.
-        if (card) {
-          card.insertAdjacentElement("afterend", $("seatPanel"));
-        }
+        if (card) card.insertAdjacentElement("afterend", $("seatPanel"));
         $("seatPanel").scrollIntoView({ behavior: "smooth" });
       }
       function updateTotal() {
@@ -1259,67 +1326,61 @@
         $("passengerPanel").hidden = false;
         $("passengerPanel").scrollIntoView({ behavior: "smooth" });
       };
-      $("passengerForm").onsubmit = function (e) {
+      $("passengerForm").onsubmit = async function (e) {
         e.preventDefault();
         if (!bus || !seats.length) return;
-        // Check seats again before booking.
-        const booked = bookedSeats(bus.id, journeyDate);
-        if (seats.some((s) => booked.includes(s))) {
-          alert("Seat already booked. Please select seats again.");
-          openSeats(bus);
-          return;
-        }
         const people = [...$("passengers").children].map((box) => ({
           name: box.querySelector('[name="name"]').value.trim(),
           age: Number(box.querySelector('[name="age"]').value),
           phone: box.querySelector('[name="phone"]').value.trim(),
         }));
-        if (
-          people.some(
-            (p) =>
-              !p.name ||
-              !Number.isInteger(p.age) ||
-              p.age < 1 ||
-              p.age > 120 ||
-              !/^[6-9][0-9]{9}$/.test(p.phone),
-          )
-        ) {
-          alert("Passenger details check karein.");
-          return;
+        if (people.some((p) => !p.name || !Number.isInteger(p.age) || p.age < 1 || p.age > 120 || !/^[6-9][0-9]{9}$/.test(p.phone))) {
+          alert("Passenger details check karein."); return;
         }
-        let pnr;
-        do {
-          pnr =
-            "APB-" +
-            Date.now().toString(36).toUpperCase() +
-            "-" +
-            Math.random().toString(36).slice(2, 6).toUpperCase();
-        } while (getBooking(pnr));
-        const booking = {
-          customerEmail: readDemoAuthSession()?.email || null,
-          id: pnr,
-          busId: bus.id,
-          bus: bus.name,
-          from: from,
-          to: to,
-          date: journeyDate,
-          seats: [...seats].sort((a, b) => a - b),
-          people: people,
-          total: seats.length * bus.fare,
-          status: "confirmed",
-          createdAt: new Date().toISOString(),
-        };
-        bookings.push(booking);
-        if (!save()) {
-          bookings.pop();
-          return;
+        const submitButton = $("passengerForm").querySelector('button[type="submit"]');
+        submitButton.disabled = true;
+        submitButton.textContent = "Booking ho rahi hai…";
+        try {
+          const result = await supabaseRpc("reserve_bus_seats", {
+            p_bus_id: Number(bus.id),
+            p_journey_date: journeyDate,
+            p_seats: [...seats].sort((a, b) => a - b),
+            p_customer_name: people[0].name,
+            p_customer_phone: people[0].phone,
+            p_customer_email: readDemoAuthSession()?.email || null,
+            p_passenger_details: people,
+          });
+          if (!result || !result.pnr) throw new Error("Booking response mein PNR nahi mila.");
+          const booking = {
+            customerEmail: readDemoAuthSession()?.email || null,
+            id: result.pnr,
+            busId: bus.id,
+            bus: bus.name,
+            from: from,
+            to: to,
+            date: journeyDate,
+            seats: [...seats].sort((a, b) => a - b),
+            people: people,
+            total: Number(result.total_fare ?? seats.length * bus.fare),
+            status: result.status || "confirmed",
+            createdAt: new Date().toISOString(),
+          };
+          // Remote bookings are the source of truth; do not save them as local bookings.
+          renderTicket(booking);
+          $("seatPanel").hidden = true;
+          $("passengerPanel").hidden = true;
+          $("ticketPanel").hidden = false;
+          $("ticketPanel").scrollIntoView({ behavior: "smooth" });
+          alert("Booking successful! Aapka PNR: " + booking.id);
+          seats = [];
+        } catch (error) {
+          console.error(error);
+          alert("Booking nahi hui: " + error.message + "\nAgar seat kisi aur ne pehle book ki hai, seats refresh karke dobara try karein.");
+          try { await openSeats(bus); } catch {}
+        } finally {
+          submitButton.disabled = false;
+          submitButton.textContent = "Book Ticket";
         }
-        renderTicket(booking);
-        renderAdmin();
-        $("seatPanel").hidden = true;
-        $("passengerPanel").hidden = true;
-        $("ticketPanel").hidden = false;
-        $("ticketPanel").scrollIntoView({ behavior: "smooth" });
       };
       $("newSearch").onclick = function () {
         showCustomer();
@@ -1404,142 +1465,66 @@
       /* ===============================
    PNR SEARCH + PRINT TICKET
 ================================ */
-      $("pnrForm").onsubmit = function (e) {
+      restrictMobile($("lookupPhone"));
+      $("pnrForm").onsubmit = async function (e) {
         e.preventDefault();
         const pnr = $("lookupPnr").value.trim();
+        const phone = $("lookupPhone").value.trim();
         const result = $("pnrResult");
         result.replaceChildren();
-        const booking = getBooking(pnr);
-        if (!booking) {
-          addText(
-            "p",
-            "Booking nahi mili. PNR dobara check karein.",
-            result,
-          );
-          return;
+        if (!/^[6-9][0-9]{9}$/.test(phone)) {
+          addText("p", "Valid 10-digit mobile number enter karein.", result); return;
         }
-        addText("h3", "Booking Details", result);
-        addText("p", "PNR: " + booking.id, result);
-        addText(
-          "p",
-          "Status: " + statusOf(booking).toUpperCase(),
-          result,
-        );
-        addText("p", "Bus: " + booking.bus, result);
-        addText(
-          "p",
-          "Route: " + booking.from + " → " + booking.to,
-          result,
-        );
-        addText("p", "Journey Date: " + booking.date, result);
-        addText(
-          "p",
-          "Seats: " + (booking.seats || []).join(", "),
-          result,
-        );
-        addText("p", "Total Fare: " + money(booking.total), result);
-        addText("h3", "Passenger Details", result);
-        (booking.people || []).forEach((p, i) => {
-          addText(
-            "p",
-            "Seat: " +
-              (booking.seats[i] ?? "—") +
-              " | Name: " +
-              p.name +
-              " | Age: " +
-              p.age +
-              " | Mobile: " +
-              p.phone,
-            result,
-          );
-        });
-        // Confirmed aur cancelled dono bookings ka ticket print ho sakta hai.
-        const printBtn = addText("button", "Print Ticket", result);
-        printBtn.type = "button";
-        printBtn.onclick = function () {
-          renderTicket(booking);
-          $("ticketPanel").hidden = false;
-          // Browser ko ticket panel render karne ka samay dein.
-          requestAnimationFrame(function () {
-            window.print();
-          });
-        };
+        try {
+          const row = await supabaseRpc("lookup_bus_booking", { p_pnr: pnr, p_customer_phone: phone });
+          const booking = bookingFromRemote(row);
+          if (!booking) { addText("p", "Booking nahi mili. PNR aur mobile number check karein.", result); return; }
+          addText("h3", "Booking Details", result);
+          addText("p", "PNR: " + booking.id, result);
+          addText("p", "Status: " + statusOf(booking).toUpperCase(), result);
+          addText("p", "Bus: " + booking.bus, result);
+          addText("p", "Route: " + booking.from + " → " + booking.to, result);
+          addText("p", "Journey Date: " + booking.date, result);
+          addText("p", "Seats: " + booking.seats.join(", "), result);
+          addText("p", "Total Fare: " + money(booking.total), result);
+          addText("h3", "Passenger Details", result);
+          booking.people.forEach((person, i) => addText("p", "Seat: " + (booking.seats[i] ?? "—") + " | Name: " + person.name + " | Age: " + person.age + " | Mobile: " + person.phone, result));
+          const printBtn = addText("button", "Print Ticket", result);
+          printBtn.type = "button";
+          printBtn.onclick = function () {
+            renderTicket(booking);
+            $("ticketPanel").hidden = false;
+            requestAnimationFrame(() => window.print());
+          };
+        } catch (error) {
+          console.error(error);
+          addText("p", "Booking lookup nahi ho paya. Supabase lookup_bus_booking function aur permissions check karein. " + error.message, result);
+        }
       };
       /* ===============================
    BOOKING CANCELLATION
 ================================ */
-      $("cancelForm").onsubmit = function (e) {
+      $("cancelForm").onsubmit = async function (e) {
         e.preventDefault();
         const pnr = $("cancelPnr").value.trim();
         const phone = $("cancelPhone").value.trim();
         const result = $("cancelResult");
         result.replaceChildren();
         if (!/^[6-9][0-9]{9}$/.test(phone)) {
-          addText(
-            "p",
-            "Valid 10-digit mobile number enter karein.",
-            result,
-          );
-          return;
+          addText("p", "Valid 10-digit mobile number enter karein.", result); return;
         }
-        const booking = getBooking(pnr);
-        if (!booking) {
-          addText(
-            "p",
-            "Booking nahi mili. PNR check karein.",
-            result,
-          );
-          return;
-        }
-        const phoneMatches = (booking.people || []).some(
-          (p) => String(p.phone).trim() === phone,
-        );
-        if (!phoneMatches) {
-          addText(
-            "p",
-            "Mobile number booking se match nahi karta.",
-            result,
-          );
-          return;
-        }
-        if (statusOf(booking) === "cancelled") {
-          addText(
-            "p",
-            "Yeh booking pehle hi cancel ho chuki hai.",
-            result,
-          );
-          return;
-        }
-        if (
-          !confirm(
-            "Kya aap PNR " +
-              booking.id +
-              " ki poori booking cancel karna chahte hain?",
-          )
-        ) {
-          return;
-        }
-        const oldStatus = booking.status;
-        const oldCancelledAt = booking.cancelledAt;
-        booking.status = "cancelled";
-        booking.cancelledAt = new Date().toISOString();
-        if (!save()) {
-          booking.status = oldStatus;
-          if (oldCancelledAt === undefined) {
-            delete booking.cancelledAt;
-          } else {
-            booking.cancelledAt = oldCancelledAt;
+        if (!confirm("Kya aap PNR " + pnr + " ki poori booking cancel karna chahte hain?")) return;
+        try {
+          const response = await supabaseRpc("cancel_bus_booking", { p_pnr: pnr, p_customer_phone: phone });
+          if (!response || response.success !== true) {
+            addText("p", response?.message || "Booking cancel nahi hui. PNR aur mobile number check karein.", result);
+            return;
           }
-          return;
-        }
-        addText(
-          "p",
-          "Booking successfully cancel ho gayi. PNR: " + booking.id,
-          result,
-        ).className = "cancelled";
-        // Updated ticket bhi PNR result se print kiya ja sakta hai.
-        if (typeof renderAdmin === "function") {
-          renderAdmin();
+          addText("p", "Booking successfully cancel ho gayi. PNR: " + (response.pnr || pnr), result).className = "cancelled";
+          addText("p", "Booked seats availability refresh karne ke liye route dobara search karein.", result);
+        } catch (error) {
+          console.error(error);
+          addText("p", "Cancellation nahi ho paya. Supabase cancel_bus_booking function aur permissions check karein. " + error.message, result);
         }
       };
       // ===============================
