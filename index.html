@@ -955,6 +955,25 @@
         }
         return data;
       }
+      async function adminBusRequest(path, options = {}) {
+        const token = getAdminAccessToken();
+        if (!token) throw new Error("Admin session expire ho gaya. Dobara login karein.");
+        const response = await fetch(SUPABASE_URL.replace(/\/$/, "") + path, {
+          ...options,
+          headers: {
+            apikey: SUPABASE_PUBLISHABLE_KEY,
+            Authorization: "Bearer " + token,
+            "Content-Type": "application/json",
+            ...(options.headers || {}),
+          },
+        });
+        const raw = await response.text();
+        let data = null;
+        try { data = raw ? JSON.parse(raw) : null; } catch { data = raw; }
+        if (!response.ok) throw new Error(data?.message || data?.details || data?.hint || (typeof data === "string" ? data : "Bus save nahi hui: " + response.status));
+        return data;
+      }
+      let editingBusId = null;
       async function loadAdminBookingsFromSupabase() {
         const token = getAdminAccessToken();
         if (!token) throw new Error("Admin session expire ho gaya. Dobara login karein.");
@@ -1577,42 +1596,49 @@
       // ===============================
       // ADMIN: ADD BUS
       // ===============================
-      $("busForm").onsubmit = function (e) {
+      $("busForm").onsubmit = async function (e) {
         e.preventDefault();
         const name = $("busName").value.trim();
         const busFrom = $("busFrom").value.trim();
         const busTo = $("busTo").value.trim();
         const fare = Number($("fare").value);
-        if (
-          !name ||
-          !busFrom ||
-          !busTo ||
-          busFrom.toLowerCase() === busTo.toLowerCase() ||
-          !Number.isInteger(fare) ||
-          fare < 1
-        ) {
-          alert("Bus details check karein.");
-          return;
+        if (!name || !busFrom || !busTo || busFrom.toLowerCase() === busTo.toLowerCase() || !Number.isInteger(fare) || fare < 1) {
+          alert("Bus details check karein."); return;
         }
-        const newBus = {
-          id:
-            "bus-" + Date.now() + "-" + Math.random().toString(36).slice(2, 6),
-          name: name,
-          type: $("busType").value,
-          from: busFrom,
-          to: busTo,
-          departure: $("departure").value,
-          arrival: $("arrival").value,
+        const payload = {
+          bus_name: name,
+          bus_type: $("busType").value,
+          source: busFrom,
+          destination: busTo,
+          departure_time: $("departure").value,
+          arrival_time: $("arrival").value,
           fare: fare,
+          total_seats: editingBusId !== null ? Number((buses.find((item) => String(item.id) === String(editingBusId)) || {}).totalSeats || 20) : 20,
         };
-        buses.push(newBus);
-        if (!save()) {
-          buses.pop();
-          return;
-        }
-        $("busForm").reset();
-        renderAdmin();
-        alert("Bus successfully add ho gayi!");
+        const submitButton = $("busForm").querySelector('button[type="submit"]');
+        submitButton.disabled = true;
+        try {
+          if (editingBusId !== null) {
+            await adminBusRequest("/rest/v1/buses?id=eq." + encodeURIComponent(editingBusId), {
+              method: "PATCH", headers: { Prefer: "return=representation" }, body: JSON.stringify(payload)
+            });
+            alert("Bus details Supabase mein update ho gayi!");
+          } else {
+            await adminBusRequest("/rest/v1/buses", {
+              method: "POST", headers: { Prefer: "return=representation" }, body: JSON.stringify(payload)
+            });
+            alert("Bus Supabase mein successfully add ho gayi!");
+          }
+          editingBusId = null;
+          $("busForm").reset();
+          $("busFrom").value = "Indore"; $("busTo").value = "Bhopal";
+          submitButton.textContent = "Add Bus";
+          await loadBusesFromSupabase();
+          renderAdmin();
+        } catch (error) {
+          console.error(error);
+          alert("Bus save nahi hui: " + error.message + "\nSupabase mein buses table ke Admin INSERT/UPDATE permissions check karein.");
+        } finally { submitButton.disabled = false; }
       };
       /* ===============================
    STEP 6: MY BOOKINGS DASHBOARD
@@ -1738,26 +1764,37 @@
           const card = document.createElement("div");
           card.className = "bus";
           addText("h3", b.name, card);
-          addText(
-            "p",
-            b.from + " → " + b.to + " | " + b.type + " | " + money(b.fare),
-            card,
-          );
+          addText("p", b.from + " → " + b.to + " | " + b.type + " | " + b.departure + "–" + b.arrival + " | " + money(b.fare), card);
+          const editButton = addText("button", "Edit Bus", card);
+          editButton.type = "button";
+          editButton.onclick = function () {
+            editingBusId = b.id;
+            $("busName").value = b.name || "";
+            $("busType").value = b.type || "AC Seater";
+            $("busFrom").value = b.from || "";
+            $("busTo").value = b.to || "";
+            $("departure").value = b.departure === "--:--" ? "" : (b.departure || "");
+            $("arrival").value = b.arrival === "--:--" ? "" : (b.arrival || "");
+            $("fare").value = Number(b.fare || 0);
+            $("busForm").querySelector('button[type="submit"]').textContent = "Update Bus";
+            $("busForm").scrollIntoView({ behavior: "smooth", block: "start" });
+          };
           const deleteButton = addText("button", "Delete Bus", card);
           deleteButton.className = "danger";
           deleteButton.type = "button";
-          deleteButton.onclick = function () {
-            if (
-              !confirm("Bus delete karein? Booking history delete nahi hogi.")
-            )
-              return;
-            const previousBuses = buses;
-            buses = buses.filter((item) => String(item.id) !== String(b.id));
-            if (!save()) {
-              buses = previousBuses;
-              return;
+          deleteButton.onclick = async function () {
+            if (!confirm("Is bus ko Supabase se delete karein? Is bus ki booking history rahegi, lekin future bookings par asar ho sakta hai.")) return;
+            deleteButton.disabled = true;
+            try {
+              await adminBusRequest("/rest/v1/buses?id=eq." + encodeURIComponent(b.id), { method: "DELETE" });
+              if (String(editingBusId) === String(b.id)) { editingBusId = null; $("busForm").reset(); $("busForm").querySelector('button[type="submit"]').textContent = "Add Bus"; }
+              await loadBusesFromSupabase();
+              renderAdmin();
+            } catch (error) {
+              console.error(error);
+              alert("Bus delete nahi hui: " + error.message + "\nAgar is bus ki bookings hain, database foreign-key restriction ki wajah se delete rok sakta hai.");
+              deleteButton.disabled = false;
             }
-            renderAdmin();
           };
           busContainer.appendChild(card);
         });
