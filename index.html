@@ -1,0 +1,2453 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Apni Bus Booking</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #f4f6fa;
+        color: #1e293b;
+        line-height: 1.5;
+      }
+      header {
+        background: linear-gradient(135deg, #b71c1c, #e53935);
+        color: white;
+        text-align: center;
+        padding: 26px 16px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12);
+      }
+      header h1 {
+        margin: 0;
+        font-size: clamp(25px, 4vw, 36px);
+        letter-spacing: 0.3px;
+      }
+      header p {
+        margin: 8px 0 14px;
+        opacity: 0.92;
+      }
+      nav {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      button {
+        background: #c62828;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 11px 17px;
+        margin: 4px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition:
+          background 0.2s,
+          transform 0.2s;
+      }
+      button:hover {
+        background: #a61f1f;
+        transform: translateY(-1px);
+      }
+      button:focus-visible,
+      input:focus-visible,
+      select:focus-visible {
+        outline: 3px solid #93c5fd;
+        outline-offset: 2px;
+      }
+      nav button {
+        background: white;
+        color: #b71c1c;
+        margin: 0;
+      }
+      nav button:hover {
+        background: #fee2e2;
+      }
+      main {
+        width: min(900px, 100%);
+        margin: 28px auto;
+        padding: 0 16px;
+      }
+      section {
+        background: white;
+        padding: 24px;
+        margin-bottom: 20px;
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        box-shadow: 0 5px 20px rgba(15, 23, 42, 0.045);
+      }
+      section h2 {
+        margin-top: 0;
+        margin-bottom: 18px;
+        font-size: 23px;
+        color: #172554;
+      }
+      label {
+        display: block;
+        margin-top: 10px;
+        font-weight: 600;
+        font-size: 14px;
+      }
+      input,
+      select {
+        display: block;
+        width: 100%;
+        padding: 12px 13px;
+        margin: 7px 0 15px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        background: #fff;
+        color: #1e293b;
+        font: inherit;
+      }
+      input:focus,
+      select:focus {
+        border-color: #dc2626;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+      }
+      .bus,
+      .passenger,
+      .booking {
+        padding: 17px;
+        margin: 14px 0;
+        border: 1px solid #e2e8f0;
+        border-radius: 11px;
+        background: #fff;
+      }
+      .bus h3,
+      .passenger h3,
+      .booking h3 {
+        margin-top: 0;
+        color: #1e293b;
+      }
+      .seats {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+        max-width: 460px;
+        margin: 18px 0;
+      }
+      .seat {
+        background: #d1fae5;
+        color: #065f46;
+        border: 1px solid #a7f3d0;
+        margin: 0;
+        padding: 12px 5px;
+      }
+      .seat.selected {
+        background: #2563eb;
+        color: white;
+        border-color: #2563eb;
+      }
+      .seat:disabled {
+        background: #e5e7eb;
+        color: #64748b;
+        border-color: #d1d5db;
+        cursor: not-allowed;
+        transform: none;
+      }
+      .summary {
+        background: #fff1f2;
+        padding: 14px;
+        border-radius: 9px;
+        color: #9f1239;
+        font-weight: 700;
+      }
+      .status {
+        color: #15803d;
+        font-weight: 700;
+      }
+      .cancelled,
+      .danger {
+        color: #dc2626;
+      }
+      .danger {
+        color: white;
+        background: #dc2626;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      @media (max-width: 600px) {
+        header {
+          padding: 22px 12px;
+        }
+        main {
+          margin: 16px auto;
+          padding: 0 10px;
+        }
+        section {
+          padding: 17px;
+          border-radius: 11px;
+        }
+        section h2 {
+          font-size: 21px;
+        }
+        button {
+          padding: 11px 13px;
+        }
+        .seats {
+          gap: 7px;
+        }
+        .seat {
+          font-size: 12px;
+          padding: 12px 2px;
+        }
+      }
+      @media print {
+        header,
+        nav,
+        button,
+        #searchPanel,
+        #results,
+        #seatPanel,
+        #passengerPanel,
+        #pnrPanel,
+        #cancelPanel,
+        #adminPanel,
+        #dashboardPanel {
+          display: none !important;
+        }
+        body {
+          background: white;
+        }
+        main {
+          width: 100%;
+          margin: 0;
+          padding: 0;
+        }
+        #ticketPanel {
+          display: block !important;
+          box-shadow: none;
+          border: none;
+        }
+      }
+      /* Step 2: Professional bus cards */
+      #busList {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 16px;
+      }
+      #busList .bus {
+        margin: 0;
+        padding: 20px;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        box-shadow: 0 5px 16px rgba(15, 23, 42, 0.05);
+        transition:
+          transform 0.2s,
+          box-shadow 0.2s;
+      }
+      #busList .bus:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.09);
+      }
+      #busList .bus h3 {
+        margin: 0 0 12px;
+        font-size: 20px;
+        color: #b91c1c;
+      }
+      #busList .bus p {
+        margin: 9px 0;
+        color: #475569;
+        overflow-wrap: anywhere;
+      }
+      #busList .bus h3 + p {
+        display: inline-block;
+        background: #f1f5f9;
+        padding: 5px 9px;
+        border-radius: 6px;
+        font-size: 13px;
+      }
+      #busList .bus button {
+        width: 100%;
+        margin: 12px 0 0;
+        padding: 13px;
+      }
+      /* Step 2: Seat selection panel */
+      #seatPanel {
+        border-top: 4px solid #c62828;
+      }
+      #busInfo {
+        background: #fff1f2;
+        padding: 12px;
+        border-radius: 8px;
+        font-weight: 600;
+      }
+      #seatList {
+        max-width: 430px;
+        padding: 16px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+      }
+      #seatList .seat {
+        min-height: 44px;
+        border-radius: 8px;
+        font-weight: 600;
+      }
+      #seatList .seat:disabled {
+        opacity: 1;
+      }
+      #total {
+        margin-top: 18px;
+        line-height: 1.7;
+      }
+      /* Passenger details */
+      #passengers .passenger {
+        background: #f8fafc;
+      }
+      #bookingSummary {
+        line-height: 1.8;
+      }
+      @media (max-width: 480px) {
+        #busList {
+          grid-template-columns: 1fr;
+        }
+        #busList .bus {
+          padding: 16px;
+        }
+        #seatList {
+          padding: 10px;
+          gap: 6px;
+        }
+      }
+      .seat-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        margin: 14px 0;
+        font-size: 12px;
+        color: #475569;
+      }
+      .seat-legend span {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .legend-seat {
+        width: 15px;
+        height: 15px;
+        border-radius: 4px;
+        display: inline-block;
+      }
+      .legend-seat.available {
+        background: #d1fae5;
+        border: 1px solid #a7f3d0;
+      }
+      .legend-seat.chosen {
+        background: #2563eb;
+      }
+      .legend-seat.booked {
+        background: #e5e7eb;
+        border: 1px solid #cbd5e1;
+      }
+      /* Step 5: Professional ticket */
+      #ticketPanel {
+        border-top: 5px solid #c62828;
+      }
+      #ticketPanel > h2 {
+        color: #b91c1c;
+      }
+      #ticket {
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        overflow-wrap: anywhere;
+        background: #fff;
+      }
+      #ticket > h3:first-child {
+        background: #c62828;
+        color: #fff;
+        padding: 20px;
+        margin: 0 0 18px;
+      }
+      #ticket > p {
+        margin: 12px 18px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #f1f5f9;
+      }
+      #ticket > h3:not(:first-child) {
+        margin: 22px 18px 10px;
+        color: #b91c1c;
+      }
+      #ticket .passenger {
+        margin: 12px 18px;
+        background: #f8fafc;
+        border-color: #e2e8f0;
+      }
+      #ticket .passenger p {
+        margin: 7px 0;
+      }
+      #ticket .status {
+        color: #15803d;
+        font-weight: 700;
+      }
+      #ticket .cancelled {
+        color: #dc2626;
+        font-weight: 700;
+      }
+      @media print {
+        @page {
+          size: A4;
+          margin: 12mm;
+        }
+        body {
+          background: #fff !important;
+          color: #111827;
+          font-size: 12px;
+        }
+        #ticketPanel {
+          display: block !important;
+          width: 100%;
+          margin: 0;
+          padding: 0;
+          border: none;
+          box-shadow: none;
+        }
+        #ticket {
+          border: 1px solid #cbd5e1;
+          border-radius: 0;
+        }
+        #ticket > h3:first-child {
+          background: #c62828 !important;
+          color: #fff !important;
+          print-color-adjust: exact;
+          -webkit-print-color-adjust: exact;
+        }
+        #ticket .passenger {
+          break-inside: avoid;
+        }
+      }
+      /* Step 6: Customer Dashboard */
+      #dashboardPanel {
+        border-top: 4px solid #c62828;
+      }
+      #bookingStats {
+        margin-bottom: 20px;
+        line-height: 1.9;
+      }
+      .my-booking-card {
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 18px;
+        margin: 14px 0;
+        background: #fff;
+        overflow-wrap: anywhere;
+      }
+      .my-booking-card h3 {
+        color: #b91c1c;
+        margin-top: 0;
+      }
+      .my-booking-card p {
+        margin: 7px 0;
+      }
+      .booking-status {
+        display: inline-block;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 700;
+        background: #dcfce7;
+        color: #166534;
+      }
+      .booking-status.cancelled {
+        background: #fee2e2;
+        color: #b91c1c;
+      }
+      #myBookingsList .booking-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 14px;
+      }
+      #myBookingsList .booking-actions button {
+        margin: 0;
+      }
+      @media (max-width: 480px) {
+        .my-booking-card {
+          padding: 14px;
+        }
+        #myBookingsList .booking-actions button {
+          flex: 1 1 100%;
+        }
+      }
+      @media print {
+        #dashboardPanel {
+          display: none !important;
+        }
+      }
+      /* Step 9C-2: Final ticket print settings */
+      @media print {
+        body * {
+          visibility: hidden !important;
+        }
+        #ticketPanel,
+        #ticketPanel * {
+          visibility: visible !important;
+        }
+        #ticketPanel {
+          display: block !important;
+          position: absolute !important;
+          top: 0 !important;
+          left: 0 !important;
+          width: 100% !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          border: none !important;
+          box-shadow: none !important;
+          background: white !important;
+        }
+        #ticketPanel > h2,
+        #ticketPanel > button {
+          display: none !important;
+        }
+        #ticket {
+          width: 100%;
+          border: 1px solid #cbd5e1;
+          border-radius: 8px;
+          background: white !important;
+          color: #111827 !important;
+        }
+        #ticket h3:first-child {
+          background: #b91c1c !important;
+          color: white !important;
+          padding: 16px;
+          print-color-adjust: exact;
+          -webkit-print-color-adjust: exact;
+        }
+        #ticket .passenger {
+          break-inside: avoid;
+          page-break-inside: avoid;
+        }
+        @page {
+          size: A4;
+          margin: 12mm;
+        }
+      }
+      /* Step 10A: Login and Registration UI */
+      #authPanel {
+        max-width: 560px;
+        margin: 24px auto;
+        border-top: 4px solid #c62828;
+      }
+      #authPanel label {
+        display: block;
+        margin-top: 12px;
+        font-weight: 600;
+      }
+      #authPanel input {
+        width: 100%;
+        padding: 12px;
+        margin: 7px 0 14px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font: inherit;
+      }
+      #authPanel button {
+        margin: 6px 6px 6px 0;
+      }
+      #authMessage {
+        padding: 10px;
+        border-radius: 8px;
+        background: #f8fafc;
+        overflow-wrap: anywhere;
+      }
+      #authPanel [hidden] {
+        display: none !important;
+      }
+      /* Step 10B: Admin dashboard theme */
+      #adminPanel {
+        border-top: 5px solid #991b1b;
+        background: #ffffff;
+      }
+      #adminPanel > h2 {
+        color: #991b1b;
+      }
+      #adminPanel h3 {
+        margin-top: 24px;
+        color: #7f1d1d;
+      }
+      #adminLoginPanel {
+        max-width: 560px;
+        margin: 24px auto;
+        border-top: 5px solid #991b1b;
+      }
+      #adminLoginPanel h2 {
+        color: #991b1b;
+      }
+      #adminLoginMessage {
+        padding: 12px;
+        border-radius: 8px;
+        background: #fff1f2;
+      }
+      .admin-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+        gap: 14px;
+        margin: 20px 0;
+      }
+      .admin-stat {
+        padding: 18px;
+        border: 1px solid #fecaca;
+        border-radius: 12px;
+        background: #fff7f7;
+      }
+      .admin-stat strong {
+        display: block;
+        color: #991b1b;
+        font-size: 26px;
+      }
+      .admin-stat span {
+        color: #475569;
+        font-size: 13px;
+      }
+      #adminLogoutBtn {
+        background: #7f1d1d;
+      }
+      @media (max-width: 480px) {
+        .admin-stats {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>🚌 Apni Bus Booking</h1>
+      <p>Book your journey easily</p>
+      <nav>
+        <button id="customerTab" type="button">Customer Website</button>
+        <button id="accountTab" type="button">My Account</button>
+        <button id="adminTab" type="button">Admin Panel</button>
+      </nav>
+    </header>
+    <main>
+      <section id="searchPanel">
+        <h2>Search Buses</h2>
+        <form id="searchForm">
+          <label>From</label><input id="from" value="Indore" required />
+          <label>To</label><input id="to" value="Bhopal" required />
+          <label>Journey Date</label><input id="date" type="date" required />
+          <button type="submit">Search Buses</button>
+        </form>
+      </section>
+      <!-- Step 10A: Customer Login and Registration -->
+      <section id="authPanel" hidden>
+        <h2 id="authTitle">Customer Login</h2>
+        <p id="authMessage" role="status">Login or create your demo account.</p>
+        <form id="loginForm">
+          <label for="loginEmail">Email Address</label>
+          <input
+            id="loginEmail"
+            type="email"
+            placeholder="Enter your registered email"
+            required
+          />
+          <label for="loginPassword">Password</label>
+          <input
+            id="loginPassword"
+            type="password"
+            minlength="6"
+            placeholder="Enter password"
+            required
+          />
+          <button type="submit">Login</button>
+        </form>
+        <form id="registerForm" hidden>
+          <label for="regName">Full Name</label>
+          <input
+            id="regName"
+            maxlength="80"
+            placeholder="Enter your name"
+            required
+          />
+          <label for="regMobile">Mobile Number</label>
+          <input
+            id="regMobile"
+            type="text"
+            inputmode="numeric"
+            maxlength="10"
+            minlength="10"
+            pattern="[6-9][0-9]{9}"
+            placeholder="10-digit mobile number"
+            required
+          />
+          <label for="regEmail">Email Address</label>
+          <input
+            id="regEmail"
+            type="email"
+            placeholder="Enter your email"
+            required
+          />
+          <label for="regPassword">Create Password</label>
+          <input
+            id="regPassword"
+            type="password"
+            minlength="6"
+            placeholder="Minimum 6 characters"
+            required
+          />
+          <label for="regConfirmPassword">Confirm Password</label>
+          <input
+            id="regConfirmPassword"
+            type="password"
+            minlength="6"
+            placeholder="Re-enter password"
+            required
+          />
+          <button type="submit">Create Demo Account</button>
+        </form>
+        <p id="authSwitchText">New customer?</p>
+        <button type="button" id="authSwitchBtn">Create Account</button>
+        <button type="button" id="logoutBtn" hidden>Logout</button>
+      </section>
+      <section id="dashboardPanel" hidden>
+        <h2>My Bookings</h2>
+        <button id="dashboardLogoutBtn" type="button">Logout</button>
+        <p>View your booking history, status and tickets.</p>
+        <div id="bookingStats" class="summary"></div>
+        <div id="myBookingsList"></div>
+        <button id="dashboardSearchBtn" type="button">Search New Bus</button>
+      </section>
+      <section id="results" hidden>
+        <h2>Available Buses</h2>
+        <div id="busList"></div>
+      </section>
+      <section id="seatPanel" hidden>
+        <h2>Select Seats</h2>
+        <p id="busInfo"></p>
+        <div class="seat-legend">
+          <span><i class="legend-seat available"></i> Available</span>
+          <span><i class="legend-seat chosen"></i> Selected</span>
+          <span><i class="legend-seat booked"></i> Booked</span>
+        </div>
+        <div id="seatList" class="seats"></div>
+        <p id="total" class="summary">Seats: 0 | Total ₹0</p>
+        <button id="continueBtn">Continue</button>
+      </section>
+      <section id="passengerPanel" hidden>
+        <h2>Passenger Details</h2>
+        <form id="passengerForm">
+          <div id="passengers"></div>
+          <p id="bookingSummary" class="summary"></p>
+          <button type="submit">Book Ticket</button>
+        </form>
+      </section>
+      <section id="ticketPanel" hidden>
+        <h2>Booking Ticket</h2>
+        <div id="ticket"></div>
+        <button onclick="window.print()">Print Ticket</button>
+        <button id="newSearch">New Search</button>
+      </section>
+      <section id="pnrPanel">
+        <h2>Find Booking / PNR</h2>
+        <form id="pnrForm">
+          <label>Enter PNR</label>
+          <input id="lookupPnr" required placeholder="Enter your PNR" />
+          <label>Passenger Mobile Number (used at booking)</label>
+          <input id="lookupPhone" type="text" inputmode="numeric" maxlength="10" minlength="10" pattern="[6-9][0-9]{9}" required placeholder="10-digit mobile number" />
+          <button type="submit">Find Booking</button>
+        </form>
+        <div id="pnrResult"></div>
+      </section>
+      <section id="cancelPanel">
+        <h2>Cancel Booking</h2>
+        <form id="cancelForm">
+          <label>PNR Number</label>
+          <input id="cancelPnr" required />
+          <label>Passenger Mobile Number</label>
+          <input
+            id="cancelPhone"
+            type="text"
+            inputmode="numeric"
+            maxlength="10"
+            pattern="[6-9][0-9]{9}"
+            required
+          />
+          <button type="submit">Cancel Ticket</button>
+        </form>
+        <div id="cancelResult"></div>
+      </section>
+      <!-- Admin Login Panel -->
+      <section id="adminLoginPanel" hidden>
+        <h2>Admin Login</h2>
+        <p id="adminLoginMessage" role="status">Enter Admin credentials...</p>
+        <form id="adminLoginForm">
+          <label for="adminUsername">Admin Email</label>
+          <input id="adminUsername" type="email" required autocomplete="username" placeholder="Admin email" />
+          <label for="adminPassword">Password</label>
+          <input
+            id="adminPassword"
+            type="password"
+            required
+            autocomplete="current-password"
+          />
+          <button type="submit">Login as Admin</button>
+        </form>
+        <button type="button" id="adminLoginBackBtn">Back to Website</button>
+      </section>
+      <section id="adminPanel" hidden>
+        <h2>Admin Panel</h2>
+        <form id="busForm">
+          <label>Bus Name</label><input id="busName" required />
+          <label>Bus Type</label>
+          <select id="busType">
+            <option>AC Seater</option>
+            <option>Non-AC Seater</option>
+            <option>AC Sleeper</option>
+          </select>
+          <label>From</label><input id="busFrom" value="Indore" required />
+          <label>To</label><input id="busTo" value="Bhopal" required />
+          <label>Departure</label><input id="departure" type="time" required />
+          <label>Arrival</label><input id="arrival" type="time" required />
+          <label>Fare</label><input id="fare" type="number" min="1" required />
+          <button type="submit">Add Bus</button>
+        </form>
+        <h3>Manage Buses</h3>
+        <div id="adminBuses"></div>
+        <h3>All Bookings</h3>
+        <div id="adminBookings"></div>
+        <hr />
+        <h3>Data Backup & Export</h3>
+        <p>Download your demo data for backup or reporting.</p>
+        <button id="exportBookingsBtn" type="button">
+          Export Bookings CSV
+        </button>
+        <button id="backupDataBtn" type="button">Download Full Backup</button>
+        <hr />
+        <h3>Restore Backup</h3>
+        <p>Select a previously downloaded Apni Bus Booking JSON backup.</p>
+        <label for="restoreBackupFile">Choose Backup File</label>
+        <input
+          type="file"
+          id="restoreBackupFile"
+          accept=".json,application/json"
+        />
+        <button id="restoreBackupBtn" type="button">Restore Full Backup</button>
+        <p id="restoreMessage" role="status" aria-live="polite"></p>
+      </section>
+    </main>
+    <script>
+      const $ = (id) => document.getElementById(id);
+      // Supabase setup: paste your Project URL and Publishable key below.
+      // Never use a service_role/secret key in this public website.
+      const SUPABASE_URL = "https://yqqkikkeimqykxkkssov.supabase.co";
+      const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_Wm0B7iOpePwoLQYuxQax1w_aVf27V_0";
+      const isSupabaseConfigured =
+        SUPABASE_URL.startsWith("https://") &&
+        !SUPABASE_URL.includes("PASTE_YOUR_") &&
+        SUPABASE_PUBLISHABLE_KEY.length > 20 &&
+        !SUPABASE_PUBLISHABLE_KEY.includes("PASTE_YOUR_");
+      let busesLoading = isSupabaseConfigured;
+      function readDemoAuthSession() {
+        try {
+          const session = JSON.parse(
+            localStorage.getItem("apniBus_demo_session_v1") || "null",
+          );
+          const profiles = JSON.parse(
+            localStorage.getItem("apniBus_demo_profiles_v1") || "[]",
+          );
+          if (
+            !session?.email ||
+            !Array.isArray(profiles) ||
+            !profiles.some((p) => p.email === session.email)
+          ) {
+            return null;
+          }
+          return session;
+        } catch {
+          return null;
+        }
+      }
+      function openDemoAuth() {
+        $("accountTab").click();
+      }
+      const defaultBuses = [
+        {
+          id: 1,
+          name: "Demo Express",
+          type: "AC Seater",
+          from: "Indore",
+          to: "Bhopal",
+          departure: "08:00",
+          arrival: "12:00",
+          fare: 499,
+        },
+        {
+          id: 2,
+          name: "Demo Sleeper",
+          type: "AC Sleeper",
+          from: "Indore",
+          to: "Bhopal",
+          departure: "22:00",
+          arrival: "05:00",
+          fare: 799,
+        },
+        {
+          id: 3,
+          name: "City Travels",
+          type: "Non-AC Seater",
+          from: "Indore",
+          to: "Bhopal",
+          departure: "14:00",
+          arrival: "19:00",
+          fare: 349,
+        },
+      ];
+      function read(key, fallback) {
+        try {
+          const data = localStorage.getItem(key);
+          return data ? JSON.parse(data) : fallback;
+        } catch {
+          return fallback;
+        }
+      }
+      let buses = read("apniBus_buses_v2", defaultBuses);
+      let bookings = read("apniBus_bookings_v2", []);
+      async function supabaseRpc(functionName, payload) {
+        if (!isSupabaseConfigured) throw new Error("Supabase settings missing.");
+        const response = await fetch(
+          SUPABASE_URL.replace(/\/$/, "") + "/rest/v1/rpc/" + functionName,
+          {
+            method: "POST",
+            headers: {
+              apikey: SUPABASE_PUBLISHABLE_KEY,
+              Authorization: "Bearer " + SUPABASE_PUBLISHABLE_KEY,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          },
+        );
+        const body = await response.text();
+        let data = null;
+        try { data = body ? JSON.parse(body) : null; } catch { data = body; }
+        if (!response.ok) {
+          const message = data && typeof data === "object" ? (data.message || data.details || data.hint || JSON.stringify(data)) : String(data || response.statusText);
+          throw new Error(message || ("Supabase request failed: " + response.status));
+        }
+        return data;
+      }
+      function getAdminAccessToken() {
+        try { return sessionStorage.getItem("apniBus_admin_access_token_v1") || ""; }
+        catch { return ""; }
+      }
+      async function adminAuthRequest(path, options = {}) {
+        const response = await fetch(SUPABASE_URL.replace(/\/$/, "") + path, {
+          ...options,
+          headers: {
+            apikey: SUPABASE_PUBLISHABLE_KEY,
+            "Content-Type": "application/json",
+            ...(options.headers || {}),
+          },
+        });
+        const raw = await response.text();
+        let data = null;
+        try { data = raw ? JSON.parse(raw) : null; } catch { data = raw; }
+        if (!response.ok) {
+          throw new Error(data?.msg || data?.message || data?.error_description || data?.message || (typeof data === "string" ? data : "Request failed: " + response.status));
+        }
+        return data;
+      }
+      async function adminBusRequest(path, options = {}) {
+        const token = getAdminAccessToken();
+        if (!token) throw new Error("Admin session expire ho gaya. Dobara login karein.");
+        const response = await fetch(SUPABASE_URL.replace(/\/$/, "") + path, {
+          ...options,
+          headers: {
+            apikey: SUPABASE_PUBLISHABLE_KEY,
+            Authorization: "Bearer " + token,
+            "Content-Type": "application/json",
+            ...(options.headers || {}),
+          },
+        });
+        const raw = await response.text();
+        let data = null;
+        try { data = raw ? JSON.parse(raw) : null; } catch { data = raw; }
+        if (!response.ok) throw new Error(data?.message || data?.details || data?.hint || (typeof data === "string" ? data : "Bus save nahi hui: " + response.status));
+        return data;
+      }
+      let editingBusId = null;
+      async function loadAdminBookingsFromSupabase() {
+        const token = getAdminAccessToken();
+        if (!token) throw new Error("Admin session expire ho gaya. Dobara login karein.");
+        const response = await fetch(SUPABASE_URL.replace(/\/$/, "") + "/rest/v1/bookings?select=id,pnr,bus_id,customer_name,customer_phone,customer_email,journey_date,seats,passenger_details,total_fare,status,created_at,cancelled_at,buses(bus_name,source,destination)&order=created_at.desc", {
+          headers: { apikey: SUPABASE_PUBLISHABLE_KEY, Authorization: "Bearer " + token }
+        });
+        const raw = await response.text();
+        let rows = null;
+        try { rows = raw ? JSON.parse(raw) : null; } catch { rows = raw; }
+        if (!response.ok) throw new Error(rows?.message || rows?.details || (typeof rows === "string" ? rows : "Bookings load nahi hui: " + response.status));
+        return Array.isArray(rows) ? rows : [];
+      }
+      async function cancelAdminBookingOnSupabase(pnr) {
+        const token = getAdminAccessToken();
+        const response = await fetch(SUPABASE_URL.replace(/\/$/, "") + "/rest/v1/bookings?pnr=eq." + encodeURIComponent(pnr) + "&status=eq.confirmed", {
+          method: "PATCH",
+          headers: { apikey: SUPABASE_PUBLISHABLE_KEY, Authorization: "Bearer " + token, "Content-Type": "application/json", Prefer: "return=representation" },
+          body: JSON.stringify({ status: "cancelled", cancelled_at: new Date().toISOString() })
+        });
+        const raw = await response.text();
+        let data = null;
+        try { data = raw ? JSON.parse(raw) : null; } catch { data = raw; }
+        if (!response.ok) throw new Error(data?.message || data?.details || (typeof data === "string" ? data : "Cancellation failed: " + response.status));
+        if (!Array.isArray(data) || !data.length) throw new Error("Booking update nahi hui. Booking shayad pehle hi cancel hai.");
+        return data[0];
+      }
+      async function getBookedSeatsFromSupabase(busId, date) {
+        const data = await supabaseRpc("get_booked_seats", {
+          p_bus_id: Number(busId),
+          p_journey_date: date,
+        });
+        return Array.isArray(data) ? data.map(Number) : [];
+      }
+      function bookingFromRemote(row) {
+        if (!row) return null;
+        const passengers = Array.isArray(row.passenger_details) ? row.passenger_details : [];
+        return {
+          customerEmail: null,
+          id: row.pnr,
+          busId: row.bus_id,
+          bus: row.bus_name || "Bus",
+          from: row.source || "",
+          to: row.destination || "",
+          date: row.journey_date,
+          seats: Array.isArray(row.seats) ? row.seats.map(Number) : [],
+          people: passengers.map((person) => ({
+            name: String(person.name || ""),
+            age: Number(person.age || 0),
+            phone: String(person.phone || ""),
+          })),
+          total: Number(row.total_fare || 0),
+          status: row.status || "confirmed",
+          createdAt: row.created_at || null,
+          cancelledAt: row.cancelled_at || null,
+        };
+      }
+
+      async function loadBusesFromSupabase() {
+        if (!isSupabaseConfigured) {
+          console.info("Supabase is not configured yet; demo buses are being used.");
+          return;
+        }
+        try {
+          const response = await fetch(
+            SUPABASE_URL.replace(/\/$/, "") + "/rest/v1/buses?select=id,bus_name,bus_type,source,destination,departure_time,arrival_time,fare,total_seats&order=id.asc",
+            {
+              headers: {
+                apikey: SUPABASE_PUBLISHABLE_KEY,
+                Authorization: "Bearer " + SUPABASE_PUBLISHABLE_KEY,
+              },
+            },
+          );
+          if (!response.ok) {
+            throw new Error("Supabase request failed: " + response.status);
+          }
+          const rows = await response.json();
+          buses = rows.map((row) => ({
+            id: row.id,
+            name: row.bus_name,
+            type: row.bus_type || "Bus",
+            from: row.source,
+            to: row.destination,
+            departure: row.departure_time || "--:--",
+            arrival: row.arrival_time || "--:--",
+            fare: Number(row.fare || 0),
+            totalSeats: Number(row.total_seats || 20),
+          }));
+          localStorage.setItem("apniBus_buses_v2", JSON.stringify(buses));
+          console.info("Buses loaded from Supabase:", buses.length);
+        } catch (error) {
+          console.error(error);
+          alert("Supabase se bus list load nahi hui. Project URL, Publishable key aur buses table ki SELECT policy check karein.");
+        } finally {
+          busesLoading = false;
+        }
+      }
+      loadBusesFromSupabase();
+      let bus = null;
+      let seats = [];
+      let from = "";
+      let to = "";
+      let journeyDate = "";
+      function save() {
+        try {
+          localStorage.setItem("apniBus_buses_v2", JSON.stringify(buses));
+          localStorage.setItem("apniBus_bookings_v2", JSON.stringify(bookings));
+          return true;
+        } catch {
+          alert("Data save nahi hua. Browser storage check karein.");
+          return false;
+        }
+      }
+      function addText(tag, value, parent) {
+        const el = document.createElement(tag);
+        el.textContent = String(value ?? "");
+        parent.appendChild(el);
+        return el;
+      }
+      function money(value) {
+        return "₹" + Number(value || 0).toLocaleString("en-IN");
+      }
+      function today() {
+        const d = new Date();
+        return (
+          d.getFullYear() +
+          "-" +
+          String(d.getMonth() + 1).padStart(2, "0") +
+          "-" +
+          String(d.getDate()).padStart(2, "0")
+        );
+      }
+      function statusOf(b) {
+        return b.status === "cancelled" ? "cancelled" : "confirmed";
+      }
+      function getBooking(pnr) {
+        return bookings.find(
+          (b) => String(b.id).toUpperCase() === pnr.trim().toUpperCase(),
+        );
+      }
+      function activeBookings() {
+        return bookings.filter((b) => statusOf(b) === "confirmed");
+      }
+      function bookedSeats(busId, date) {
+        return activeBookings()
+          .filter((b) => String(b.busId) === String(busId) && b.date === date)
+          .flatMap((b) => b.seats || []);
+      }
+      function findBus(id) {
+        return buses.find((b) => String(b.id) === String(id));
+      }
+      function showCustomer() {
+        ["searchPanel", "pnrPanel", "cancelPanel"].forEach((id) => {
+          $(id).hidden = false;
+        });
+        [
+          "results",
+          "seatPanel",
+          "passengerPanel",
+          "ticketPanel",
+          "dashboardPanel",
+          "adminPanel",
+          "adminLoginPanel",
+          "authPanel",
+        ].forEach((id) => {
+          const panel = $(id);
+          if (panel) panel.hidden = true;
+        });
+      }
+      function showDashboard() {
+        // Login check: customer demo session zaroori hai.
+        let loggedIn = false;
+        try {
+          const session = JSON.parse(
+            localStorage.getItem("apniBus_demo_session_v1") || "null",
+          );
+          const profiles = JSON.parse(
+            localStorage.getItem("apniBus_demo_profiles_v1") || "[]",
+          );
+          loggedIn = !!(
+            session &&
+            session.email &&
+            Array.isArray(profiles) &&
+            profiles.some((p) => p.email === session.email)
+          );
+        } catch {
+          loggedIn = false;
+        }
+        if (!loggedIn) {
+          showCustomer();
+          openDemoAuth();
+          return;
+        }
+        [
+          "searchPanel",
+          "results",
+          "seatPanel",
+          "passengerPanel",
+          "ticketPanel",
+          "pnrPanel",
+          "cancelPanel",
+          "adminPanel",
+          "adminLoginPanel",
+          "authPanel",
+        ].forEach((id) => {
+          const panel = $(id);
+          if (panel) panel.hidden = true;
+        });
+        $("dashboardPanel").hidden = false;
+        renderMyBookings();
+        $("dashboardPanel").scrollIntoView({ behavior: "smooth" });
+      }
+      function showAdmin() {
+        let adminLoggedIn = false;
+        try {
+          adminLoggedIn =
+            sessionStorage.getItem("apniBus_admin_session_v1") === "true";
+        } catch {
+          adminLoggedIn = false;
+        }
+        [
+          "searchPanel",
+          "results",
+          "seatPanel",
+          "passengerPanel",
+          "ticketPanel",
+          "pnrPanel",
+          "cancelPanel",
+          "dashboardPanel",
+          "authPanel",
+        ].forEach((id) => {
+          const panel = $(id);
+          if (panel) panel.hidden = true;
+        });
+        const adminLoginPanel = $("adminLoginPanel");
+        if (!adminLoggedIn) {
+          $("adminPanel").hidden = true;
+          if (adminLoginPanel) {
+            adminLoginPanel.hidden = false;
+          }
+          return;
+        }
+        if (adminLoginPanel) {
+          adminLoginPanel.hidden = true;
+        }
+        $("adminPanel").hidden = false;
+        renderAdmin();
+      }
+      $("customerTab").onclick = showCustomer;
+      $("dashboardSearchBtn").onclick = function () {
+        showCustomer();
+        window.scrollTo({
+          top: 0,
+          behavior: "smooth",
+        });
+      };
+      $("adminTab").onclick = showAdmin;
+      $("date").value = today();
+      $("date").min = today();
+      // Mobile field: digits only, maximum 10.
+      function restrictMobile(input) {
+        input.addEventListener("input", function () {
+          this.value = this.value.replace(/[^0-9]/g, "").slice(0, 10);
+        });
+      }
+      restrictMobile($("cancelPhone"));
+      $("searchForm").onsubmit = async function (e) {
+        e.preventDefault();
+        if (busesLoading) {
+          alert("Bus list load ho rahi hai. 2-3 second baad dobara Search karein.");
+          return;
+        }
+        from = $("from").value.trim();
+        to = $("to").value.trim();
+        journeyDate = $("date").value;
+        if (from.toLowerCase() === to.toLowerCase()) {
+          alert("From aur To alag chunein."); return;
+        }
+        if (!journeyDate || journeyDate < today()) {
+          alert("Valid journey date select karein."); return;
+        }
+        const busList = $("busList");
+        busList.replaceChildren();
+        const matches = buses.filter((b) =>
+          b.from.trim().toLowerCase() === from.toLowerCase() &&
+          b.to.trim().toLowerCase() === to.toLowerCase()
+        );
+        if (!matches.length) addText("p", "Is route par koi bus nahi mili.", busList);
+        try {
+          for (const b of matches) {
+            const booked = await getBookedSeatsFromSupabase(b.id, journeyDate);
+            const card = document.createElement("div");
+            card.className = "bus";
+            addText("h3", b.name, card);
+            addText("p", b.type + " | " + b.departure + " - " + b.arrival, card);
+            addText("p", from + " → " + to, card);
+            addText("h3", money(b.fare) + " per seat", card);
+            const available = (b.totalSeats || 20) - booked.length;
+            addText("p", Math.max(0, available) + " seats available", card);
+            const btn = addText("button", "Select Seats", card);
+            btn.type = "button";
+            btn.disabled = available <= 0;
+            btn.onclick = () => openSeats(b, card);
+            busList.appendChild(card);
+          }
+        } catch (error) {
+          console.error(error);
+          alert("Seat availability load nahi hui. Supabase get_booked_seats function aur permissions check karein. Details: " + error.message);
+          return;
+        }
+        $("results").hidden = false;
+        $("seatPanel").hidden = true;
+        $("passengerPanel").hidden = true;
+        $("ticketPanel").hidden = true;
+        $("results").scrollIntoView({ behavior: "smooth" });
+      };
+      async function openSeats(selectedBus, card) {
+        bus = selectedBus;
+        seats = [];
+        $("busInfo").textContent = bus.name + " | " + money(bus.fare) + " per seat";
+        const list = $("seatList");
+        list.replaceChildren();
+        $("seatPanel").hidden = false;
+        addText("p", "Seat availability refresh ho rahi hai…", list);
+        try {
+          const booked = await getBookedSeatsFromSupabase(bus.id, journeyDate);
+          list.replaceChildren();
+          for (let i = 1; i <= (bus.totalSeats || 20); i++) {
+            const btn = addText("button", "Seat " + i, list);
+            btn.type = "button";
+            btn.className = "seat";
+            if (booked.includes(i)) {
+              btn.disabled = true;
+              btn.title = "Already booked";
+            } else {
+              btn.onclick = () => {
+                if (seats.includes(i)) {
+                  seats = seats.filter((seat) => seat !== i);
+                  btn.classList.remove("selected");
+                } else {
+                  seats.push(i);
+                  btn.classList.add("selected");
+                }
+                updateTotal();
+              };
+            }
+          }
+        } catch (error) {
+          list.replaceChildren();
+          addText("p", "Seat map load nahi hua: " + error.message, list);
+          alert("Seat availability load nahi hui. Supabase setup check karein.");
+          return;
+        }
+        updateTotal();
+        $("passengerPanel").hidden = true;
+        $("ticketPanel").hidden = true;
+        $("seatPanel").hidden = false;
+        if (card) card.insertAdjacentElement("afterend", $("seatPanel"));
+        $("seatPanel").scrollIntoView({ behavior: "smooth" });
+      }
+      function updateTotal() {
+        $("total").textContent =
+          "Seats: " +
+          seats.length +
+          " | Total: " +
+          money(seats.length * (bus ? bus.fare : 0));
+      }
+      $("continueBtn").onclick = function () {
+        if (!bus || !seats.length) {
+          alert("Pehle seat select karein.");
+          return;
+        }
+        $("passengers").replaceChildren();
+        [...seats]
+          .sort((a, b) => a - b)
+          .forEach((seat, index) => {
+            const box = document.createElement("div");
+            box.className = "passenger";
+            addText("h3", "Passenger " + (index + 1) + " — Seat " + seat, box);
+            const name = document.createElement("input");
+            name.name = "name";
+            name.placeholder = "Passenger Name";
+            name.maxLength = 80;
+            name.required = true;
+            box.appendChild(name);
+            const age = document.createElement("input");
+            age.name = "age";
+            age.type = "number";
+            age.placeholder = "Age";
+            age.min = 1;
+            age.max = 120;
+            age.required = true;
+            box.appendChild(age);
+            const phone = document.createElement("input");
+            phone.name = "phone";
+            phone.type = "text";
+            phone.inputMode = "numeric";
+            phone.placeholder = "10-digit mobile number";
+            phone.maxLength = 10;
+            phone.minLength = 10;
+            phone.pattern = "[6-9][0-9]{9}";
+            phone.required = true;
+            restrictMobile(phone);
+            box.appendChild(phone);
+            $("passengers").appendChild(box);
+          });
+        $("bookingSummary").textContent =
+          bus.name +
+          " | " +
+          from +
+          " → " +
+          to +
+          " | " +
+          journeyDate +
+          " | Total " +
+          money(seats.length * bus.fare);
+        $("passengerPanel").hidden = false;
+        $("passengerPanel").scrollIntoView({ behavior: "smooth" });
+      };
+      $("passengerForm").onsubmit = async function (e) {
+        e.preventDefault();
+        if (!bus || !seats.length) return;
+        const people = [...$("passengers").children].map((box) => ({
+          name: box.querySelector('[name="name"]').value.trim(),
+          age: Number(box.querySelector('[name="age"]').value),
+          phone: box.querySelector('[name="phone"]').value.trim(),
+        }));
+        if (people.some((p) => !p.name || !Number.isInteger(p.age) || p.age < 1 || p.age > 120 || !/^[6-9][0-9]{9}$/.test(p.phone))) {
+          alert("Passenger details check karein."); return;
+        }
+        const submitButton = $("passengerForm").querySelector('button[type="submit"]');
+        submitButton.disabled = true;
+        submitButton.textContent = "Booking ho rahi hai…";
+        try {
+          const result = await supabaseRpc("reserve_bus_seats", {
+            p_bus_id: Number(bus.id),
+            p_journey_date: journeyDate,
+            p_seats: [...seats].sort((a, b) => a - b),
+            p_customer_name: people[0].name,
+            p_customer_phone: people[0].phone,
+            p_customer_email: readDemoAuthSession()?.email || null,
+            p_passenger_details: people,
+          });
+          if (!result || !result.pnr) throw new Error("Booking response mein PNR nahi mila.");
+          const booking = {
+            customerEmail: readDemoAuthSession()?.email || null,
+            id: result.pnr,
+            busId: bus.id,
+            bus: bus.name,
+            from: from,
+            to: to,
+            date: journeyDate,
+            seats: [...seats].sort((a, b) => a - b),
+            people: people,
+            total: Number(result.total_fare ?? seats.length * bus.fare),
+            status: result.status || "confirmed",
+            createdAt: new Date().toISOString(),
+          };
+          // Remote bookings are the source of truth; do not save them as local bookings.
+          renderTicket(booking);
+          $("seatPanel").hidden = true;
+          $("passengerPanel").hidden = true;
+          $("ticketPanel").hidden = false;
+          $("ticketPanel").scrollIntoView({ behavior: "smooth" });
+          alert("Booking successful! Aapka PNR: " + booking.id);
+          seats = [];
+        } catch (error) {
+          console.error(error);
+          alert("Booking nahi hui: " + error.message + "\nAgar seat kisi aur ne pehle book ki hai, seats refresh karke dobara try karein.");
+          try { await openSeats(bus); } catch {}
+        } finally {
+          submitButton.disabled = false;
+          submitButton.textContent = "Book Ticket";
+        }
+      };
+      $("newSearch").onclick = function () {
+        showCustomer();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      };
+      function renderTicket(b) {
+        const ticket = $("ticket");
+        ticket.replaceChildren();
+        const cancelled = statusOf(b) === "cancelled";
+        addText(
+          "h3",
+          cancelled
+            ? "Apni Bus Booking — Cancellation Receipt"
+            : "Apni Bus Booking — Booking Confirmation",
+          ticket,
+        );
+        const status = addText(
+          "p",
+          "Booking Status: " + (cancelled ? "CANCELLED" : "CONFIRMED"),
+          ticket,
+        );
+        status.className = cancelled ? "cancelled" : "status";
+        [
+          ["PNR", b.id],
+          ["Bus", b.bus],
+          ["Route", b.from + " → " + b.to],
+          ["Journey Date", b.date],
+          ["Departure", findBus(b.busId)?.departure || "—"],
+          ["Seats", (b.seats || []).join(", ")],
+          ["Total Fare", money(b.total)],
+          [
+            "Booking Date",
+            b.createdAt ? new Date(b.createdAt).toLocaleString("en-IN") : "—",
+          ],
+          [
+            "Cancellation Date",
+            cancelled && b.cancelledAt
+              ? new Date(b.cancelledAt).toLocaleString("en-IN")
+              : "—",
+          ],
+        ].forEach(([label, value]) => {
+          if (label === "Cancellation Date" && !cancelled) return;
+          const row = document.createElement("p");
+          addText("strong", label + ": ", row);
+          addText("span", value, row);
+          ticket.appendChild(row);
+        });
+        addText("h3", "Passenger Details", ticket);
+        (b.people || []).forEach((p, i) => {
+          const box = document.createElement("div");
+          box.className = "passenger";
+          addText("p", "Seat: " + (b.seats[i] ?? "—"), box);
+          addText("p", "Name: " + p.name, box);
+          addText("p", "Age: " + p.age, box);
+          addText("p", "Mobile: " + p.phone, box);
+          ticket.appendChild(box);
+        });
+        if (cancelled) {
+          const note = addText(
+            "p",
+            "This booking has been cancelled. This is a demo receipt.",
+            ticket,
+          );
+          note.className = "cancelled";
+        } else {
+          addText(
+            "p",
+            "Booking confirmed — please keep your PNR for reference.",
+            ticket,
+          );
+        }
+        addText(
+          "p",
+          "DEMO RECEIPT — NOT A REAL TRANSPORT TICKET",
+          ticket,
+        );
+      }
+      const printButton = $("printBtn");
+      if (printButton) {
+        printButton.onclick = () => window.print();
+      }
+      /* ===============================
+   PNR SEARCH + PRINT TICKET
+================================ */
+      restrictMobile($("lookupPhone"));
+      $("pnrForm").onsubmit = async function (e) {
+        e.preventDefault();
+        const pnr = $("lookupPnr").value.trim();
+        const phone = $("lookupPhone").value.trim();
+        const result = $("pnrResult");
+        result.replaceChildren();
+        if (!/^[6-9][0-9]{9}$/.test(phone)) {
+          addText("p", "Valid 10-digit mobile number enter karein.", result); return;
+        }
+        try {
+          const row = await supabaseRpc("lookup_bus_booking", { p_pnr: pnr, p_customer_phone: phone });
+          const booking = bookingFromRemote(row);
+          if (!booking) { addText("p", "Booking nahi mili. PNR aur mobile number check karein.", result); return; }
+          addText("h3", "Booking Details", result);
+          addText("p", "PNR: " + booking.id, result);
+          addText("p", "Status: " + statusOf(booking).toUpperCase(), result);
+          addText("p", "Bus: " + booking.bus, result);
+          addText("p", "Route: " + booking.from + " → " + booking.to, result);
+          addText("p", "Journey Date: " + booking.date, result);
+          addText("p", "Seats: " + booking.seats.join(", "), result);
+          addText("p", "Total Fare: " + money(booking.total), result);
+          addText("h3", "Passenger Details", result);
+          booking.people.forEach((person, i) => addText("p", "Seat: " + (booking.seats[i] ?? "—") + " | Name: " + person.name + " | Age: " + person.age + " | Mobile: " + person.phone, result));
+          const printBtn = addText("button", "Print Ticket", result);
+          printBtn.type = "button";
+          printBtn.onclick = function () {
+            renderTicket(booking);
+            $("ticketPanel").hidden = false;
+            requestAnimationFrame(() => window.print());
+          };
+        } catch (error) {
+          console.error(error);
+          addText("p", "Booking lookup nahi ho paya. Supabase lookup_bus_booking function aur permissions check karein. " + error.message, result);
+        }
+      };
+      /* ===============================
+   BOOKING CANCELLATION
+================================ */
+      $("cancelForm").onsubmit = async function (e) {
+        e.preventDefault();
+        const pnr = $("cancelPnr").value.trim();
+        const phone = $("cancelPhone").value.trim();
+        const result = $("cancelResult");
+        result.replaceChildren();
+        if (!/^[6-9][0-9]{9}$/.test(phone)) {
+          addText("p", "Valid 10-digit mobile number enter karein.", result); return;
+        }
+        if (!confirm("Kya aap PNR " + pnr + " ki poori booking cancel karna chahte hain?")) return;
+        try {
+          const response = await supabaseRpc("cancel_bus_booking", { p_pnr: pnr, p_customer_phone: phone });
+          if (!response || response.success !== true) {
+            addText("p", response?.message || "Booking cancel nahi hui. PNR aur mobile number check karein.", result);
+            return;
+          }
+          addText("p", "Booking successfully cancel ho gayi. PNR: " + (response.pnr || pnr), result).className = "cancelled";
+          addText("p", "Booked seats availability refresh karne ke liye route dobara search karein.", result);
+        } catch (error) {
+          console.error(error);
+          addText("p", "Cancellation nahi ho paya. Supabase cancel_bus_booking function aur permissions check karein. " + error.message, result);
+        }
+      };
+      // ===============================
+      // ADMIN: ADD BUS
+      // ===============================
+      $("busForm").onsubmit = async function (e) {
+        e.preventDefault();
+        const name = $("busName").value.trim();
+        const busFrom = $("busFrom").value.trim();
+        const busTo = $("busTo").value.trim();
+        const fare = Number($("fare").value);
+        if (!name || !busFrom || !busTo || busFrom.toLowerCase() === busTo.toLowerCase() || !Number.isInteger(fare) || fare < 1) {
+          alert("Bus details check karein."); return;
+        }
+        const payload = {
+          bus_name: name,
+          bus_type: $("busType").value,
+          source: busFrom,
+          destination: busTo,
+          departure_time: $("departure").value,
+          arrival_time: $("arrival").value,
+          fare: fare,
+          total_seats: editingBusId !== null ? Number((buses.find((item) => String(item.id) === String(editingBusId)) || {}).totalSeats || 20) : 20,
+        };
+        const submitButton = $("busForm").querySelector('button[type="submit"]');
+        submitButton.disabled = true;
+        try {
+          if (editingBusId !== null) {
+            await adminBusRequest("/rest/v1/buses?id=eq." + encodeURIComponent(editingBusId), {
+              method: "PATCH", headers: { Prefer: "return=representation" }, body: JSON.stringify(payload)
+            });
+            alert("Bus details Supabase mein update ho gayi!");
+          } else {
+            await adminBusRequest("/rest/v1/buses", {
+              method: "POST", headers: { Prefer: "return=representation" }, body: JSON.stringify(payload)
+            });
+            alert("Bus Supabase mein successfully add ho gayi!");
+          }
+          editingBusId = null;
+          $("busForm").reset();
+          $("busFrom").value = "Indore"; $("busTo").value = "Bhopal";
+          submitButton.textContent = "Add Bus";
+          await loadBusesFromSupabase();
+          renderAdmin();
+        } catch (error) {
+          console.error(error);
+          alert("Bus save nahi hui: " + error.message + "\nSupabase mein buses table ke Admin INSERT/UPDATE permissions check karein.");
+        } finally { submitButton.disabled = false; }
+      };
+      /* ===============================
+   STEP 6: MY BOOKINGS DASHBOARD
+================================ */
+      function renderMyBookings() {
+        const container = $("myBookingsList");
+        const stats = $("bookingStats");
+        container.replaceChildren();
+        stats.replaceChildren();
+        const session = readDemoAuthSession();
+        const sortedBookings = bookings
+          .filter((b) => b.customerEmail === session?.email)
+          .slice()
+          .sort((a, b) =>
+            String(b.createdAt || "").localeCompare(String(a.createdAt || "")),
+          );
+        const confirmedCount = sortedBookings.filter(
+          (b) => statusOf(b) === "confirmed",
+        ).length;
+        const cancelledCount = sortedBookings.filter(
+          (b) => statusOf(b) === "cancelled",
+        ).length;
+        addText(
+          "p",
+          "Total Bookings: " + sortedBookings.length,
+          stats,
+        );
+        addText(
+          "p",
+          "Confirmed: " + confirmedCount + " | Cancelled: " + cancelledCount,
+          stats,
+        );
+        if (sortedBookings.length === 0) {
+          addText(
+            "p",
+            "Abhi koi booking nahi hai. Apni pehli bus booking karein!",
+            container,
+          );
+          return;
+        }
+        sortedBookings.forEach((booking) => {
+          const card = document.createElement("div");
+          card.className = "my-booking-card";
+          addText("h3", booking.bus || "Bus Booking", card);
+          const status = addText(
+            "span",
+            statusOf(booking).toUpperCase(),
+            card,
+          );
+          status.className = "booking-status";
+          if (statusOf(booking) === "cancelled") {
+            status.classList.add("cancelled");
+          }
+          addText("p", "PNR: " + booking.id, card);
+          addText(
+            "p",
+            "Route: " + booking.from + " → " + booking.to,
+            card,
+          );
+          addText("p", "Journey Date: " + booking.date, card);
+          addText(
+            "p",
+            "Seats: " + (booking.seats || []).join(", "),
+            card,
+          );
+          addText(
+            "p",
+            "Passengers: " +
+              (booking.people || []).map((p) => p.name).join(", "),
+            card,
+          );
+          addText(
+            "p",
+            "Total Fare: " + money(booking.total),
+            card,
+          );
+          const actions = document.createElement("div");
+          actions.className = "booking-actions";
+          const viewBtn = addText(
+            "button",
+            "View Ticket",
+            actions,
+          );
+          viewBtn.type = "button";
+          viewBtn.onclick = function () {
+            renderTicket(booking);
+            $("dashboardPanel").hidden = true;
+            $("ticketPanel").hidden = false;
+            $("ticketPanel").scrollIntoView({
+              behavior: "smooth",
+            });
+          };
+          const printBtn = addText(
+            "button",
+            "Print Ticket",
+            actions,
+          );
+          printBtn.type = "button";
+          printBtn.onclick = function () {
+            renderTicket(booking);
+            $("dashboardPanel").hidden = true;
+            $("ticketPanel").hidden = false;
+            requestAnimationFrame(function () {
+              window.print();
+            });
+          };
+          container.appendChild(card);
+          card.appendChild(actions);
+        });
+      }
+      // ===============================
+      // ADMIN: MANAGE BUSES & BOOKINGS
+      // ===============================
+      function renderAdmin() {
+        const busContainer = $("adminBuses");
+        const bookingContainer = $("adminBookings");
+        busContainer.replaceChildren();
+        bookingContainer.replaceChildren();
+        if (!buses.length) {
+          addText("p", "Koi bus available nahi hai.", busContainer);
+        }
+        buses.forEach((b) => {
+          const card = document.createElement("div");
+          card.className = "bus";
+          addText("h3", b.name, card);
+          addText("p", b.from + " → " + b.to + " | " + b.type + " | " + b.departure + "–" + b.arrival + " | " + money(b.fare), card);
+          const editButton = addText("button", "Edit Bus", card);
+          editButton.type = "button";
+          editButton.onclick = function () {
+            editingBusId = b.id;
+            $("busName").value = b.name || "";
+            $("busType").value = b.type || "AC Seater";
+            $("busFrom").value = b.from || "";
+            $("busTo").value = b.to || "";
+            $("departure").value = b.departure === "--:--" ? "" : (b.departure || "");
+            $("arrival").value = b.arrival === "--:--" ? "" : (b.arrival || "");
+            $("fare").value = Number(b.fare || 0);
+            $("busForm").querySelector('button[type="submit"]').textContent = "Update Bus";
+            $("busForm").scrollIntoView({ behavior: "smooth", block: "start" });
+          };
+          const deleteButton = addText("button", "Delete Bus", card);
+          deleteButton.className = "danger";
+          deleteButton.type = "button";
+          deleteButton.onclick = async function () {
+            if (!confirm("Is bus ko Supabase se delete karein? Is bus ki booking history rahegi, lekin future bookings par asar ho sakta hai.")) return;
+            deleteButton.disabled = true;
+            try {
+              await adminBusRequest("/rest/v1/buses?id=eq." + encodeURIComponent(b.id), { method: "DELETE" });
+              if (String(editingBusId) === String(b.id)) { editingBusId = null; $("busForm").reset(); $("busForm").querySelector('button[type="submit"]').textContent = "Add Bus"; }
+              await loadBusesFromSupabase();
+              renderAdmin();
+            } catch (error) {
+              console.error(error);
+              alert("Bus delete nahi hui: " + error.message + "\nAgar is bus ki bookings hain, database foreign-key restriction ki wajah se delete rok sakta hai.");
+              deleteButton.disabled = false;
+            }
+          };
+          busContainer.appendChild(card);
+        });
+        bookingContainer.textContent = "Supabase bookings load ho rahi hain...";
+        loadAdminBookingsFromSupabase().then(function (remoteBookings) {
+          bookingContainer.replaceChildren();
+          const totalActive = remoteBookings.filter((b) => b.status === "confirmed").length;
+          addText("p", "Total bookings: " + remoteBookings.length + " | Active bookings: " + totalActive, bookingContainer);
+          if (!remoteBookings.length) {
+            addText("p", "Supabase mein abhi koi booking nahi hai.", bookingContainer);
+            return;
+          }
+          remoteBookings.forEach(function (row) {
+            const busInfo = row.buses || {};
+            const booking = {
+              id: row.pnr,
+              busId: row.bus_id,
+              bus: busInfo.bus_name || "Bus #" + row.bus_id,
+              from: busInfo.source || "",
+              to: busInfo.destination || "",
+              date: row.journey_date,
+              seats: Array.isArray(row.seats) ? row.seats.map(Number) : [],
+              people: Array.isArray(row.passenger_details) ? row.passenger_details : [],
+              total: Number(row.total_fare || 0),
+              status: row.status,
+              customerName: row.customer_name,
+              customerPhone: row.customer_phone,
+              customerEmail: row.customer_email,
+              createdAt: row.created_at,
+            };
+            const card = document.createElement("div");
+            card.className = "booking";
+            addText("h3", "PNR: " + booking.id, card);
+            const status = addText("p", "Status: " + String(row.status || "unknown").toUpperCase(), card);
+            status.className = row.status === "cancelled" ? "cancelled" : "status";
+            addText("p", "Customer: " + (row.customer_name || "—"), card);
+            addText("p", "Mobile: " + (row.customer_phone || "—"), card);
+            addText("p", "Bus: " + booking.bus, card);
+            addText("p", "Route: " + booking.from + " → " + booking.to, card);
+            addText("p", "Date: " + booking.date, card);
+            addText("p", "Seats: " + booking.seats.join(", "), card);
+            addText("p", "Passengers: " + booking.people.map((p) => p.name || "").filter(Boolean).join(", "), card);
+            addText("p", "Fare: " + money(booking.total), card);
+            addText("p", "Booked: " + (row.created_at ? new Date(row.created_at).toLocaleString() : "—"), card);
+            if (row.status === "confirmed") {
+              const cancelButton = addText("button", "Cancel Booking", card);
+              cancelButton.className = "danger";
+              cancelButton.type = "button";
+              cancelButton.onclick = async function () {
+                if (!confirm("PNR " + booking.id + " ki booking cancel karein?")) return;
+                cancelButton.disabled = true;
+                try {
+                  await cancelAdminBookingOnSupabase(booking.id);
+                  alert("Booking Supabase mein cancel ho gayi.");
+                  renderAdmin();
+                } catch (error) {
+                  alert("Cancellation error: " + error.message);
+                  cancelButton.disabled = false;
+                }
+              };
+            }
+            bookingContainer.appendChild(card);
+          });
+        }).catch(function (error) {
+          bookingContainer.replaceChildren();
+          addText("p", "Supabase bookings load nahi hui: " + error.message, bookingContainer);
+          addText("p", "SQL policies aur Admin login setup check karein.", bookingContainer);
+        });
+      }
+      /* ===============================
+   STEP 7B: DATA EXPORT & BACKUP
+================================ */
+      // Download helper
+      function downloadFile(filename, content, type) {
+        const blob = new Blob([content], {
+          type: type,
+        });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(function () {
+          URL.revokeObjectURL(url);
+        }, 1000);
+      }
+      // CSV cell formatting
+      function csvCell(value) {
+        let text = String(value ?? "");
+        // Prevent spreadsheet formula injection.
+        if (/^[\s]*[=+\-@]/.test(text)) {
+          text = "'" + text;
+        }
+        return '"' + text.replace(/"/g, '""') + '"';
+      }
+      // Export bookings as CSV
+      $("exportBookingsBtn").onclick = function () {
+        if (!bookings.length) {
+          alert("Export karne ke liye koi booking nahi hai.");
+          return;
+        }
+        const headers = [
+          "PNR",
+          "Status",
+          "Bus",
+          "From",
+          "To",
+          "Journey Date",
+          "Seats",
+          "Passenger Names",
+          "Passenger Ages",
+          "Passenger Mobile Numbers",
+          "Total Fare",
+          "Booking Created At",
+          "Cancelled At",
+        ];
+        const rows = bookings.map(function (b) {
+          const people = b.people || [];
+          return [
+            b.id,
+            statusOf(b).toUpperCase(),
+            b.bus,
+            b.from,
+            b.to,
+            b.date,
+            (b.seats || []).join(", "),
+            people.map((p) => p.name).join(", "),
+            people.map((p) => p.age).join(", "),
+            people.map((p) => p.phone).join(", "),
+            b.total,
+            b.createdAt || "",
+            b.cancelledAt || "",
+          ];
+        });
+        const csv =
+          "\uFEFF" +
+          [headers, ...rows]
+            .map((row) => row.map(csvCell).join(","))
+            .join("\r\n");
+        downloadFile(
+          "apni-bus-bookings-" + today() + ".csv",
+          csv,
+          "text/csv;charset=utf-8;",
+        );
+        alert("Bookings CSV download shuru ho gaya.");
+      };
+      // Download complete JSON backup
+      $("backupDataBtn").onclick = function () {
+        const backup = {
+          app: "Apni Bus Booking",
+          backupVersion: 1,
+          exportedAt: new Date().toISOString(),
+          buses: buses,
+          bookings: bookings,
+        };
+        const json = JSON.stringify(backup, null, 2);
+        downloadFile(
+          "apni-bus-backup-" + today() + ".json",
+          json,
+          "application/json;charset=utf-8;",
+        );
+        alert("Full JSON backup download shuru ho gaya.");
+      };
+      /* ===============================
+   STEP 8: RESTORE JSON BACKUP
+================================ */
+      function validateBackup(data) {
+        if (
+          !data ||
+          data.app !== "Apni Bus Booking" ||
+          data.backupVersion !== 1 ||
+          !Array.isArray(data.buses) ||
+          !Array.isArray(data.bookings)
+        ) {
+          return "Invalid backup file. Apni Bus Booking JSON file select karein.";
+        }
+        // Validate buses before changing current data.
+        const busIds = new Set();
+        for (const b of data.buses) {
+          if (
+            !b ||
+            (typeof b.id !== "string" && typeof b.id !== "number") ||
+            !String(b.id).trim() ||
+            typeof b.name !== "string" ||
+            typeof b.from !== "string" ||
+            typeof b.to !== "string" ||
+            typeof b.departure !== "string" ||
+            typeof b.arrival !== "string" ||
+            !Number.isFinite(Number(b.fare)) ||
+            Number(b.fare) < 1 ||
+            busIds.has(String(b.id))
+          ) {
+            return "Backup mein bus details invalid hain.";
+          }
+          busIds.add(String(b.id));
+        }
+        // Validate bookings before replacing current data.
+        const bookingIds = new Set();
+        for (const b of data.bookings) {
+          if (
+            !b ||
+            (typeof b.id !== "string" && typeof b.id !== "number") ||
+            !String(b.id).trim() ||
+            typeof b.bus !== "string" ||
+            typeof b.from !== "string" ||
+            typeof b.to !== "string" ||
+            typeof b.date !== "string" ||
+            !Array.isArray(b.seats) ||
+            !Array.isArray(b.people) ||
+            !Number.isFinite(Number(b.total)) ||
+            Number(b.total) < 0 ||
+            (b.status !== undefined &&
+              !["confirmed", "cancelled"].includes(b.status)) ||
+            bookingIds.has(String(b.id))
+          ) {
+            return "Backup mein booking details invalid hain.";
+          }
+          if (b.seats.some((s) => !Number.isInteger(s) || s < 1 || s > 20)) {
+            return "Backup mein seat numbers invalid hain.";
+          }
+          if (
+            b.people.length !== b.seats.length ||
+            b.people.some(
+              (p) =>
+                !p ||
+                typeof p.name !== "string" ||
+                !Number.isInteger(Number(p.age)) ||
+                Number(p.age) < 1 ||
+                Number(p.age) > 120 ||
+                typeof p.phone !== "string" ||
+                !/^[6-9][0-9]{9}$/.test(p.phone),
+            )
+          ) {
+            return "Backup mein passenger details invalid hain.";
+          }
+          bookingIds.add(String(b.id));
+        }
+        // Step 9A: Detect duplicate active seat assignments.
+        const occupiedSeats = new Set();
+        for (const b of data.bookings) {
+          if (b.status === "cancelled") {
+            continue;
+          }
+          for (const seat of b.seats) {
+            const key = [String(b.busId), b.date, String(seat)].join("|");
+            if (occupiedSeats.has(key)) {
+              return (
+                "Backup mein duplicate seat booking mili: " +
+                "Bus ID " +
+                b.busId +
+                ", Date " +
+                b.date +
+                ", Seat " +
+                seat +
+                ". Restore nahi kiya gaya."
+              );
+            }
+            occupiedSeats.add(key);
+          }
+        }
+        return "";
+      }
+      $("restoreBackupBtn").onclick = async function () {
+        const fileInput = $("restoreBackupFile");
+        const message = $("restoreMessage");
+        const file = fileInput.files[0];
+        message.textContent = "";
+        if (!file) {
+          message.textContent = "Pehle JSON backup file choose karein.";
+          return;
+        }
+        if (!file.name.toLowerCase().endsWith(".json")) {
+          message.textContent = "Sirf .json backup file select karein.";
+          return;
+        }
+        let data;
+        try {
+          const content = await file.text();
+          data = JSON.parse(content);
+        } catch {
+          message.textContent = "File read nahi hui ya JSON invalid hai.";
+          return;
+        }
+        const error = validateBackup(data);
+        if (error) {
+          message.textContent = error;
+          return;
+        }
+        const confirmed = confirm(
+          "WARNING: Current buses aur bookings replace ho jayengi.\n\n" +
+            "Backup buses: " +
+            data.buses.length +
+            "\n" +
+            "Backup bookings: " +
+            data.bookings.length +
+            "\n\n" +
+            "Kya aapne current data ka backup liya hai? Restore karein?",
+        );
+        if (!confirmed) {
+          message.textContent = "Restore cancel kar diya gaya.";
+          return;
+        }
+        // Keep the current data in memory for rollback.
+        const oldBuses = buses;
+        const oldBookings = bookings;
+        // Keep current browser storage as an additional safeguard.
+        const oldStoredBuses = localStorage.getItem("apniBus_buses_v2");
+        const oldStoredBookings = localStorage.getItem("apniBus_bookings_v2");
+        buses = data.buses;
+        bookings = data.bookings;
+        if (!save()) {
+          // Restore previous in-memory data.
+          buses = oldBuses;
+          bookings = oldBookings;
+          // Try to restore the original storage values too.
+          try {
+            if (oldStoredBuses === null) {
+              localStorage.removeItem("apniBus_buses_v2");
+            } else {
+              localStorage.setItem("apniBus_buses_v2", oldStoredBuses);
+            }
+            if (oldStoredBookings === null) {
+              localStorage.removeItem("apniBus_bookings_v2");
+            } else {
+              localStorage.setItem("apniBus_bookings_v2", oldStoredBookings);
+            }
+          } catch {
+            message.textContent =
+              "Restore fail hua. Storage rollback bhi fail hua; current data check karein.";
+            return;
+          }
+          message.textContent =
+            "Restore save nahi hua. Purana data wapas rakha gaya.";
+          return;
+        }
+        // Refresh the interface using restored data.
+        renderAdmin();
+        if (!$("dashboardPanel").hidden) {
+          renderMyBookings();
+        }
+        message.textContent =
+          "Backup successfully restore ho gaya! " +
+          buses.length +
+          " buses aur " +
+          bookings.length +
+          " bookings load hui.";
+        fileInput.value = "";
+      };
+      // ===============================
+      // INITIALIZE APP
+      // ===============================
+      renderAdmin();
+      showCustomer();
+      /* =====================================
+   STEP 10A: DEMO LOGIN & REGISTRATION
+   ===================================== */
+      (function initDemoAuth() {
+        const authProfilesKey = "apniBus_demo_profiles_v1";
+        const authSessionKey = "apniBus_demo_session_v1";
+        const el = (id) => document.getElementById(id);
+        const authPanel = el("authPanel");
+        const accountTab = el("accountTab");
+        const loginForm = el("loginForm");
+        const registerForm = el("registerForm");
+        const authTitle = el("authTitle");
+        const authMessage = el("authMessage");
+        const authSwitchText = el("authSwitchText");
+        const authSwitchBtn = el("authSwitchBtn");
+        const logoutBtn = el("logoutBtn");
+        if (
+          !authPanel ||
+          !accountTab ||
+          !loginForm ||
+          !registerForm ||
+          !authTitle ||
+          !authMessage ||
+          !authSwitchBtn ||
+          !logoutBtn
+        ) {
+          console.error("Step 10A: Auth HTML elements missing.");
+          return;
+        }
+        let registerMode = false;
+        function readProfiles() {
+          try {
+            const data = JSON.parse(
+              localStorage.getItem(authProfilesKey) || "[]",
+            );
+            return Array.isArray(data) ? data : [];
+          } catch {
+            return [];
+          }
+        }
+        function readSession() {
+          try {
+            return JSON.parse(localStorage.getItem(authSessionKey) || "null");
+          } catch {
+            return null;
+          }
+        }
+        function currentProfile() {
+          const session = readSession();
+          if (!session || !session.email) return null;
+          return readProfiles().find((p) => p.email === session.email) || null;
+        }
+        function showMessage(message) {
+          authMessage.textContent = message;
+        }
+        function refreshAuthStatus() {
+          const profile = currentProfile();
+          if (profile) {
+            showMessage("Logged in as " + profile.name);
+            logoutBtn.hidden = false;
+            authSwitchBtn.textContent = "Switch Account";
+            authSwitchText.textContent = "Demo account active.";
+          } else {
+            showMessage("Login or create your demo account.");
+            logoutBtn.hidden = true;
+            authSwitchBtn.textContent = "Create Account";
+            authSwitchText.textContent = "New customer?";
+          }
+        }
+        function setMode(isRegister) {
+          registerMode = isRegister;
+          loginForm.hidden = registerMode;
+          registerForm.hidden = !registerMode;
+          authTitle.textContent = registerMode
+            ? "Customer Registration"
+            : "Customer Login";
+          authSwitchBtn.textContent = registerMode
+            ? "Back to Login"
+            : currentProfile()
+              ? "Switch Account"
+              : "Create Account";
+          authSwitchText.textContent = registerMode
+            ? "Already registered?"
+            : currentProfile()
+              ? "Demo account active."
+              : "New customer?";
+          showMessage(
+            registerMode
+              ? "Create your demo customer profile."
+              : "Enter your registered email to continue.",
+          );
+        }
+        function openAuth() {
+          [
+            "searchPanel",
+            "results",
+            "seatPanel",
+            "passengerPanel",
+            "ticketPanel",
+            "pnrPanel",
+            "cancelPanel",
+            "adminPanel",
+            "adminLoginPanel",
+            "dashboardPanel",
+          ].forEach((id) => {
+            const panel = el(id);
+            if (panel) panel.hidden = true;
+          });
+          authPanel.hidden = false;
+          setMode(false);
+          refreshAuthStatus();
+          authPanel.scrollIntoView({ behavior: "smooth" });
+        }
+        function finishLogin(profile) {
+          try {
+            localStorage.setItem(
+              "apniBus_demo_session_v1",
+              JSON.stringify({ email: profile.email }),
+            );
+          } catch {
+            showMessage("Browser storage unavailable. Login nahi hua.");
+            return;
+          }
+          showDashboard();
+          refreshAuthStatus();
+          alert("Demo login successful! Welcome, " + profile.name);
+        }
+        accountTab.addEventListener("click", function () {
+          if (currentProfile()) {
+            showDashboard();
+          } else {
+            openAuth();
+          }
+        });
+        $("customerTab").addEventListener("click", function () {
+          authPanel.hidden = true;
+          showCustomer();
+        });
+        $("adminTab").addEventListener("click", function () {
+          authPanel.hidden = true;
+          showAdmin();
+        });
+        authSwitchBtn.addEventListener("click", function () {
+          setMode(!registerMode);
+        });
+        el("regMobile").addEventListener("input", function () {
+          this.value = this.value.replace(/\D/g, "").slice(0, 10);
+        });
+        registerForm.addEventListener("submit", function (event) {
+          event.preventDefault();
+          const name = el("regName").value.trim();
+          const mobile = el("regMobile").value.trim();
+          const email = el("regEmail").value.trim().toLowerCase();
+          const password = el("regPassword").value;
+          const confirmPassword = el("regConfirmPassword").value;
+          if (!name || name.length > 80) {
+            showMessage("Valid full name enter karein.");
+            return;
+          }
+          if (!/^[6-9][0-9]{9}$/.test(mobile)) {
+            showMessage("Mobile number exactly 10 digits ka hona chahiye.");
+            return;
+          }
+          if (password.length < 6) {
+            showMessage("Password minimum 6 characters ka hona chahiye.");
+            return;
+          }
+          if (password !== confirmPassword) {
+            showMessage("Dono passwords match nahi karte.");
+            return;
+          }
+          const profiles = readProfiles();
+          if (profiles.some((p) => p.email === email)) {
+            showMessage("Is email se account pehle se registered hai.");
+            return;
+          }
+          const profile = {
+            name: name,
+            mobile: mobile,
+            email: email,
+            password: password,
+            createdAt: new Date().toISOString(),
+          };
+          try {
+            profiles.push(profile);
+            localStorage.setItem(
+              authProfilesKey,
+              JSON.stringify(profiles),
+            );
+          } catch {
+            showMessage("Account save nahi hua. Browser storage check karein.");
+            return;
+          }
+          registerForm.reset();
+          finishLogin(profile);
+        });
+        loginForm.addEventListener("submit", function (event) {
+          event.preventDefault();
+          const email = el("loginEmail").value.trim().toLowerCase();
+          const password = el("loginPassword").value;
+          if (!password) {
+            showMessage("Password enter karein.");
+            return;
+          }
+          const profile = readProfiles().find((p) => p.email === email);
+          if (!profile) {
+            showMessage("Account nahi mila. Pehle Create Account karein.");
+            return;
+          }
+          if (!profile.password || profile.password !== password) {
+            showMessage("Email ya password galat hai.");
+            return;
+          }
+          loginForm.reset();
+          finishLogin(profile);
+        });
+        logoutBtn.addEventListener("click", function () {
+          try {
+            localStorage.removeItem(authSessionKey);
+          } catch {
+            showMessage("Logout nahi ho saka.");
+            return;
+          }
+          const dashboard = document.getElementById("dashboardPanel");
+          if (dashboard) {
+            dashboard.hidden = true;
+          }
+          refreshAuthStatus();
+          setMode(false);
+          openAuth();
+          showMessage("Aap logout ho gaye hain.");
+        });
+        const dashboardLogoutBtn = el("dashboardLogoutBtn");
+        if (dashboardLogoutBtn) {
+          dashboardLogoutBtn.addEventListener("click", function () {
+            logoutBtn.click();
+          });
+        }
+        // Page refresh par saved demo session check karein.
+        refreshAuthStatus();
+      })();
+      /* ADMIN LOGIN / LOGOUT — SUPABASE AUTH */
+      (function initAdminAuth() {
+        const ADMIN_SESSION_KEY = "apniBus_admin_session_v1";
+        const adminLoginPanel = document.getElementById("adminLoginPanel");
+        const adminPanel = document.getElementById("adminPanel");
+        const adminTab = document.getElementById("adminTab");
+        const loginForm = document.getElementById("adminLoginForm");
+        const message = document.getElementById("adminLoginMessage");
+        function isAdminLoggedIn() {
+          return !!getAdminAccessToken() && sessionStorage.getItem(ADMIN_SESSION_KEY) === "true";
+        }
+        function hideOtherPanels() {
+          ["searchPanel","results","seatPanel","passengerPanel","ticketPanel","pnrPanel","cancelPanel","dashboardPanel","authPanel"].forEach((id) => {
+            const panel = document.getElementById(id); if (panel) panel.hidden = true;
+          });
+        }
+        function openAdminLogin() {
+          hideOtherPanels(); adminPanel.hidden = true; adminLoginPanel.hidden = false;
+          message.textContent = "Apna Supabase Admin email aur password daalein.";
+        }
+        function openAdminPanel() {
+          if (!isAdminLoggedIn()) { openAdminLogin(); return; }
+          hideOtherPanels(); adminLoginPanel.hidden = true; adminPanel.hidden = false; renderAdmin();
+        }
+        loginForm.addEventListener("submit", async function (event) {
+          event.preventDefault();
+          const email = document.getElementById("adminUsername").value.trim().toLowerCase();
+          const password = document.getElementById("adminPassword").value;
+          const submit = loginForm.querySelector('button[type="submit"]');
+          submit.disabled = true; message.textContent = "Login ho raha hai...";
+          try {
+            const data = await adminAuthRequest("/auth/v1/token?grant_type=password", { method: "POST", body: JSON.stringify({ email, password }) });
+            if (!data.access_token || !data.user?.id) throw new Error("Login token nahi mila.");
+            sessionStorage.setItem("apniBus_admin_access_token_v1", data.access_token);
+            sessionStorage.setItem(ADMIN_SESSION_KEY, "true");
+            loginForm.reset();
+            openAdminPanel();
+          } catch (error) {
+            message.textContent = "Admin login fail: " + error.message;
+          } finally { submit.disabled = false; }
+        });
+        adminTab.addEventListener("click", openAdminPanel);
+        const backButton = document.getElementById("adminLoginBackBtn");
+        if (backButton) backButton.addEventListener("click", function () {
+          adminLoginPanel.hidden = true; adminPanel.hidden = true; showCustomer(); window.scrollTo({ top: 0, behavior: "smooth" });
+        });
+        const logoutButton = document.createElement("button");
+        logoutButton.type = "button"; logoutButton.textContent = "Admin Logout"; logoutButton.id = "adminLogoutBtn";
+        logoutButton.addEventListener("click", async function () {
+          const token = getAdminAccessToken();
+          try { if (token) await adminAuthRequest("/auth/v1/logout", { method: "POST", headers: { Authorization: "Bearer " + token } }); } catch (_) {}
+          try { sessionStorage.removeItem(ADMIN_SESSION_KEY); sessionStorage.removeItem("apniBus_admin_access_token_v1"); } catch (_) {}
+          adminPanel.hidden = true; openAdminLogin(); message.textContent = "Admin logout ho gaya.";
+        });
+        adminPanel.prepend(logoutButton);
+        adminPanel.hidden = true; adminLoginPanel.hidden = true;
+      })();
+    </script>
+  </body>
+</html>
