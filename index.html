@@ -802,11 +802,12 @@
             <option>AC Seater</option>
             <option>Non-AC Seater</option>
             <option>AC Sleeper</option>
+            <option>Non-AC Sleeper</option>
           </select>
-          <label>From</label><input id="busFrom" value="Indore" required />
-          <label>To</label><input id="busTo" value="Bhopal" required />
-          <label>Departure</label><input id="departure" type="time" required />
-          <label>Arrival</label><input id="arrival" type="time" required />
+          <label>From</label><input id="busFrom" placeholder="Indore" required />
+          <label>To</label><input id="busTo" placeholder="Bhopal" required />
+          <label>Departure</label><input id="departure" type="time" value="00:00:00" required />
+          <label>Arrival</label><input id="arrival" type="time" value="08:00:00" required />
           <label>Fare</label><input id="fare" type="number" min="1" required />
           <button type="submit">Add Bus</button>
         </form>
