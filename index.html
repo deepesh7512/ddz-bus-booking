@@ -1507,6 +1507,8 @@
       }
       function renderTicket(b) {
         window.currentApniBusTicket = b;
+        const generalShareButton = $("shareTicketBtn");
+        if (generalShareButton) generalShareButton.hidden = false;
         const ticket = $("ticket");
         ticket.replaceChildren();
         const cancelled = statusOf(b) === "cancelled";
@@ -1586,6 +1588,10 @@
       };
       function openAdminTicket(booking, printAfter) {
         renderTicket(booking);
+        // Admin view has a dedicated WhatsApp button in its action row.
+        // Hide the general ticket-panel button to prevent duplicate options.
+        const generalShareButton = $("shareTicketBtn");
+        if (generalShareButton) generalShareButton.hidden = true;
         const ticket = $("ticket");
         const actions = document.createElement("div");
         actions.className = "ticket-admin-actions";
