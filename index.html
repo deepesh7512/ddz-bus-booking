@@ -393,6 +393,8 @@
         color: #dc2626;
         font-weight: 700;
       }
+      .ticket-admin-actions { display: flex; gap: 10px; flex-wrap: wrap; margin: 16px 0; }
+      @media print { .ticket-admin-actions { display: none !important; } }
       @media print {
         @page {
           size: A4;
@@ -751,8 +753,6 @@
         <form id="pnrForm">
           <label>Enter PNR</label>
           <input id="lookupPnr" required placeholder="Enter your PNR" />
-          <label>Passenger Mobile Number (used at booking)</label>
-          <input id="lookupPhone" type="text" inputmode="numeric" maxlength="10" minlength="10" pattern="[6-9][0-9]{9}" required placeholder="10-digit mobile number" />
           <button type="submit">Find Booking</button>
         </form>
         <div id="pnrResult"></div>
@@ -1108,17 +1108,6 @@
       }
       function statusOf(b) {
         return b.status === "cancelled" ? "cancelled" : "confirmed";
-      }
-
-      // Pay Later: payment is collected directly by the bus operator.
-      // This website does not collect or mark any payment as paid.
-      function paymentStatusOf(b) {
-        return statusOf(b) === "cancelled"
-          ? "Not applicable (booking cancelled)"
-          : "Pay to Bus Operator";
-      }
-      function paymentMethodOf() {
-        return "Pay Later";
       }
       function getBooking(pnr) {
         return bookings.find(
@@ -1489,8 +1478,6 @@
           ["Departure", findBus(b.busId)?.departure || "—"],
           ["Seats", (b.seats || []).join(", ")],
           ["Total Fare", money(b.total)],
-          ["Payment Status", paymentStatusOf(b)],
-          ["Payment Method", paymentMethodOf()],
           [
             "Booking Date",
             b.createdAt ? new Date(b.createdAt).toLocaleString("en-IN") : "—",
@@ -1538,6 +1525,37 @@
           ticket,
         );
       }
+      function openAdminTicket(booking, printAfter) {
+        renderTicket(booking);
+        const ticket = $("ticket");
+        const actions = document.createElement("div");
+        actions.className = "ticket-admin-actions";
+        if (statusOf(booking) === "confirmed") {
+          const cancelButton = addText("button", "CANCEL TICKET", actions);
+          cancelButton.type = "button";
+          cancelButton.className = "danger";
+          cancelButton.onclick = async function () {
+            if (!confirm("PNR " + booking.id + " ki ticket cancel karna chahte hain?")) return;
+            cancelButton.disabled = true;
+            try {
+              await cancelAdminBookingOnSupabase(booking.id);
+              alert("Ticket successfully cancel ho gayi.");
+              $("ticketPanel").hidden = true;
+              renderAdmin();
+            } catch (error) {
+              alert("Cancellation error: " + error.message);
+              cancelButton.disabled = false;
+            }
+          };
+        } else {
+          const note = addText("span", "This ticket is already cancelled.", actions);
+          note.className = "cancelled";
+        }
+        ticket.appendChild(actions);
+        $("ticketPanel").hidden = false;
+        $("ticketPanel").scrollIntoView({ behavior: "smooth", block: "start" });
+        if (printAfter) requestAnimationFrame(() => window.print());
+      }
       const printButton = $("printBtn");
       if (printButton) {
         printButton.onclick = () => window.print();
@@ -1545,20 +1563,16 @@
       /* ===============================
    PNR SEARCH + PRINT TICKET
 ================================ */
-      restrictMobile($("lookupPhone"));
       $("pnrForm").onsubmit = async function (e) {
         e.preventDefault();
         const pnr = $("lookupPnr").value.trim();
-        const phone = $("lookupPhone").value.trim();
         const result = $("pnrResult");
         result.replaceChildren();
-        if (!/^[6-9][0-9]{9}$/.test(phone)) {
-          addText("p", "Valid 10-digit mobile number enter karein.", result); return;
-        }
+        if (!pnr) { addText("p", "PNR number enter karein.", result); return; }
         try {
-          const row = await supabaseRpc("lookup_bus_booking", { p_pnr: pnr, p_customer_phone: phone });
+          const row = await supabaseRpc("lookup_bus_booking", { p_pnr: pnr });
           const booking = bookingFromRemote(row);
-          if (!booking) { addText("p", "Booking nahi mili. PNR aur mobile number check karein.", result); return; }
+          if (!booking) { addText("p", "Is PNR se koi booking nahi mili. PNR number check karein.", result); return; }
           addText("h3", "Booking Details", result);
           addText("p", "PNR: " + booking.id, result);
           addText("p", "Status: " + statusOf(booking).toUpperCase(), result);
@@ -1567,10 +1581,8 @@
           addText("p", "Journey Date: " + booking.date, result);
           addText("p", "Seats: " + booking.seats.join(", "), result);
           addText("p", "Total Fare: " + money(booking.total), result);
-          addText("p", "Payment Status: " + paymentStatusOf(booking), result);
-          addText("p", "Payment Method: " + paymentMethodOf(), result);
           addText("h3", "Passenger Details", result);
-          booking.people.forEach((person, i) => addText("p", "Seat: " + (booking.seats[i] ?? "—") + " | Name: " + person.name + " | Age: " + person.age + " | Mobile: " + person.phone, result));
+          booking.people.forEach((person, i) => addText("p", "Seat: " + (booking.seats[i] ?? "—") + " | Name: " + person.name + " | Age: " + person.age, result));
           const printBtn = addText("button", "Print Ticket", result);
           printBtn.type = "button";
           printBtn.onclick = function () {
@@ -1731,8 +1743,6 @@
             "Total Fare: " + money(booking.total),
             card,
           );
-          addText("p", "Payment Status: " + paymentStatusOf(booking), card);
-          addText("p", "Payment Method: " + paymentMethodOf(), card);
           const actions = document.createElement("div");
           actions.className = "booking-actions";
           const viewBtn = addText(
@@ -1856,26 +1866,13 @@
             addText("p", "Seats: " + booking.seats.join(", "), card);
             addText("p", "Passengers: " + booking.people.map((p) => p.name || "").filter(Boolean).join(", "), card);
             addText("p", "Fare: " + money(booking.total), card);
-            addText("p", "Payment Status: " + paymentStatusOf(booking), card);
-            addText("p", "Payment Method: " + paymentMethodOf(), card);
             addText("p", "Booked: " + (row.created_at ? new Date(row.created_at).toLocaleString() : "—"), card);
-            if (row.status === "confirmed") {
-              const cancelButton = addText("button", "Cancel Booking", card);
-              cancelButton.className = "danger";
-              cancelButton.type = "button";
-              cancelButton.onclick = async function () {
-                if (!confirm("PNR " + booking.id + " ki booking cancel karein?")) return;
-                cancelButton.disabled = true;
-                try {
-                  await cancelAdminBookingOnSupabase(booking.id);
-                  alert("Booking Supabase mein cancel ho gayi.");
-                  renderAdmin();
-                } catch (error) {
-                  alert("Cancellation error: " + error.message);
-                  cancelButton.disabled = false;
-                }
-              };
-            }
+            const viewButton = addText("button", "VIEW TICKET", card);
+            viewButton.type = "button";
+            viewButton.onclick = function () { openAdminTicket(booking, false); };
+            const printTicketButton = addText("button", "PRINT TICKET", card);
+            printTicketButton.type = "button";
+            printTicketButton.onclick = function () { openAdminTicket(booking, true); };
             bookingContainer.appendChild(card);
           });
         }).catch(function (error) {
