@@ -752,6 +752,7 @@
       <section id="ticketPanel" hidden>
         <h2>Booking Ticket</h2>
         <div id="ticket"></div>
+        <button id="shareTicketBtn" type="button">Share Ticket on WhatsApp</button>
         <button onclick="window.print()">Print Ticket</button>
         <button id="newSearch">New Search</button>
       </section>
@@ -1469,6 +1470,35 @@
         showCustomer();
         window.scrollTo({ top: 0, behavior: "smooth" });
       };
+      function whatsappTicketText(b) {
+        const passengerNames = (b.people || []).map((p) => p.name).filter(Boolean).join(", ");
+        return [
+          "APNI BUS BOOKING – TICKET DETAILS",
+          "Booking Status: " + (statusOf(b) === "cancelled" ? "CANCELLED" : "CONFIRMED"),
+          "PNR: " + (b.id || "—"),
+          "Bus: " + (b.bus || "—"),
+          "Route: " + (b.from || "—") + " → " + (b.to || "—"),
+          "Journey Date: " + (b.date || "—"),
+          "Seats: " + ((b.seats || []).join(", ") || "—"),
+          passengerNames ? "Passenger(s): " + passengerNames : "",
+          "Total Fare: " + money(b.total),
+          "Payment Method: " + paymentMethodLabel(b.paymentMethod),
+          "Payment Status: " + paymentStatusLabel(b.paymentStatus),
+          "Check booking status: https://deepesh7512.github.io/ddz-bus-booking/",
+          "Please keep the PNR for reference."
+        ].filter(Boolean).join("\n");
+      }
+      function shareTicketOnWhatsApp(b) {
+        if (!b || !b.id) { alert("Ticket details available nahi hain."); return; }
+        const url = "https://wa.me/?text=" + encodeURIComponent(whatsappTicketText(b));
+        window.open(url, "_blank", "noopener,noreferrer");
+      }
+      function addWhatsAppShareButton(parent, booking, label) {
+        const button = addText("button", label || "Share on WhatsApp", parent);
+        button.type = "button";
+        button.onclick = () => shareTicketOnWhatsApp(booking);
+        return button;
+      }
       function paymentMethodLabel(value) {
         return ({ cash: "Cash – Pay to Bus Operator", upi: "UPI – Pay to Bus Operator", pay_later: "Pay Later – At Journey Time" })[value] || "Pay Later – At Journey Time";
       }
@@ -1476,6 +1506,7 @@
         return ({ pending: "PENDING – Payment Due", paid: "PAID", refunded: "REFUNDED" })[value] || "PENDING – Payment Due";
       }
       function renderTicket(b) {
+        window.currentApniBusTicket = b;
         const ticket = $("ticket");
         ticket.replaceChildren();
         const cancelled = statusOf(b) === "cancelled";
@@ -1549,11 +1580,16 @@
           ticket,
         );
       }
+      const shareTicketBtn = $("shareTicketBtn");
+      if (shareTicketBtn) shareTicketBtn.onclick = function () {
+        if (window.currentApniBusTicket) shareTicketOnWhatsApp(window.currentApniBusTicket);
+      };
       function openAdminTicket(booking, printAfter) {
         renderTicket(booking);
         const ticket = $("ticket");
         const actions = document.createElement("div");
         actions.className = "ticket-admin-actions";
+        addWhatsAppShareButton(actions, booking, "SHARE ON WHATSAPP");
         if (statusOf(booking) === "confirmed") {
           const cancelButton = addText("button", "CANCEL TICKET", actions);
           cancelButton.type = "button";
@@ -1616,6 +1652,7 @@
             $("ticketPanel").hidden = false;
             requestAnimationFrame(() => window.print());
           };
+          addWhatsAppShareButton(result, booking, "Share Ticket on WhatsApp");
         } catch (error) {
           console.error(error);
           addText("p", "Booking lookup nahi ho paya. Supabase lookup_bus_booking function aur permissions check karein. " + error.message, result);
@@ -1801,6 +1838,7 @@
               window.print();
             });
           };
+          addWhatsAppShareButton(actions, booking, "Share on WhatsApp");
           container.appendChild(card);
           card.appendChild(actions);
         });
