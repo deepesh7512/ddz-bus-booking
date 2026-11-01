@@ -1109,6 +1109,17 @@
       function statusOf(b) {
         return b.status === "cancelled" ? "cancelled" : "confirmed";
       }
+
+      // Pay Later: payment is collected directly by the bus operator.
+      // This website does not collect or mark any payment as paid.
+      function paymentStatusOf(b) {
+        return statusOf(b) === "cancelled"
+          ? "Not applicable (booking cancelled)"
+          : "Pay to Bus Operator";
+      }
+      function paymentMethodOf() {
+        return "Pay Later";
+      }
       function getBooking(pnr) {
         return bookings.find(
           (b) => String(b.id).toUpperCase() === pnr.trim().toUpperCase(),
@@ -1478,6 +1489,8 @@
           ["Departure", findBus(b.busId)?.departure || "—"],
           ["Seats", (b.seats || []).join(", ")],
           ["Total Fare", money(b.total)],
+          ["Payment Status", paymentStatusOf(b)],
+          ["Payment Method", paymentMethodOf()],
           [
             "Booking Date",
             b.createdAt ? new Date(b.createdAt).toLocaleString("en-IN") : "—",
@@ -1554,6 +1567,8 @@
           addText("p", "Journey Date: " + booking.date, result);
           addText("p", "Seats: " + booking.seats.join(", "), result);
           addText("p", "Total Fare: " + money(booking.total), result);
+          addText("p", "Payment Status: " + paymentStatusOf(booking), result);
+          addText("p", "Payment Method: " + paymentMethodOf(), result);
           addText("h3", "Passenger Details", result);
           booking.people.forEach((person, i) => addText("p", "Seat: " + (booking.seats[i] ?? "—") + " | Name: " + person.name + " | Age: " + person.age + " | Mobile: " + person.phone, result));
           const printBtn = addText("button", "Print Ticket", result);
@@ -1716,6 +1731,8 @@
             "Total Fare: " + money(booking.total),
             card,
           );
+          addText("p", "Payment Status: " + paymentStatusOf(booking), card);
+          addText("p", "Payment Method: " + paymentMethodOf(), card);
           const actions = document.createElement("div");
           actions.className = "booking-actions";
           const viewBtn = addText(
@@ -1839,6 +1856,8 @@
             addText("p", "Seats: " + booking.seats.join(", "), card);
             addText("p", "Passengers: " + booking.people.map((p) => p.name || "").filter(Boolean).join(", "), card);
             addText("p", "Fare: " + money(booking.total), card);
+            addText("p", "Payment Status: " + paymentStatusOf(booking), card);
+            addText("p", "Payment Method: " + paymentMethodOf(), card);
             addText("p", "Booked: " + (row.created_at ? new Date(row.created_at).toLocaleString() : "—"), card);
             if (row.status === "confirmed") {
               const cancelButton = addText("button", "Cancel Booking", card);
