@@ -967,6 +967,10 @@
         try { return sessionStorage.getItem("apniBus_admin_access_token_v1") || ""; }
         catch { return ""; }
       }
+      function getAdminRefreshToken() {
+        try { return sessionStorage.getItem("apniBus_admin_refresh_token_v1") || ""; }
+        catch { return ""; }
+      }
       async function adminAuthRequest(path, options = {}) {
         const response = await fetch(SUPABASE_URL.replace(/\/$/, "") + path, {
           ...options,
@@ -984,50 +988,60 @@
         }
         return data;
       }
+      let adminRefreshInProgress = null;
+      async function refreshAdminAccessToken() {
+        if (adminRefreshInProgress) return adminRefreshInProgress;
+        const refreshToken = getAdminRefreshToken();
+        if (!refreshToken) throw new Error("Admin session expire ho gaya. Ek baar dobara login karein.");
+        adminRefreshInProgress = (async () => {
+          const data = await adminAuthRequest("/auth/v1/token?grant_type=refresh_token", {
+            method: "POST",
+            body: JSON.stringify({ refresh_token: refreshToken }),
+          });
+          if (!data.access_token || !data.refresh_token) throw new Error("Session refresh nahi ho paya. Dobara login karein.");
+          sessionStorage.setItem("apniBus_admin_access_token_v1", data.access_token);
+          sessionStorage.setItem("apniBus_admin_refresh_token_v1", data.refresh_token);
+          return data.access_token;
+        })();
+        try { return await adminRefreshInProgress; }
+        finally { adminRefreshInProgress = null; }
+      }
       async function adminBusRequest(path, options = {}) {
-        const token = getAdminAccessToken();
+        let token = getAdminAccessToken();
         if (!token) throw new Error("Admin session expire ho gaya. Dobara login karein.");
-        const response = await fetch(SUPABASE_URL.replace(/\/$/, "") + path, {
+        const send = (accessToken) => fetch(SUPABASE_URL.replace(/\/$/, "") + path, {
           ...options,
           headers: {
             apikey: SUPABASE_PUBLISHABLE_KEY,
-            Authorization: "Bearer " + token,
+            Authorization: "Bearer " + accessToken,
             "Content-Type": "application/json",
             ...(options.headers || {}),
           },
         });
+        let response = await send(token);
+        if (response.status === 401) {
+          token = await refreshAdminAccessToken();
+          response = await send(token);
+        }
         const raw = await response.text();
         let data = null;
         try { data = raw ? JSON.parse(raw) : null; } catch { data = raw; }
-        if (!response.ok) throw new Error(data?.message || data?.details || data?.hint || (typeof data === "string" ? data : "Bus save nahi hui: " + response.status));
+        if (!response.ok) throw new Error(data?.message || data?.details || data?.hint || (typeof data === "string" ? data : "Supabase request failed: " + response.status));
         return data;
       }
       let editingBusId = null;
       const refreshNotificationsButton = $("refreshNotificationsBtn");
       if (refreshNotificationsButton) refreshNotificationsButton.addEventListener("click", loadAdminNotifications);
       async function loadAdminBookingsFromSupabase() {
-        const token = getAdminAccessToken();
-        if (!token) throw new Error("Admin session expire ho gaya. Dobara login karein.");
-        const response = await fetch(SUPABASE_URL.replace(/\/$/, "") + "/rest/v1/bookings?select=id,pnr,bus_id,customer_name,customer_phone,customer_email,journey_date,seats,passenger_details,total_fare,status,payment_method,payment_status,created_at,cancelled_at,buses(bus_name,source,destination)&order=created_at.desc", {
-          headers: { apikey: SUPABASE_PUBLISHABLE_KEY, Authorization: "Bearer " + token }
-        });
-        const raw = await response.text();
-        let rows = null;
-        try { rows = raw ? JSON.parse(raw) : null; } catch { rows = raw; }
-        if (!response.ok) throw new Error(rows?.message || rows?.details || (typeof rows === "string" ? rows : "Bookings load nahi hui: " + response.status));
+        const rows = await adminBusRequest("/rest/v1/bookings?select=id,pnr,bus_id,customer_name,customer_phone,customer_email,journey_date,seats,passenger_details,total_fare,status,payment_method,payment_status,created_at,cancelled_at,buses(bus_name,source,destination)&order=created_at.desc");
         return Array.isArray(rows) ? rows : [];
       }
       async function cancelAdminBookingOnSupabase(pnr) {
-        const token = getAdminAccessToken();
-        const response = await fetch(SUPABASE_URL.replace(/\/$/, "") + "/rest/v1/bookings?pnr=eq." + encodeURIComponent(pnr) + "&status=eq.confirmed", {
+        const data = await adminBusRequest("/rest/v1/bookings?pnr=eq." + encodeURIComponent(pnr) + "&status=eq.confirmed", {
           method: "PATCH",
-          headers: { apikey: SUPABASE_PUBLISHABLE_KEY, Authorization: "Bearer " + token, "Content-Type": "application/json", Prefer: "return=representation" },
+          headers: { Prefer: "return=representation" },
           body: JSON.stringify({ status: "cancelled", cancelled_at: new Date().toISOString() })
         });
-        const raw = await response.text();
-        let data = null;
-        try { data = raw ? JSON.parse(raw) : null; } catch { data = raw; }
-        if (!response.ok) throw new Error(data?.message || data?.details || (typeof data === "string" ? data : "Cancellation failed: " + response.status));
         if (!Array.isArray(data) || !data.length) throw new Error("Booking update nahi hui. Booking shayad pehle hi cancel hai.");
         return data[0];
       }
@@ -2648,6 +2662,7 @@
             const data = await adminAuthRequest("/auth/v1/token?grant_type=password", { method: "POST", body: JSON.stringify({ email, password }) });
             if (!data.access_token || !data.user?.id) throw new Error("Login token nahi mila.");
             sessionStorage.setItem("apniBus_admin_access_token_v1", data.access_token);
+            if (data.refresh_token) sessionStorage.setItem("apniBus_admin_refresh_token_v1", data.refresh_token);
             sessionStorage.setItem(ADMIN_SESSION_KEY, "true");
             loginForm.reset();
             openAdminPanel();
@@ -2665,7 +2680,11 @@
         logoutButton.addEventListener("click", async function () {
           const token = getAdminAccessToken();
           try { if (token) await adminAuthRequest("/auth/v1/logout", { method: "POST", headers: { Authorization: "Bearer " + token } }); } catch (_) {}
-          try { sessionStorage.removeItem(ADMIN_SESSION_KEY); sessionStorage.removeItem("apniBus_admin_access_token_v1"); } catch (_) {}
+          try {
+            sessionStorage.removeItem(ADMIN_SESSION_KEY);
+            sessionStorage.removeItem("apniBus_admin_access_token_v1");
+            sessionStorage.removeItem("apniBus_admin_refresh_token_v1");
+          } catch (_) {}
           adminPanel.hidden = true; openAdminLogin(); message.textContent = "Admin logout ho gaya.";
         });
         adminPanel.prepend(logoutButton);
