@@ -739,6 +739,13 @@
         <form id="passengerForm">
           <div id="passengers"></div>
           <p id="bookingSummary" class="summary"></p>
+          <label for="paymentMethod">Select Payment Method</label>
+          <select id="paymentMethod" required>
+            <option value="cash">Cash (Pay to Bus Operator)</option>
+            <option value="upi">UPI (Pay to Bus Operator)</option>
+            <option value="pay_later" selected>Pay Later (At Journey Time)</option>
+          </select>
+          <p class="muted">Payment abhi website par collect nahi hoga. Selected method bus operator ko bataya jayega.</p>
           <button type="submit">Book Ticket</button>
         </form>
       </section>
@@ -978,7 +985,7 @@
       async function loadAdminBookingsFromSupabase() {
         const token = getAdminAccessToken();
         if (!token) throw new Error("Admin session expire ho gaya. Dobara login karein.");
-        const response = await fetch(SUPABASE_URL.replace(/\/$/, "") + "/rest/v1/bookings?select=id,pnr,bus_id,customer_name,customer_phone,customer_email,journey_date,seats,passenger_details,total_fare,status,created_at,cancelled_at,buses(bus_name,source,destination)&order=created_at.desc", {
+        const response = await fetch(SUPABASE_URL.replace(/\/$/, "") + "/rest/v1/bookings?select=id,pnr,bus_id,customer_name,customer_phone,customer_email,journey_date,seats,passenger_details,total_fare,status,payment_method,payment_status,created_at,cancelled_at,buses(bus_name,source,destination)&order=created_at.desc", {
           headers: { apikey: SUPABASE_PUBLISHABLE_KEY, Authorization: "Bearer " + token }
         });
         const raw = await response.text();
@@ -1026,6 +1033,8 @@
             phone: String(person.phone || ""),
           })),
           total: Number(row.total_fare || 0),
+          paymentMethod: row.payment_method || "pay_later",
+          paymentStatus: row.payment_status || "pending",
           status: row.status || "confirmed",
           createdAt: row.created_at || null,
           cancelledAt: row.cancelled_at || null,
@@ -1418,6 +1427,11 @@
             p_passenger_details: people,
           });
           if (!result || !result.pnr) throw new Error("Booking response mein PNR nahi mila.");
+          const selectedPaymentMethod = $("paymentMethod").value || "pay_later";
+          await supabaseRpc("save_booking_payment_method", {
+            p_pnr: result.pnr,
+            p_payment_method: selectedPaymentMethod,
+          });
           const booking = {
             customerEmail: readDemoAuthSession()?.email || null,
             id: result.pnr,
@@ -1429,6 +1443,8 @@
             seats: [...seats].sort((a, b) => a - b),
             people: people,
             total: Number(result.total_fare ?? seats.length * bus.fare),
+            paymentMethod: selectedPaymentMethod,
+            paymentStatus: "pending",
             status: result.status || "confirmed",
             createdAt: new Date().toISOString(),
           };
@@ -1453,6 +1469,12 @@
         showCustomer();
         window.scrollTo({ top: 0, behavior: "smooth" });
       };
+      function paymentMethodLabel(value) {
+        return ({ cash: "Cash – Pay to Bus Operator", upi: "UPI – Pay to Bus Operator", pay_later: "Pay Later – At Journey Time" })[value] || "Pay Later – At Journey Time";
+      }
+      function paymentStatusLabel(value) {
+        return ({ pending: "PENDING – Payment Due", paid: "PAID", refunded: "REFUNDED" })[value] || "PENDING – Payment Due";
+      }
       function renderTicket(b) {
         const ticket = $("ticket");
         ticket.replaceChildren();
@@ -1478,6 +1500,8 @@
           ["Departure", findBus(b.busId)?.departure || "—"],
           ["Seats", (b.seats || []).join(", ")],
           ["Total Fare", money(b.total)],
+          ["Payment Method", paymentMethodLabel(b.paymentMethod)],
+          ["Payment Status", paymentStatusLabel(b.paymentStatus)],
           [
             "Booking Date",
             b.createdAt ? new Date(b.createdAt).toLocaleString("en-IN") : "—",
@@ -1581,6 +1605,8 @@
           addText("p", "Journey Date: " + booking.date, result);
           addText("p", "Seats: " + booking.seats.join(", "), result);
           addText("p", "Total Fare: " + money(booking.total), result);
+          addText("p", "Payment Method: " + paymentMethodLabel(booking.paymentMethod), result);
+          addText("p", "Payment Status: " + paymentStatusLabel(booking.paymentStatus), result);
           addText("h3", "Passenger Details", result);
           booking.people.forEach((person, i) => addText("p", "Seat: " + (booking.seats[i] ?? "—") + " | Name: " + person.name + " | Age: " + person.age, result));
           const printBtn = addText("button", "Print Ticket", result);
@@ -1743,6 +1769,8 @@
             "Total Fare: " + money(booking.total),
             card,
           );
+          addText("p", "Payment Method: " + paymentMethodLabel(booking.paymentMethod), card);
+          addText("p", "Payment Status: " + paymentStatusLabel(booking.paymentStatus), card);
           const actions = document.createElement("div");
           actions.className = "booking-actions";
           const viewBtn = addText(
@@ -1847,6 +1875,8 @@
               seats: Array.isArray(row.seats) ? row.seats.map(Number) : [],
               people: Array.isArray(row.passenger_details) ? row.passenger_details : [],
               total: Number(row.total_fare || 0),
+              paymentMethod: row.payment_method || "pay_later",
+              paymentStatus: row.payment_status || "pending",
               status: row.status,
               customerName: row.customer_name,
               customerPhone: row.customer_phone,
@@ -1866,6 +1896,30 @@
             addText("p", "Seats: " + booking.seats.join(", "), card);
             addText("p", "Passengers: " + booking.people.map((p) => p.name || "").filter(Boolean).join(", "), card);
             addText("p", "Fare: " + money(booking.total), card);
+            addText("p", "Payment Method: " + paymentMethodLabel(row.payment_method), card);
+            const payStatusLine = addText("p", "Payment Status: " + paymentStatusLabel(row.payment_status), card);
+            const payStatusSelect = document.createElement("select");
+            [ ["pending", "Pending"], ["paid", "Paid"], ["refunded", "Refunded"] ].forEach(([value, label]) => {
+              const option = document.createElement("option"); option.value = value; option.textContent = label; payStatusSelect.appendChild(option);
+            });
+            payStatusSelect.value = row.payment_status || "pending";
+            payStatusSelect.setAttribute("aria-label", "Update payment status for " + booking.id);
+            const updatePayButton = addText("button", "UPDATE PAYMENT STATUS", card);
+            updatePayButton.type = "button";
+            updatePayButton.onclick = async function () {
+              updatePayButton.disabled = true;
+              try {
+                await adminBusRequest("/rest/v1/bookings?pnr=eq." + encodeURIComponent(booking.id), {
+                  method: "PATCH", headers: { Prefer: "return=representation" },
+                  body: JSON.stringify({ payment_status: payStatusSelect.value })
+                });
+                payStatusLine.textContent = "Payment Status: " + paymentStatusLabel(payStatusSelect.value);
+                alert("Payment status update ho gaya.");
+              } catch (error) { alert("Payment status update nahi hua: " + error.message); }
+              finally { updatePayButton.disabled = false; }
+            };
+            card.appendChild(payStatusSelect);
+            card.appendChild(updatePayButton);
             addText("p", "Booked: " + (row.created_at ? new Date(row.created_at).toLocaleString() : "—"), card);
             const viewButton = addText("button", "VIEW TICKET", card);
             viewButton.type = "button";
