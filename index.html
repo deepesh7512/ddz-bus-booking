@@ -821,6 +821,11 @@
         </form>
         <h3>Manage Buses</h3>
         <div id="adminBuses"></div>
+        <h3>Notifications</h3>
+        <p>New bookings, cancellations aur payment updates ki recent activity.</p>
+        <div id="adminNotifications" aria-live="polite">Notifications load ho rahi hain...</div>
+        <button id="refreshNotificationsBtn" type="button">REFRESH NOTIFICATIONS</button>
+        <hr />
         <h3>All Bookings</h3>
         <div id="adminBookings"></div>
         <hr />
@@ -983,6 +988,8 @@
         return data;
       }
       let editingBusId = null;
+      const refreshNotificationsButton = $("refreshNotificationsBtn");
+      if (refreshNotificationsButton) refreshNotificationsButton.addEventListener("click", loadAdminNotifications);
       async function loadAdminBookingsFromSupabase() {
         const token = getAdminAccessToken();
         if (!token) throw new Error("Admin session expire ho gaya. Dobara login karein.");
@@ -1849,10 +1856,36 @@
           card.appendChild(actions);
         });
       }
+      async function loadAdminNotifications() {
+        const container = $("adminNotifications");
+        if (!container) return;
+        container.textContent = "Notifications load ho rahi hain...";
+        try {
+          const rows = await adminBusRequest("/rest/v1/admin_notifications?select=id,event_type,pnr,message,created_at&order=created_at.desc&limit=30");
+          container.replaceChildren();
+          if (!Array.isArray(rows) || !rows.length) {
+            addText("p", "Abhi koi notification nahi hai.", container);
+            return;
+          }
+          rows.forEach((row) => {
+            const item = document.createElement("div");
+            item.className = "booking";
+            item.style.marginBottom = "10px";
+            addText("strong", String(row.event_type || "UPDATE").replace(/_/g, " ").toUpperCase(), item);
+            addText("p", row.message || ("PNR: " + (row.pnr || "—")), item);
+            addText("small", row.created_at ? new Date(row.created_at).toLocaleString() : "", item);
+            container.appendChild(item);
+          });
+        } catch (error) {
+          container.textContent = "Notifications load nahi hui: " + error.message + ". Supabase notification SQL run karein.";
+        }
+      }
+
       // ===============================
       // ADMIN: MANAGE BUSES & BOOKINGS
       // ===============================
       function renderAdmin() {
+        loadAdminNotifications();
         const busContainer = $("adminBuses");
         const bookingContainer = $("adminBookings");
         busContainer.replaceChildren();
