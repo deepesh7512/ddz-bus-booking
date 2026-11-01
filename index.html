@@ -427,6 +427,10 @@
           break-inside: avoid;
         }
       }
+      #adminBookingReports { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 14px 0 22px; }
+      .report-metric { border: 1px solid #dbe3ee; border-radius: 10px; padding: 14px; background: #f8fafc; }
+      .report-metric strong { display: block; font-size: 20px; color: #1e293b; margin-top: 5px; overflow-wrap: anywhere; }
+      .report-metric span { color: #475569; font-size: 12px; }
       /* Step 6: Customer Dashboard */
       #dashboardPanel {
         border-top: 4px solid #c62828;
@@ -825,6 +829,17 @@
         <p>New bookings, cancellations aur payment updates ki recent activity.</p>
         <div id="adminNotifications" aria-live="polite">Notifications load ho rahi hain...</div>
         <button id="refreshNotificationsBtn" type="button">REFRESH NOTIFICATIONS</button>
+        <hr />
+        <h3>Booking & Revenue Reports</h3>
+        <p>Daily, weekly aur monthly booking, collection aur pending payment ka summary.</p>
+        <label for="bookingReportPeriod">Report Period</label>
+        <select id="bookingReportPeriod">
+          <option value="today">Today</option>
+          <option value="week">Last 7 Days</option>
+          <option value="month" selected>This Month</option>
+        </select>
+        <button id="refreshBookingReportsBtn" type="button">REFRESH REPORT</button>
+        <div id="adminBookingReports" aria-live="polite"></div>
         <hr />
         <h3>All Bookings</h3>
         <div id="adminBookings"></div>
@@ -1881,6 +1896,64 @@
         }
       }
 
+      function renderBookingReports(rows) {
+        const container = $("adminBookingReports");
+        if (!container) return;
+        container.replaceChildren();
+        const period = $("bookingReportPeriod")?.value || "month";
+        const now = new Date();
+        const start = new Date(now);
+        if (period === "today") start.setHours(0, 0, 0, 0);
+        else if (period === "week") start.setDate(start.getDate() - 6);
+        else start.setDate(1);
+        if (period !== "today") start.setHours(0, 0, 0, 0);
+        const selected = rows.filter((row) => {
+          const created = row.created_at ? new Date(row.created_at) : null;
+          return created && !Number.isNaN(created.getTime()) && created >= start && created <= now;
+        });
+        const confirmed = selected.filter((r) => r.status === "confirmed");
+        const cancelled = selected.filter((r) => r.status === "cancelled");
+        const paid = confirmed.filter((r) => r.payment_status === "paid");
+        const pending = confirmed.filter((r) => !r.payment_status || r.payment_status === "pending");
+        const refunded = selected.filter((r) => r.payment_status === "refunded");
+        const sum = (list) => list.reduce((total, r) => total + Number(r.total_fare || 0), 0);
+        const metrics = [
+          ["Total Bookings", selected.length],
+          ["Confirmed Tickets", confirmed.length],
+          ["Cancelled Tickets", cancelled.length],
+          ["Booked Fare (Confirmed)", money(sum(confirmed))],
+          ["Total Collection (Paid)", money(sum(paid))],
+          ["Pending Payments", money(sum(pending))],
+          ["Refunded Amount", money(sum(refunded))],
+        ];
+        metrics.forEach(([label, value]) => {
+          const card = document.createElement("div");
+          card.className = "report-metric";
+          addText("span", label, card);
+          addText("strong", value, card);
+          container.appendChild(card);
+        });
+        const periodLabel = period === "today" ? "Today" : period === "week" ? "Last 7 Days" : "This Month";
+        const note = document.createElement("p");
+        note.style.gridColumn = "1 / -1";
+        note.textContent = periodLabel + " | Report booking creation date ke basis par hai. Collection mein sirf confirmed + paid tickets shamil hain.";
+        container.appendChild(note);
+      }
+
+      const reportPeriodSelect = $("bookingReportPeriod");
+      const refreshReportsButton = $("refreshBookingReportsBtn");
+      let latestAdminReportRows = [];
+      if (reportPeriodSelect) reportPeriodSelect.addEventListener("change", () => renderBookingReports(latestAdminReportRows));
+      if (refreshReportsButton) refreshReportsButton.addEventListener("click", async () => {
+        refreshReportsButton.disabled = true;
+        try {
+          latestAdminReportRows = await loadAdminBookingsFromSupabase();
+          renderBookingReports(latestAdminReportRows);
+        } catch (error) {
+          $("adminBookingReports").textContent = "Report load nahi hui: " + error.message;
+        } finally { refreshReportsButton.disabled = false; }
+      });
+
       // ===============================
       // ADMIN: MANAGE BUSES & BOOKINGS
       // ===============================
@@ -1933,6 +2006,8 @@
         });
         bookingContainer.textContent = "Supabase bookings load ho rahi hain...";
         loadAdminBookingsFromSupabase().then(function (remoteBookings) {
+          latestAdminReportRows = remoteBookings;
+          renderBookingReports(remoteBookings);
           bookingContainer.replaceChildren();
           const totalActive = remoteBookings.filter((b) => b.status === "confirmed").length;
           addText("p", "Total bookings: " + remoteBookings.length + " | Active bookings: " + totalActive, bookingContainer);
