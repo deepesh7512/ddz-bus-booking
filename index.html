@@ -1288,10 +1288,6 @@
       restrictMobile($("cancelPhone"));
       $("searchForm").onsubmit = async function (e) {
         e.preventDefault();
-        if (busesLoading) {
-          alert("Bus list load ho rahi hai. 2-3 second baad dobara Search karein.");
-          return;
-        }
         from = $("from").value.trim();
         to = $("to").value.trim();
         journeyDate = $("date").value;
@@ -1303,39 +1299,93 @@
         }
         const busList = $("busList");
         busList.replaceChildren();
-        const matches = buses.filter((b) =>
-          b.from.trim().toLowerCase() === from.toLowerCase() &&
-          b.to.trim().toLowerCase() === to.toLowerCase()
-        );
-        if (!matches.length) addText("p", "Is route par koi bus nahi mili.", busList);
-        try {
-          for (const b of matches) {
-            const booked = await getBookedSeatsFromSupabase(b.id, journeyDate);
-            const card = document.createElement("div");
-            card.className = "bus";
-            addText("h3", b.name, card);
-            addText("p", b.type + " | " + b.departure + " - " + b.arrival, card);
-            addText("p", from + " → " + to, card);
-            addText("h3", money(b.fare) + " per seat", card);
-            const available = (b.totalSeats || 20) - booked.length;
-            addText("p", Math.max(0, available) + " seats available", card);
-            const btn = addText("button", "Select Seats", card);
-            btn.type = "button";
-            btn.disabled = available <= 0;
-            btn.onclick = () => openSeats(b, card);
-            busList.appendChild(card);
-          }
-        } catch (error) {
-          console.error(error);
-          alert("Seat availability load nahi hui. Supabase get_booked_seats function aur permissions check karein. Details: " + error.message);
-          return;
-        }
+        addText("p", "Buses aur trips search ho rahi hain...", busList);
         $("results").hidden = false;
         $("seatPanel").hidden = true;
         $("passengerPanel").hidden = true;
         $("ticketPanel").hidden = true;
         $("results").scrollIntoView({ behavior: "smooth" });
+
+        try {
+          // V2 Trips aur Stops के आधार पर इस रूट की ट्रिप्स खोजें
+          // हम सीधे Supabase से app_trips और related tables join करके डेटा ला सकते हैं
+          const response = await fetch(
+            SUPABASE_URL.replace(/\/$/, "") + 
+            `/rest/v1/app_trips?select=id,journey_date,status,app_buses(id,bus_name,bus_type,total_seats),app_routes(route_name),app_trip_fares(fare,boarding_stop_id,dropping_stop_id)&journey_date=eq.${journeyDate}&status=eq.active`,
+            {
+              headers: {
+                apikey: SUPABASE_PUBLISHABLE_KEY,
+                Authorization: "Bearer " + SUPABASE_PUBLISHABLE_KEY,
+              },
+            }
+          );
+          if (!response.ok) throw new Error("Trips fetch nahi ho payिन.");
+          const trips = await response.json();
+          busList.replaceChildren();
+
+          if (!trips.length) {
+            addText("p", "Is date par koi trip available nahi hai. (Demo data: 03/11/2026 se 17/11/2026 ke beech check karein)", busList);
+            return;
+          }
+
+          trips.forEach((trip) => {
+            const busInfo = trip.app_buses || {};
+            const card = document.createElement("div");
+            card.className = "bus";
+            addText("h3", busInfo.bus_name || "Apni Bus Express", card);
+            addText("p", (busInfo.bus_type || "AC Seater") + " | Route: " + (trip.app_routes?.route_name || from + " → " + to), card);
+            addText("p", "Journey Date: " + journeyDate, card);
+            
+            // Fare calculation from trip fares agar available ho
+            const sampleFare = trip.app_trip_fares?.[0]?.fare || 450;
+            addText("h3", money(sampleFare) + " (Segment Fare)", card);
+            
+            const btn = addText("button", "Select Seats & Stops", card);
+            btn.type = "button";
+            btn.onclick = () => openV2TripSeats(trip, sampleFare, card);
+            busList.appendChild(card);
+          });
+        } catch (error) {
+          console.error(error);
+          busList.replaceChildren();
+          addText("p", "Trips load karne mein samasya aayi: " + error.message, busList);
+        }
       };
+
+      // V2 Trip Seat Selection Helper
+      async function openV2TripSeats(trip, fare, card) {
+        bus = {
+          id: trip.app_buses?.id || trip.id,
+          name: trip.app_buses?.bus_name || "Bus",
+          fare: fare,
+          totalSeats: trip.app_buses?.total_seats || 40,
+          tripId: trip.id
+        };
+        seats = [];
+        $("busInfo").textContent = bus.name + " | Trip ID: " + trip.id + " | Fare: " + money(bus.fare);
+        const list = $("seatList");
+        list.replaceChildren();
+        $("seatPanel").hidden = false;
+        
+        for (let i = 1; i <= bus.totalSeats; i++) {
+          const btn = addText("button", "Seat " + i, list);
+          btn.type = "button";
+          btn.className = "seat";
+          btn.onclick = () => {
+            if (seats.includes(i)) {
+              seats = seats.filter((s) => s !== i);
+              btn.classList.remove("selected");
+            } else {
+              seats.push(i);
+              btn.classList.add("selected");
+            }
+            updateTotal();
+          };
+        }
+        updateTotal();
+        if (card) card.insertAdjacentElement("afterend", $("seatPanel"));
+        $("seatPanel").scrollIntoView({ behavior: "smooth" });
+      };      
       async function openSeats(selectedBus, card) {
         bus = selectedBus;
         seats = [];
