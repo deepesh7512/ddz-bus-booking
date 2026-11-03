@@ -1082,17 +1082,35 @@
       const refreshNotificationsButton = $("refreshNotificationsBtn");
       if (refreshNotificationsButton) refreshNotificationsButton.addEventListener("click", loadAdminNotifications);
       async function loadAdminBookingsFromSupabase() {
-        const rows = await adminBusRequest("/rest/v1/bookings?select=id,pnr,bus_id,customer_name,customer_phone,customer_email,journey_date,seats,passenger_details,total_fare,status,payment_method,payment_status,created_at,cancelled_at,buses(bus_name,source,destination)&order=created_at.desc");
-        return Array.isArray(rows) ? rows : [];
+        // V2 bookings are stored in app_bookings, not the legacy bookings table.
+        const rows = await adminBusRequest("/rest/v1/app_bookings?select=id,pnr,trip_id,customer_name,customer_phone,customer_email,boarding_name_snapshot,dropping_name_snapshot,seats,fare,status,created_at,cancelled_at&order=created_at.desc");
+        if (!Array.isArray(rows)) return [];
+        return await Promise.all(rows.map(async (row) => {
+          let ticket = null;
+          try {
+            const found = await adminBusRequest("/rest/v1/rpc/app_lookup_booking", {
+              method: "POST", body: JSON.stringify({ p_pnr: row.pnr })
+            });
+            ticket = Array.isArray(found) ? found[0] : found;
+          } catch (err) { console.warn("Ticket detail lookup failed for", row.pnr, err); }
+          return {
+            ...row,
+            bus_id: row.trip_id,
+            bus_name: ticket?.bus_name || "Bus details unavailable",
+            source: ticket?.boarding_name || row.boarding_name_snapshot || "",
+            destination: ticket?.dropping_name || row.dropping_name_snapshot || "",
+            journey_date: ticket?.journey_date || "",
+            total_fare: Number(row.fare ?? ticket?.total_fare ?? 0),
+            payment_method: "not_recorded",
+            payment_status: "not_recorded",
+            passenger_details: [],
+            pnr: row.pnr,
+            status: row.status,
+          };
+        }));
       }
       async function cancelAdminBookingOnSupabase(pnr) {
-        const data = await adminBusRequest("/rest/v1/bookings?pnr=eq." + encodeURIComponent(pnr) + "&status=eq.confirmed", {
-          method: "PATCH",
-          headers: { Prefer: "return=representation" },
-          body: JSON.stringify({ status: "cancelled", cancelled_at: new Date().toISOString() })
-        });
-        if (!Array.isArray(data) || !data.length) throw new Error("Booking update nahi hui. Booking shayad pehle hi cancel hai.");
-        return data[0];
+        throw new Error("Admin cancellation ko V2 phone-verification workflow se alag se configure karna hoga. Customer cancellation page use karein.");
       }
       async function getBookedSeatsFromSupabase(busId, date) {
         const data = await supabaseRpc("get_booked_seats", {
@@ -2002,7 +2020,7 @@
         const confirmed = selected.filter((r) => r.status === "confirmed");
         const cancelled = selected.filter((r) => r.status === "cancelled");
         const paid = confirmed.filter((r) => r.payment_status === "paid");
-        const pending = confirmed.filter((r) => !r.payment_status || r.payment_status === "pending");
+        const pending = confirmed.filter((r) => r.payment_status === "pending");
         const refunded = selected.filter((r) => r.payment_status === "refunded");
         const sum = (list) => list.reduce((total, r) => total + Number(r.total_fare || 0), 0);
         const metrics = [
@@ -2010,9 +2028,9 @@
           ["Confirmed Tickets", confirmed.length],
           ["Cancelled Tickets", cancelled.length],
           ["Booked Fare (Confirmed)", money(sum(confirmed))],
-          ["Total Collection (Paid)", money(sum(paid))],
-          ["Pending Payments", money(sum(pending))],
-          ["Refunded Amount", money(sum(refunded))],
+          ["Total Collection (Paid)", "Payment data not recorded"],
+          ["Pending Payments", "Payment data not recorded"],
+          ["Refunded Amount", "Payment data not recorded"],
         ];
         metrics.forEach(([label, value]) => {
           const card = document.createElement("div");
@@ -2595,6 +2613,18 @@
           try {
             const data = await adminAuthRequest("/auth/v1/token?grant_type=password", { method: "POST", body: JSON.stringify({ email, password }) });
             if (!data.access_token || !data.user?.id) throw new Error("Login token nahi mila.");
+            // Authentication alone is not Admin authorization. Verify membership server-side.
+            const roleResponse = await fetch(SUPABASE_URL.replace(/\/$/, "") + "/rest/v1/rpc/app_is_admin", {
+              method: "POST",
+              headers: { apikey: SUPABASE_PUBLISHABLE_KEY, Authorization: "Bearer " + data.access_token, "Content-Type": "application/json" },
+              body: "{}"
+            });
+            const roleRaw = await roleResponse.text();
+            let isAdmin = null; try { isAdmin = roleRaw ? JSON.parse(roleRaw) : null; } catch (_) { isAdmin = null; }
+            if (!roleResponse.ok || isAdmin !== true) {
+              try { await adminAuthRequest("/auth/v1/logout", { method: "POST", headers: { Authorization: "Bearer " + data.access_token } }); } catch (_) {}
+              throw new Error("Is account ko Admin permission nahi hai. Customer account se Admin Panel mein login nahi kar sakte.");
+            }
             sessionStorage.setItem("apniBus_admin_access_token_v1", data.access_token);
             if (data.refresh_token) sessionStorage.setItem("apniBus_admin_refresh_token_v1", data.refresh_token);
             sessionStorage.setItem(ADMIN_SESSION_KEY, "true");
