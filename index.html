@@ -647,7 +647,7 @@
       <!-- Step 10A: Customer Login and Registration -->
       <section id="authPanel" hidden>
         <h2 id="authTitle">Customer Login</h2>
-        <p id="authMessage" role="status">Login or create your demo account.</p>
+        <p id="authMessage" role="status">Login or create your customer account.</p>
         <form id="loginForm">
           <label for="loginEmail">Email Address</label>
           <input
@@ -708,7 +708,7 @@
             placeholder="Re-enter password"
             required
           />
-          <button type="submit">Create Demo Account</button>
+          <button type="submit">Create Customer Account</button>
         </form>
         <p id="authSwitchText">New customer?</p>
         <button type="button" id="authSwitchBtn">Create Account</button>
@@ -717,7 +717,7 @@
       <section id="dashboardPanel" hidden>
         <h2>My Bookings</h2>
         <button id="dashboardLogoutBtn" type="button">Logout</button>
-        <p>View your booking history, status and tickets.</p>
+        <p>View your bookings, ticket status and journey details across devices.</p>
         <div id="bookingStats" class="summary"></div>
         <div id="myBookingsList"></div>
         <button id="dashboardSearchBtn" type="button">Search New Bus</button>
@@ -926,25 +926,23 @@
         SUPABASE_PUBLISHABLE_KEY.length > 20 &&
         !SUPABASE_PUBLISHABLE_KEY.includes("PASTE_YOUR_");
       let busesLoading = isSupabaseConfigured;
+      const CUSTOMER_SESSION_KEY = "apniBus_customer_auth_session_v2";
       function readDemoAuthSession() {
         try {
-          const session = JSON.parse(
-            localStorage.getItem("apniBus_demo_session_v1") || "null",
-          );
-          const profiles = JSON.parse(
-            localStorage.getItem("apniBus_demo_profiles_v1") || "[]",
-          );
-          if (
-            !session?.email ||
-            !Array.isArray(profiles) ||
-            !profiles.some((p) => p.email === session.email)
-          ) {
-            return null;
-          }
-          return session;
-        } catch {
-          return null;
-        }
+          const session = JSON.parse(localStorage.getItem(CUSTOMER_SESSION_KEY) || "null");
+          if (!session || !session.access_token || !session.user?.id || !session.user?.email) return null;
+          return { ...session, email: session.user.email, userId: session.user.id };
+        } catch { return null; }
+      }
+      function getCustomerAccessToken() {
+        return readDemoAuthSession()?.access_token || "";
+      }
+      function customerAuthHeaders() {
+        return {
+          apikey: SUPABASE_PUBLISHABLE_KEY,
+          Authorization: "Bearer " + (getCustomerAccessToken() || SUPABASE_PUBLISHABLE_KEY),
+          "Content-Type": "application/json"
+        };
       }
       function openDemoAuth() {
         $("accountTab").click();
@@ -1241,43 +1239,13 @@
         });
       }
       function showDashboard() {
-        // Login check: customer demo session zaroori hai.
-        let loggedIn = false;
-        try {
-          const session = JSON.parse(
-            localStorage.getItem("apniBus_demo_session_v1") || "null",
-          );
-          const profiles = JSON.parse(
-            localStorage.getItem("apniBus_demo_profiles_v1") || "[]",
-          );
-          loggedIn = !!(
-            session &&
-            session.email &&
-            Array.isArray(profiles) &&
-            profiles.some((p) => p.email === session.email)
-          );
-        } catch {
-          loggedIn = false;
-        }
-        if (!loggedIn) {
+        if (!readDemoAuthSession()) {
           showCustomer();
           openDemoAuth();
           return;
         }
-        [
-          "searchPanel",
-          "results",
-          "seatPanel",
-          "passengerPanel",
-          "ticketPanel",
-          "pnrPanel",
-          "cancelPanel",
-          "adminPanel",
-          "adminLoginPanel",
-          "authPanel",
-        ].forEach((id) => {
-          const panel = $(id);
-          if (panel) panel.hidden = true;
+        ["searchPanel","results","seatPanel","passengerPanel","ticketPanel","pnrPanel","cancelPanel","adminPanel","adminLoginPanel","authPanel"].forEach((id) => {
+          const panel = $(id); if (panel) panel.hidden = true;
         });
         $("dashboardPanel").hidden = false;
         renderMyBookings();
@@ -1943,63 +1911,52 @@
         const container = $("myBookingsList");
         const stats = $("bookingStats");
         const session = readDemoAuthSession();
-        if (!container || !session?.email) return;
-        const key = "apniBus_v2_account_pnrs_v1";
-        let saved = [];
-        try { saved = JSON.parse(localStorage.getItem(key) || "[]"); } catch { saved = []; }
-        if (!Array.isArray(saved)) saved = [];
-        const mine = saved.filter(x => x && x.email === session.email && x.pnr);
-        if (!mine.length) {
-          const note = document.createElement("p");
-          note.textContent = "V2 bookings made while signed in on this browser will appear here. Older bookings can be checked using PNR Lookup.";
-          container.appendChild(note);
-          return;
-        }
+        if (!container || !session?.userId || !session?.access_token) return;
         const heading = document.createElement("h3");
         heading.textContent = "V2 Booking History";
         container.appendChild(heading);
-        let confirmed = 0, cancelled = 0;
-        for (const savedBooking of mine.slice().reverse()) {
-          const card = document.createElement("div");
-          card.className = "my-booking-card";
-          addText("p", "Loading ticket " + savedBooking.pnr + "…", card);
-          container.appendChild(card);
-          try {
-            const response = await supabaseRpc("app_lookup_booking", { p_pnr: savedBooking.pnr });
-            const item = Array.isArray(response) ? response[0] : response;
-            card.replaceChildren();
-            if (!item || !item.booking_pnr) {
-              addText("p", "PNR " + savedBooking.pnr + ": ticket details not available.", card);
-              continue;
-            }
-            const status = String(item.booking_status || "unknown").toLowerCase();
-            if (status === "confirmed") confirmed++; else if (status === "cancelled") cancelled++;
-            addText("h3", item.bus_name || "Bus Booking", card);
-            const badge = addText("span", status.toUpperCase(), card);
-            badge.className = "booking-status";
-            if (status === "cancelled") badge.classList.add("cancelled");
-            addText("p", "PNR: " + item.booking_pnr, card);
-            addText("p", "Bus: " + (item.bus_number || "—") + " · " + (item.bus_type || "—"), card);
-            addText("p", "Journey Date: " + (item.journey_date || "—"), card);
-            addText("p", "Route: " + (item.boarding_name || "—") + " → " + (item.dropping_name || "—"), card);
-            addText("p", "Seats: " + ((item.seats || []).join(", ") || "—"), card);
-            addText("p", "Total Fare: " + money(item.total_fare), card);
-            const view = addText("button", "View Ticket Details", card);
-            view.type = "button";
-            view.onclick = () => {
-              $("lookupPnr").value = item.booking_pnr;
-              $("dashboardPanel").hidden = true;
-              $("pnrPanel").hidden = false;
-              $("pnrForm").requestSubmit();
-            };
-          } catch (err) {
-            card.replaceChildren();
-            addText("p", "PNR " + savedBooking.pnr + " load nahi hua: " + err.message, card);
+        const cardArea = document.createElement("div");
+        container.appendChild(cardArea);
+        try {
+          const url = SUPABASE_URL.replace(/\/$/, "") + "/rest/v1/app_bookings?select=pnr,status,created_at&customer_user_id=eq." + encodeURIComponent(session.userId) + "&order=created_at.desc";
+          const response = await fetch(url, { headers: customerAuthHeaders() });
+          const raw = await response.text();
+          let rows; try { rows = raw ? JSON.parse(raw) : []; } catch { rows = []; }
+          if (!response.ok) throw new Error(rows?.message || rows?.details || String(raw || response.status));
+          if (!Array.isArray(rows) || !rows.length) {
+            addText("p", "Is account se abhi koi V2 booking nahi hui hai.", cardArea);
+            return;
           }
+          let confirmed = 0, cancelled = 0;
+          for (const row of rows) {
+            const card = document.createElement("div");
+            card.className = "my-booking-card";
+            cardArea.appendChild(card);
+            try {
+              const ticket = await supabaseRpc("app_lookup_booking", { p_pnr: row.pnr });
+              const item = Array.isArray(ticket) ? ticket[0] : ticket;
+              if (!item?.booking_pnr) { addText("p", "PNR " + row.pnr + ": ticket details not available.", card); continue; }
+              const status = String(item.booking_status || row.status || "unknown").toLowerCase();
+              if (status === "confirmed") confirmed++; else if (status === "cancelled") cancelled++;
+              addText("h3", item.bus_name || "Bus Booking", card);
+              const badge = addText("span", status.toUpperCase(), card); badge.className = "booking-status";
+              if (status === "cancelled") badge.classList.add("cancelled");
+              addText("p", "PNR: " + item.booking_pnr, card);
+              addText("p", "Bus: " + (item.bus_number || "—") + " · " + (item.bus_type || "—"), card);
+              addText("p", "Journey Date: " + (item.journey_date || "—"), card);
+              addText("p", "Route: " + (item.boarding_name || "—") + " → " + (item.dropping_name || "—"), card);
+              addText("p", "Seats: " + ((item.seats || []).join(", ") || "—"), card);
+              addText("p", "Total Fare: " + money(item.total_fare), card);
+              const view = addText("button", "View Ticket Details", card); view.type = "button";
+              view.onclick = () => { $("lookupPnr").value = item.booking_pnr; $("dashboardPanel").hidden = true; $("pnrPanel").hidden = false; $("pnrForm").requestSubmit(); };
+            } catch (err) { addText("p", "PNR " + row.pnr + " load nahi hua: " + err.message, card); }
+          }
+          const summary = document.createElement("p");
+          summary.textContent = "V2 account bookings: " + rows.length + " · Confirmed: " + confirmed + " · Cancelled: " + cancelled;
+          stats.appendChild(summary);
+        } catch (err) {
+          addText("p", "Booking history load nahi hui: " + err.message, cardArea);
         }
-        const summary = document.createElement("p");
-        summary.textContent = "V2 bookings on this browser: " + mine.length + " · Confirmed: " + confirmed + " · Cancelled: " + cancelled;
-        stats.appendChild(summary);
       }
 
       async function loadAdminNotifications() {
@@ -2504,246 +2461,106 @@
       // ===============================
       renderAdmin();
       showCustomer();
-      /* =====================================
-   STEP 10A: DEMO LOGIN & REGISTRATION
-   ===================================== */
-      (function initDemoAuth() {
-        const authProfilesKey = "apniBus_demo_profiles_v1";
-        const authSessionKey = "apniBus_demo_session_v1";
+      /* CUSTOMER AUTH — SUPABASE AUTH */
+      (function initCustomerSupabaseAuth() {
+        const SESSION_KEY = "apniBus_customer_auth_session_v2";
         const el = (id) => document.getElementById(id);
-        const authPanel = el("authPanel");
-        const accountTab = el("accountTab");
-        const loginForm = el("loginForm");
-        const registerForm = el("registerForm");
-        const authTitle = el("authTitle");
-        const authMessage = el("authMessage");
-        const authSwitchText = el("authSwitchText");
-        const authSwitchBtn = el("authSwitchBtn");
-        const logoutBtn = el("logoutBtn");
-        if (
-          !authPanel ||
-          !accountTab ||
-          !loginForm ||
-          !registerForm ||
-          !authTitle ||
-          !authMessage ||
-          !authSwitchBtn ||
-          !logoutBtn
-        ) {
-          console.error("Step 10A: Auth HTML elements missing.");
-          return;
-        }
+        const authPanel = el("authPanel"), accountTab = el("accountTab");
+        const loginForm = el("loginForm"), registerForm = el("registerForm");
+        const authTitle = el("authTitle"), authMessage = el("authMessage");
+        const authSwitchText = el("authSwitchText"), authSwitchBtn = el("authSwitchBtn");
+        const logoutBtn = el("logoutBtn"), dashboardLogoutBtn = el("dashboardLogoutBtn");
         let registerMode = false;
-        function readProfiles() {
-          try {
-            const data = JSON.parse(
-              localStorage.getItem(authProfilesKey) || "[]",
-            );
-            return Array.isArray(data) ? data : [];
-          } catch {
-            return [];
-          }
+        function session() { try { return JSON.parse(localStorage.getItem(SESSION_KEY) || "null"); } catch { return null; } }
+        function saveSession(data) {
+          if (!data?.access_token || !data?.user?.id) throw new Error("Supabase session token nahi mila.");
+          if (!data.expires_at && data.expires_in) data.expires_at = Math.floor(Date.now()/1000) + Number(data.expires_in);
+          localStorage.setItem(SESSION_KEY, JSON.stringify(data));
         }
-        function readSession() {
-          try {
-            return JSON.parse(localStorage.getItem(authSessionKey) || "null");
-          } catch {
-            return null;
-          }
+        async function authRequest(path, body, token) {
+          const response = await fetch(SUPABASE_URL.replace(/\/$/, "") + "/auth/v1/" + path, {
+            method: "POST",
+            headers: { apikey: SUPABASE_PUBLISHABLE_KEY, "Content-Type": "application/json", ...(token ? { Authorization: "Bearer " + token } : {}) },
+            body: JSON.stringify(body || {})
+          });
+          const raw = await response.text(); let data; try { data = raw ? JSON.parse(raw) : {}; } catch { data = { message: raw }; }
+          if (!response.ok) throw new Error(data.msg || data.message || data.error_description || data.error || "Authentication failed");
+          return data;
         }
-        function currentProfile() {
-          const session = readSession();
-          if (!session || !session.email) return null;
-          return readProfiles().find((p) => p.email === session.email) || null;
+        async function refreshSessionIfNeeded() {
+          const current = session(); if (!current?.refresh_token) return current;
+          const expiresAt = Number(current.expires_at || 0);
+          if (expiresAt && expiresAt > Math.floor(Date.now()/1000) + 60) return current;
+          const fresh = await authRequest("token?grant_type=refresh_token", { refresh_token: current.refresh_token });
+          saveSession(fresh); return fresh;
         }
-        function showMessage(message) {
-          authMessage.textContent = message;
+        function showMessage(message) { authMessage.textContent = message; }
+        function setMode(isRegister) {
+          registerMode = isRegister; loginForm.hidden = registerMode; registerForm.hidden = !registerMode;
+          authTitle.textContent = registerMode ? "Customer Registration" : "Customer Login";
+          authSwitchBtn.textContent = registerMode ? "Back to Login" : "Create Account";
+          authSwitchText.textContent = registerMode ? "Already registered?" : "New customer?";
+          showMessage(registerMode ? "Apna account banayein." : "Supabase customer account se login karein.");
         }
         function refreshAuthStatus() {
-          const profile = currentProfile();
-          if (profile) {
-            showMessage("Logged in as " + profile.name);
-            logoutBtn.hidden = false;
-            authSwitchBtn.textContent = "Switch Account";
-            authSwitchText.textContent = "Demo account active.";
+          const current = session();
+          if (current?.user?.email && current?.access_token) {
+            showMessage("Logged in as " + current.user.email);
+            logoutBtn.hidden = false; authSwitchBtn.hidden = true; authSwitchText.hidden = true;
           } else {
-            showMessage("Login or create your demo account.");
-            logoutBtn.hidden = true;
-            authSwitchBtn.textContent = "Create Account";
-            authSwitchText.textContent = "New customer?";
+            showMessage("Login ya naya customer account banayein.");
+            logoutBtn.hidden = true; authSwitchBtn.hidden = false; authSwitchText.hidden = false;
           }
-        }
-        function setMode(isRegister) {
-          registerMode = isRegister;
-          loginForm.hidden = registerMode;
-          registerForm.hidden = !registerMode;
-          authTitle.textContent = registerMode
-            ? "Customer Registration"
-            : "Customer Login";
-          authSwitchBtn.textContent = registerMode
-            ? "Back to Login"
-            : currentProfile()
-              ? "Switch Account"
-              : "Create Account";
-          authSwitchText.textContent = registerMode
-            ? "Already registered?"
-            : currentProfile()
-              ? "Demo account active."
-              : "New customer?";
-          showMessage(
-            registerMode
-              ? "Create your demo customer profile."
-              : "Enter your registered email to continue.",
-          );
         }
         function openAuth() {
-          [
-            "searchPanel",
-            "results",
-            "seatPanel",
-            "passengerPanel",
-            "ticketPanel",
-            "pnrPanel",
-            "cancelPanel",
-            "adminPanel",
-            "adminLoginPanel",
-            "dashboardPanel",
-          ].forEach((id) => {
-            const panel = el(id);
-            if (panel) panel.hidden = true;
-          });
-          authPanel.hidden = false;
-          setMode(false);
-          refreshAuthStatus();
-          authPanel.scrollIntoView({ behavior: "smooth" });
+          ["searchPanel","results","seatPanel","passengerPanel","ticketPanel","pnrPanel","cancelPanel","adminPanel","adminLoginPanel","dashboardPanel"].forEach(id => { const panel=el(id); if(panel) panel.hidden=true; });
+          authPanel.hidden=false; setMode(false); refreshAuthStatus(); authPanel.scrollIntoView({behavior:"smooth"});
         }
-        function finishLogin(profile) {
-          try {
-            localStorage.setItem(
-              "apniBus_demo_session_v1",
-              JSON.stringify({ email: profile.email }),
-            );
-          } catch {
-            showMessage("Browser storage unavailable. Login nahi hua.");
-            return;
-          }
+        async function completeLogin(data) {
+          saveSession(data); loginForm.reset(); registerForm.reset(); refreshAuthStatus();
           showDashboard();
-          refreshAuthStatus();
-          alert("Demo login successful! Welcome, " + profile.name);
         }
-        accountTab.addEventListener("click", function () {
-          if (currentProfile()) {
-            showDashboard();
-          } else {
-            openAuth();
-          }
+        accountTab.addEventListener("click", async function () {
+          try { const current=await refreshSessionIfNeeded(); if(current?.access_token){ saveSession(current); showDashboard(); } else openAuth(); }
+          catch(err){ localStorage.removeItem(SESSION_KEY); openAuth(); showMessage("Session refresh nahi hua: "+err.message+". Dobara login karein."); }
         });
-        $("customerTab").addEventListener("click", function () {
-          authPanel.hidden = true;
-          showCustomer();
-        });
-        $("adminTab").addEventListener("click", function () {
-          authPanel.hidden = true;
-          showAdmin();
-        });
-        authSwitchBtn.addEventListener("click", function () {
-          setMode(!registerMode);
-        });
-        el("regMobile").addEventListener("input", function () {
-          this.value = this.value.replace(/\D/g, "").slice(0, 10);
-        });
-        registerForm.addEventListener("submit", function (event) {
-          event.preventDefault();
-          const name = el("regName").value.trim();
-          const mobile = el("regMobile").value.trim();
-          const email = el("regEmail").value.trim().toLowerCase();
-          const password = el("regPassword").value;
-          const confirmPassword = el("regConfirmPassword").value;
-          if (!name || name.length > 80) {
-            showMessage("Valid full name enter karein.");
-            return;
-          }
-          if (!/^[6-9][0-9]{9}$/.test(mobile)) {
-            showMessage("Mobile number exactly 10 digits ka hona chahiye.");
-            return;
-          }
-          if (password.length < 6) {
-            showMessage("Password minimum 6 characters ka hona chahiye.");
-            return;
-          }
-          if (password !== confirmPassword) {
-            showMessage("Dono passwords match nahi karte.");
-            return;
-          }
-          const profiles = readProfiles();
-          if (profiles.some((p) => p.email === email)) {
-            showMessage("Is email se account pehle se registered hai.");
-            return;
-          }
-          const profile = {
-            name: name,
-            mobile: mobile,
-            email: email,
-            password: password,
-            createdAt: new Date().toISOString(),
-          };
+        el("customerTab").addEventListener("click", function(){ authPanel.hidden=true; showCustomer(); });
+        el("adminTab").addEventListener("click", function(){ authPanel.hidden=true; showAdmin(); });
+        authSwitchBtn.addEventListener("click", function(){ setMode(!registerMode); });
+        el("regMobile").addEventListener("input", function(){ this.value=this.value.replace(/\D/g,"").slice(0,10); });
+        registerForm.addEventListener("submit", async function(event){
+          event.preventDefault(); const name=el("regName").value.trim(), mobile=el("regMobile").value.trim();
+          const email=el("regEmail").value.trim().toLowerCase(), password=el("regPassword").value, confirmPassword=el("regConfirmPassword").value;
+          if(!name || name.length>80){showMessage("Valid full name enter karein.");return;}
+          if(!/^[6-9][0-9]{9}$/.test(mobile)){showMessage("Mobile number exactly 10 digits ka hona chahiye.");return;}
+          if(password.length<6){showMessage("Password minimum 6 characters ka hona chahiye.");return;}
+          if(password!==confirmPassword){showMessage("Dono passwords match nahi karte.");return;}
+          const button=registerForm.querySelector('button[type="submit"]'); button.disabled=true; showMessage("Account create ho raha hai...");
           try {
-            profiles.push(profile);
-            localStorage.setItem(
-              authProfilesKey,
-              JSON.stringify(profiles),
-            );
-          } catch {
-            showMessage("Account save nahi hua. Browser storage check karein.");
-            return;
-          }
-          registerForm.reset();
-          finishLogin(profile);
+            const data=await authRequest("signup",{email,password,data:{full_name:name,mobile}});
+            if(data.access_token && data.user?.id){ await completeLogin(data); alert("Customer account successfully create ho gaya."); }
+            else { registerForm.reset(); setMode(false); showMessage("Account create ho gaya. Email verification link check karke phir login karein."); }
+          } catch(err){showMessage("Registration fail: "+err.message);} finally{button.disabled=false;}
         });
-        loginForm.addEventListener("submit", function (event) {
-          event.preventDefault();
-          const email = el("loginEmail").value.trim().toLowerCase();
-          const password = el("loginPassword").value;
-          if (!password) {
-            showMessage("Password enter karein.");
-            return;
-          }
-          const profile = readProfiles().find((p) => p.email === email);
-          if (!profile) {
-            showMessage("Account nahi mila. Pehle Create Account karein.");
-            return;
-          }
-          if (!profile.password || profile.password !== password) {
-            showMessage("Email ya password galat hai.");
-            return;
-          }
-          loginForm.reset();
-          finishLogin(profile);
+        loginForm.addEventListener("submit", async function(event){
+          event.preventDefault(); const email=el("loginEmail").value.trim().toLowerCase(), password=el("loginPassword").value;
+          const button=loginForm.querySelector('button[type="submit"]'); button.disabled=true; showMessage("Login ho raha hai...");
+          try { const data=await authRequest("token?grant_type=password",{email,password}); await completeLogin(data); }
+          catch(err){showMessage("Login fail: "+err.message);} finally{button.disabled=false;}
         });
-        logoutBtn.addEventListener("click", function () {
-          try {
-            localStorage.removeItem(authSessionKey);
-          } catch {
-            showMessage("Logout nahi ho saka.");
-            return;
-          }
-          const dashboard = document.getElementById("dashboardPanel");
-          if (dashboard) {
-            dashboard.hidden = true;
-          }
-          refreshAuthStatus();
-          setMode(false);
-          openAuth();
-          showMessage("Aap logout ho gaye hain.");
-        });
-        const dashboardLogoutBtn = el("dashboardLogoutBtn");
-        if (dashboardLogoutBtn) {
-          dashboardLogoutBtn.addEventListener("click", function () {
-            logoutBtn.click();
-          });
+        async function logout() {
+          const current=session();
+          try { if(current?.access_token) await authRequest("logout",{},current.access_token); } catch(_) {}
+          localStorage.removeItem(SESSION_KEY);
+          const dashboard=el("dashboardPanel"); if(dashboard) dashboard.hidden=true;
+          refreshAuthStatus(); openAuth(); showMessage("Aap logout ho gaye hain.");
         }
-        // Page refresh par saved demo session check karein.
-        refreshAuthStatus();
+        logoutBtn.addEventListener("click", logout);
+        if(dashboardLogoutBtn) dashboardLogoutBtn.addEventListener("click", logout);
+        (async function restore(){
+          try { const current=await refreshSessionIfNeeded(); if(current?.access_token){ saveSession(current); refreshAuthStatus(); } else refreshAuthStatus(); }
+          catch(err){ localStorage.removeItem(SESSION_KEY); refreshAuthStatus(); showMessage("Session expire ho gaya. Dobara login karein."); }
+        })();
       })();
       /* ADMIN LOGIN / LOGOUT — SUPABASE AUTH */
       (function initAdminAuth() {
@@ -2878,7 +2695,9 @@
         return d;
       }
       async function rpc(name, payload) {
-        const r = await fetch(API + "/rpc/" + name, { method: "POST", headers, body: JSON.stringify(payload) });
+        const auth = readDemoAuthSession();
+        const requestHeaders = { ...headers, Authorization: "Bearer " + (auth?.access_token || SUPABASE_PUBLISHABLE_KEY) };
+        const r = await fetch(API + "/rpc/" + name, { method: "POST", headers: requestHeaders, body: JSON.stringify(payload) });
         const t = await r.text(); let d; try { d = t ? JSON.parse(t) : null; } catch { d = t; }
         if (!r.ok) throw new Error(d?.message || d?.details || String(d));
         return d;
