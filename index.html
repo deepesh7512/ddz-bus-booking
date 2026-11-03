@@ -1096,14 +1096,21 @@
           return {
             ...row,
             bus_id: row.trip_id,
-            bus_name: ticket?.bus_name || "Bus details unavailable",
-            source: ticket?.boarding_name || row.boarding_name_snapshot || "",
-            destination: ticket?.dropping_name || row.dropping_name_snapshot || "",
-            journey_date: ticket?.journey_date || "",
+            bus_name: ticket?.bus_name || ticket?.bus_type || "Bus details unavailable",
+            bus_number: ticket?.bus_number || ticket?.registration_number || "—",
+            source: ticket?.boarding_name || row.boarding_name_snapshot || "Boarding stop unavailable",
+            destination: ticket?.dropping_name || row.dropping_name_snapshot || "Dropping stop unavailable",
+            journey_date: ticket?.journey_date || row.journey_date || "—",
             total_fare: Number(row.fare ?? ticket?.total_fare ?? 0),
             payment_method: row.payment_method || "pay_later",
             payment_status: row.payment_status || "pending",
-            passenger_details: [],
+            passenger_details: Array.isArray(ticket?.passengers)
+              ? ticket.passengers
+              : Array.isArray(ticket?.passenger_details)
+                ? ticket.passenger_details
+                : [{ name: row.customer_name || ticket?.customer_name || "—", age: ticket?.customer_age || "—", phone: row.customer_phone || ticket?.customer_phone || "—" }],
+            customer_name: row.customer_name || ticket?.customer_name || "—",
+            customer_phone: row.customer_phone || ticket?.customer_phone || "—",
             pnr: row.pnr,
             status: row.status,
           };
@@ -1127,6 +1134,7 @@
           id: row.pnr,
           busId: row.bus_id,
           bus: row.bus_name || "Bus",
+          busNumber: row.bus_number || "—",
           from: row.source || "",
           to: row.destination || "",
           date: row.journey_date,
@@ -1602,6 +1610,7 @@
         [
           ["PNR", b.id],
           ["Bus", b.bus],
+          ["Bus Number", b.busNumber || "—"],
           ["Route", b.from + " → " + b.to],
           ["Journey Date", b.date],
           ["Departure", findBus(b.busId)?.departure || "—"],
