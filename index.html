@@ -700,8 +700,8 @@
       <section id="searchPanel">
         <h2>Search Buses</h2>
         <form id="searchForm">
-          <label>From</label><input id="from" value="Indore" required />
-          <label>To</label><input id="to" value="Bhopal" required />
+          <label>From</label><input id="from" value="Shahdol" required />
+          <label>To</label><input id="to" value="Rewa" required />
           <label>Journey Date</label><input id="date" type="date" required />
           <button type="submit">Search Buses</button>
         </form>
@@ -879,8 +879,8 @@
             <option>AC Sleeper</option>
             <option>Non-AC Sleeper</option>
           </select>
-          <label>From</label><input id="busFrom" placeholder="Indore" required />
-          <label>To</label><input id="busTo" placeholder="Bhopal" required />
+          <label>From</label><input id="busFrom" placeholder="Shahdol" required />
+          <label>To</label><input id="busTo" placeholder="Rewa" required />
           <label>Departure</label><input id="departure" type="time" value="00:00:00" required />
           <label>Arrival</label><input id="arrival" type="time" value="08:00:00" required />
           <label>Fare</label><input id="fare" type="number" min="1" required />
@@ -1042,8 +1042,8 @@
           id: 1,
           name: "Demo Express",
           type: "AC Seater",
-          from: "Indore",
-          to: "Bhopal",
+          from: "Shahdol",
+          to: "Rewa",
           departure: "08:00",
           arrival: "12:00",
           fare: 499,
@@ -1052,8 +1052,8 @@
           id: 2,
           name: "Demo Sleeper",
           type: "AC Sleeper",
-          from: "Indore",
-          to: "Bhopal",
+          from: "Shahdol",
+          to: "Rewa",
           departure: "22:00",
           arrival: "05:00",
           fare: 799,
@@ -1062,8 +1062,8 @@
           id: 3,
           name: "City Travels",
           type: "Non-AC Seater",
-          from: "Indore",
-          to: "Bhopal",
+          from: "Shahdol",
+          to: "Rewa",
           departure: "14:00",
           arrival: "19:00",
           fare: 349,
@@ -1891,7 +1891,7 @@
           }
           editingBusId = null;
           $("busForm").reset();
-          $("busFrom").value = "Indore"; $("busTo").value = "Bhopal";
+          $("busFrom").value = "Shahdol"; $("busTo").value = "Rewa";
           submitButton.textContent = "Add Bus";
           await loadBusesFromSupabase();
           renderAdmin();
