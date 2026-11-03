@@ -2022,15 +2022,15 @@
         const paid = confirmed.filter((r) => r.payment_status === "paid");
         const pending = confirmed.filter((r) => r.payment_status === "pending");
         const refunded = selected.filter((r) => r.payment_status === "refunded");
-        const sum = (list) => list.reduce((total, r) => total + Number(r.total_fare || 0), 0);
+        const sum = (list) => list.reduce((total, r) => total + Number(r.total_fare || r.fare || 0), 0);
         const metrics = [
           ["Total Bookings", selected.length],
           ["Confirmed Tickets", confirmed.length],
           ["Cancelled Tickets", cancelled.length],
           ["Booked Fare (Confirmed)", money(sum(confirmed))],
-          ["Total Collection (Paid)", "Payment data not recorded"],
-          ["Pending Payments", "Payment data not recorded"],
-          ["Refunded Amount", "Payment data not recorded"],
+          ["Total Collection (Paid)", money(sum(paid))],
+          ["Pending Payments", money(sum(pending))],
+          ["Refunded Amount", money(sum(refunded))],
         ];
         metrics.forEach(([label, value]) => {
           const card = document.createElement("div");
