@@ -1311,7 +1311,7 @@
           // हम सीधे Supabase से app_trips और related tables join करके डेटा ला सकते हैं
           const response = await fetch(
             SUPABASE_URL.replace(/\/$/, "") + 
-            `/rest/v1/app_trips?select=id,journey_date,status,app_buses(id,bus_name,bus_type,total_seats),app_routes(route_name),app_trip_fares(fare,boarding_stop_id,dropping_stop_id)&journey_date=eq.${journeyDate}&status=eq.active`,
+            `/rest/v1/app_trips?select=id,journey_date,status,app_buses(id,bus_name,bus_type,total_seats),app_routes(route_name),app_trip_fares(fare,boarding_stop_id,dropping_stop_id)&journey_date=eq.${journeyDate}&status=eq.scheduled`,
             {
               headers: {
                 apikey: SUPABASE_PUBLISHABLE_KEY,
