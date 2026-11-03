@@ -1281,6 +1281,7 @@
         });
         $("dashboardPanel").hidden = false;
         renderMyBookings();
+        renderV2AccountBookings();
         $("dashboardPanel").scrollIntoView({ behavior: "smooth" });
       }
       function showAdmin() {
@@ -1936,6 +1937,71 @@
           card.appendChild(actions);
         });
       }
+      // V2 account history: stores only the PNR on this browser and retrieves
+      // the limited ticket details through app_lookup_booking when the account opens.
+      async function renderV2AccountBookings() {
+        const container = $("myBookingsList");
+        const stats = $("bookingStats");
+        const session = readDemoAuthSession();
+        if (!container || !session?.email) return;
+        const key = "apniBus_v2_account_pnrs_v1";
+        let saved = [];
+        try { saved = JSON.parse(localStorage.getItem(key) || "[]"); } catch { saved = []; }
+        if (!Array.isArray(saved)) saved = [];
+        const mine = saved.filter(x => x && x.email === session.email && x.pnr);
+        if (!mine.length) {
+          const note = document.createElement("p");
+          note.textContent = "V2 bookings made while signed in on this browser will appear here. Older bookings can be checked using PNR Lookup.";
+          container.appendChild(note);
+          return;
+        }
+        const heading = document.createElement("h3");
+        heading.textContent = "V2 Booking History";
+        container.appendChild(heading);
+        let confirmed = 0, cancelled = 0;
+        for (const savedBooking of mine.slice().reverse()) {
+          const card = document.createElement("div");
+          card.className = "my-booking-card";
+          addText("p", "Loading ticket " + savedBooking.pnr + "…", card);
+          container.appendChild(card);
+          try {
+            const response = await supabaseRpc("app_lookup_booking", { p_pnr: savedBooking.pnr });
+            const item = Array.isArray(response) ? response[0] : response;
+            card.replaceChildren();
+            if (!item || !item.booking_pnr) {
+              addText("p", "PNR " + savedBooking.pnr + ": ticket details not available.", card);
+              continue;
+            }
+            const status = String(item.booking_status || "unknown").toLowerCase();
+            if (status === "confirmed") confirmed++; else if (status === "cancelled") cancelled++;
+            addText("h3", item.bus_name || "Bus Booking", card);
+            const badge = addText("span", status.toUpperCase(), card);
+            badge.className = "booking-status";
+            if (status === "cancelled") badge.classList.add("cancelled");
+            addText("p", "PNR: " + item.booking_pnr, card);
+            addText("p", "Bus: " + (item.bus_number || "—") + " · " + (item.bus_type || "—"), card);
+            addText("p", "Journey Date: " + (item.journey_date || "—"), card);
+            addText("p", "Route: " + (item.boarding_name || "—") + " → " + (item.dropping_name || "—"), card);
+            addText("p", "Seats: " + ((item.seats || []).join(", ") || "—"), card);
+            addText("p", "Total Fare: " + money(item.total_fare), card);
+            const view = addText("button", "View Ticket Details", card);
+            view.type = "button";
+            view.onclick = () => {
+              $("lookupPnr").value = item.booking_pnr;
+              $("dashboardPanel").hidden = true;
+              $("pnrPanel").hidden = false;
+              $("pnrForm").requestSubmit();
+            };
+          } catch (err) {
+            card.replaceChildren();
+            addText("p", "PNR " + savedBooking.pnr + " load nahi hua: " + err.message, card);
+          }
+        }
+        const summary = document.createElement("p");
+        summary.textContent = "V2 bookings on this browser: " + mine.length + " · Confirmed: " + confirmed + " · Cancelled: " + cancelled;
+        stats.appendChild(summary);
+      }
+
       async function loadAdminNotifications() {
         const container = $("adminNotifications");
         if (!container) return;
@@ -2900,7 +2966,7 @@
         q("seatPanel").hidden=false;q("passengerPanel").hidden=true;q("ticketPanel").hidden=true;if(card)card.insertAdjacentElement("afterend",q("seatPanel"));q("seatPanel").scrollIntoView({behavior:"smooth"});
       }
       q("continueBtn").onclick=function(){if(!v2Trip||!seats.length){alert("Pehle seat select karein.");return;}const bs=v2Stops.find(x=>x.id===q("v2Boarding").value),ds=v2Stops.find(x=>x.id===q("v2Dropping").value);if(!bs||!ds||bs.stop_order>=ds.stop_order||!v2Fares.some(x=>x.boarding_stop_id===bs.id&&x.dropping_stop_id===ds.id)){alert("Valid boarding aur dropping stop chunein.");return;}v2Boarding=bs.id;v2Dropping=ds.id;v2Fare=Number(v2Fares.find(x=>x.boarding_stop_id===bs.id&&x.dropping_stop_id===ds.id).fare);q("passengers").replaceChildren();[...seats].sort((a,b)=>a-b).forEach((seat,i)=>{const box=document.createElement("div");box.className="passenger";addText("h3",`Passenger ${i+1} — Seat ${seat}`,box);const n=document.createElement("input");n.name="name";n.placeholder="Passenger Name";n.required=true;box.appendChild(n);const age=document.createElement("input");age.name="age";age.type="number";age.min=1;age.max=120;age.placeholder="Age";age.required=true;box.appendChild(age);const ph=document.createElement("input");ph.name="phone";ph.placeholder="10-digit mobile number";ph.inputMode="numeric";ph.maxLength=10;ph.pattern="[6-9][0-9]{9}";ph.required=true;restrictMobile(ph);box.appendChild(ph);q("passengers").appendChild(box);});q("bookingSummary").textContent=`${bus.name} | ${v2Stops.find(x=>x.id===v2Boarding).stop_name} → ${v2Stops.find(x=>x.id===v2Dropping).stop_name} | ${journeyDate} | Seats ${seats.join(", ")} | Total ${money(v2Fare*seats.length)}`;q("passengerPanel").hidden=false;q("passengerPanel").scrollIntoView({behavior:"smooth"});};
-      q("passengerForm").onsubmit=async function(e){e.preventDefault();if(!v2Trip||!seats.length)return;const people=[...q("passengers").children].map(box=>({name:box.querySelector('[name="name"]').value.trim(),age:Number(box.querySelector('[name="age"]').value),phone:box.querySelector('[name="phone"]').value.trim()}));if(people.some(p=>!p.name||!Number.isInteger(p.age)||p.age<1||p.age>120||!/^[6-9][0-9]{9}$/.test(p.phone))){alert("Passenger details check karein.");return;}const submit=q("passengerForm").querySelector('button[type="submit"]');submit.disabled=true;try{const data=await rpc("app_create_booking",{p_trip_id:v2Trip.trip.id,p_boarding_stop_id:v2Boarding,p_dropping_stop_id:v2Dropping,p_seats:[...seats].sort((a,b)=>a-b),p_customer_name:people[0].name,p_customer_phone:people[0].phone,p_customer_email:readDemoAuthSession()?.email||null});const row=Array.isArray(data)?data[0]:data;if(!row?.booking_pnr)throw new Error("Booking PNR response nahi mila.");const booking={id:row.booking_pnr,bus:bus.name,from:v2Stops.find(x=>x.id===v2Boarding).stop_name,to:v2Stops.find(x=>x.id===v2Dropping).stop_name,date:journeyDate,seats:[...seats].sort((a,b)=>a-b),people,total:Number(row.total_fare),paymentMethod:q("paymentMethod").value||"pay_later",paymentStatus:"pending",status:"confirmed",createdAt:new Date().toISOString(),boardingTime:v2Stops.find(x=>x.id===v2Boarding).departure_time,droppingTime:v2Stops.find(x=>x.id===v2Dropping).arrival_time};renderTicket(booking);q("seatPanel").hidden=true;q("passengerPanel").hidden=true;q("ticketPanel").hidden=false;q("ticketPanel").scrollIntoView({behavior:"smooth"});alert("Booking successful! PNR: "+booking.id);seats=[];}catch(err){alert("Booking nahi hui: "+err.message+". Seat refresh karke try karein.");try{await openV2(v2Trips.find(x=>x.trip.id===v2Trip.trip.id));}catch(_){}}finally{submit.disabled=false;}};
+      q("passengerForm").onsubmit=async function(e){e.preventDefault();if(!v2Trip||!seats.length)return;const people=[...q("passengers").children].map(box=>({name:box.querySelector('[name="name"]').value.trim(),age:Number(box.querySelector('[name="age"]').value),phone:box.querySelector('[name="phone"]').value.trim()}));if(people.some(p=>!p.name||!Number.isInteger(p.age)||p.age<1||p.age>120||!/^[6-9][0-9]{9}$/.test(p.phone))){alert("Passenger details check karein.");return;}const submit=q("passengerForm").querySelector('button[type="submit"]');submit.disabled=true;try{const data=await rpc("app_create_booking",{p_trip_id:v2Trip.trip.id,p_boarding_stop_id:v2Boarding,p_dropping_stop_id:v2Dropping,p_seats:[...seats].sort((a,b)=>a-b),p_customer_name:people[0].name,p_customer_phone:people[0].phone,p_customer_email:readDemoAuthSession()?.email||null});const row=Array.isArray(data)?data[0]:data;if(!row?.booking_pnr)throw new Error("Booking PNR response nahi mila.");const account=readDemoAuthSession();if(account?.email){const historyKey="apniBus_v2_account_pnrs_v1";let history=[];try{history=JSON.parse(localStorage.getItem(historyKey)||"[]");}catch{history=[];}if(!Array.isArray(history))history=[];if(!history.some(x=>x.pnr===row.booking_pnr&&x.email===account.email)){history.push({pnr:row.booking_pnr,email:account.email,createdAt:new Date().toISOString()});localStorage.setItem(historyKey,JSON.stringify(history));}}const booking={id:row.booking_pnr,bus:bus.name,from:v2Stops.find(x=>x.id===v2Boarding).stop_name,to:v2Stops.find(x=>x.id===v2Dropping).stop_name,date:journeyDate,seats:[...seats].sort((a,b)=>a-b),people,total:Number(row.total_fare),paymentMethod:q("paymentMethod").value||"pay_later",paymentStatus:"pending",status:"confirmed",createdAt:new Date().toISOString(),boardingTime:v2Stops.find(x=>x.id===v2Boarding).departure_time,droppingTime:v2Stops.find(x=>x.id===v2Dropping).arrival_time};renderTicket(booking);q("seatPanel").hidden=true;q("passengerPanel").hidden=true;q("ticketPanel").hidden=false;q("ticketPanel").scrollIntoView({behavior:"smooth"});alert("Booking successful! PNR: "+booking.id);seats=[];}catch(err){alert("Booking nahi hui: "+err.message+". Seat refresh karke try karein.");try{await openV2(v2Trips.find(x=>x.trip.id===v2Trip.trip.id));}catch(_){}}finally{submit.disabled=false;}};
       // Limited-information PNR lookup as defined by the V2 RPC.
       q("pnrForm").onsubmit=async function(e){e.preventDefault();const pnr=q("lookupPnr").value.trim(),out=q("pnrResult");out.replaceChildren();try{const data=await rpc("app_lookup_booking",{p_pnr:pnr});const x=Array.isArray(data)?data[0]:data;if(!x||!x.booking_pnr){showV2Message(out,"Is PNR se booking nahi mili.");return;}addText("h3","Ticket Details",out);[["PNR",x.booking_pnr],["Status",String(x.booking_status).toUpperCase()],["Bus",x.bus_name],["Bus Number",x.bus_number],["Bus Type",x.bus_type],["Journey Date",x.journey_date],["Boarding",x.boarding_name+" — "+(x.boarding_time||"—")],["Dropping",x.dropping_name+" — "+(x.dropping_time||"—")],["Seats",(x.seats||[]).join(", ")],["Total Fare",money(x.total_fare)],["Booked At",x.booked_at?new Date(x.booked_at).toLocaleString("en-IN"):"—"]].forEach(([k,v])=>{const p=document.createElement("p");addText("strong",k+": ",p);addText("span",v,p);out.appendChild(p);});}catch(err){showV2Message(out,"PNR lookup nahi ho paya: "+err.message);}};
       // Preview ticket first; user must explicitly confirm cancellation.
