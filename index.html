@@ -1082,17 +1082,52 @@
       const refreshNotificationsButton = $("refreshNotificationsBtn");
       if (refreshNotificationsButton) refreshNotificationsButton.addEventListener("click", loadAdminNotifications);
       async function loadAdminBookingsFromSupabase() {
-        const rows = await adminBusRequest("/rest/v1/bookings?select=id,pnr,bus_id,customer_name,customer_phone,customer_email,journey_date,seats,passenger_details,total_fare,status,payment_method,payment_status,created_at,cancelled_at,buses(bus_name,source,destination)&order=created_at.desc");
-        return Array.isArray(rows) ? rows : [];
+        // V2 bookings are stored in app_bookings. Fetch ticket display details
+        // through the existing limited-data RPC so the admin UI uses the same
+        // authoritative trip/bus/stop snapshots as customer PNR lookup.
+        const rows = await adminBusRequest("/rest/v1/app_bookings?select=id,pnr,customer_name,customer_phone,customer_email,trip_id,boarding_name_snapshot,dropping_name_snapshot,fare,seats,status,created_at,cancelled_at&order=created_at.desc");
+        if (!Array.isArray(rows) || !rows.length) return [];
+        const detailed = await Promise.all(rows.map(async (row) => {
+          const result = await adminBusRequest("/rest/v1/rpc/app_lookup_booking", {
+            method: "POST", body: JSON.stringify({ p_pnr: row.pnr })
+          });
+          const ticket = Array.isArray(result) ? result[0] : result;
+          if (!ticket) throw new Error("PNR " + row.pnr + " ka ticket detail nahi mila.");
+          return {
+            ...row,
+            booking_pnr: ticket.booking_pnr || row.pnr,
+            bus_name: ticket.bus_name || "Bus",
+            bus_number: ticket.bus_number || "",
+            bus_type: ticket.bus_type || "",
+            journey_date: ticket.journey_date || row.journey_date,
+            boarding_name: ticket.boarding_name || row.boarding_name_snapshot || "",
+            dropping_name: ticket.dropping_name || row.dropping_name_snapshot || "",
+            boarding_time: ticket.boarding_time || "",
+            dropping_time: ticket.dropping_time || "",
+            seats: ticket.seats || row.seats || [],
+            total_fare: Number(ticket.total_fare ?? row.fare ?? 0),
+            booking_status: ticket.booking_status || row.status,
+            booked_at: ticket.booked_at || row.created_at,
+            status: ticket.booking_status || row.status,
+            created_at: row.created_at,
+            cancelled_at: row.cancelled_at,
+            customer_name: row.customer_name,
+            customer_phone: row.customer_phone,
+            customer_email: row.customer_email,
+            payment_method: null,
+            payment_status: null,
+            passenger_details: []
+          };
+        }));
+        return detailed;
       }
-      async function cancelAdminBookingOnSupabase(pnr) {
-        const data = await adminBusRequest("/rest/v1/bookings?pnr=eq." + encodeURIComponent(pnr) + "&status=eq.confirmed", {
-          method: "PATCH",
-          headers: { Prefer: "return=representation" },
-          body: JSON.stringify({ status: "cancelled", cancelled_at: new Date().toISOString() })
+      async function cancelAdminBookingOnSupabase(pnr, phone) {
+        const result = await adminBusRequest("/rest/v1/rpc/app_cancel_booking", {
+          method: "POST", body: JSON.stringify({ p_pnr: pnr, p_customer_phone: phone })
         });
-        if (!Array.isArray(data) || !data.length) throw new Error("Booking update nahi hui. Booking shayad pehle hi cancel hai.");
-        return data[0];
+        const row = Array.isArray(result) ? result[0] : result;
+        if (!row || row.booking_status !== "cancelled") throw new Error("Booking cancel nahi hui. Status ya mobile number verify karein.");
+        return row;
       }
       async function getBookedSeatsFromSupabase(busId, date) {
         const data = await supabaseRpc("get_booked_seats", {
@@ -1660,7 +1695,7 @@
             if (!confirm("PNR " + booking.id + " ki ticket cancel karna chahte hain?")) return;
             cancelButton.disabled = true;
             try {
-              await cancelAdminBookingOnSupabase(booking.id);
+              await cancelAdminBookingOnSupabase(booking.id, booking.customerPhone);
               alert("Ticket successfully cancel ho gayi.");
               $("ticketPanel").hidden = true;
               renderAdmin();
@@ -2001,18 +2036,13 @@
         });
         const confirmed = selected.filter((r) => r.status === "confirmed");
         const cancelled = selected.filter((r) => r.status === "cancelled");
-        const paid = confirmed.filter((r) => r.payment_status === "paid");
-        const pending = confirmed.filter((r) => !r.payment_status || r.payment_status === "pending");
-        const refunded = selected.filter((r) => r.payment_status === "refunded");
         const sum = (list) => list.reduce((total, r) => total + Number(r.total_fare || 0), 0);
         const metrics = [
           ["Total Bookings", selected.length],
           ["Confirmed Tickets", confirmed.length],
           ["Cancelled Tickets", cancelled.length],
-          ["Booked Fare (Confirmed)", money(sum(confirmed))],
-          ["Total Collection (Paid)", money(sum(paid))],
-          ["Pending Payments", money(sum(pending))],
-          ["Refunded Amount", money(sum(refunded))],
+          ["Confirmed Booking Fare", money(sum(confirmed))],
+          ["Cancelled Booking Fare", money(sum(cancelled))],
         ];
         metrics.forEach(([label, value]) => {
           const card = document.createElement("div");
@@ -2024,7 +2054,7 @@
         const periodLabel = period === "today" ? "Today" : period === "week" ? "Last 7 Days" : "This Month";
         const note = document.createElement("p");
         note.style.gridColumn = "1 / -1";
-        note.textContent = periodLabel + " | Report booking creation date ke basis par hai. Collection mein sirf confirmed + paid tickets shamil hain.";
+        note.textContent = periodLabel + " | Report booking creation date ke basis par hai. Fare totals booking status ke hisaab se hain; V2 mein payment status abhi record nahi hota.";
         container.appendChild(note);
       }
 
@@ -2107,16 +2137,16 @@
             const busInfo = row.buses || {};
             const booking = {
               id: row.pnr,
-              busId: row.bus_id,
-              bus: busInfo.bus_name || "Bus #" + row.bus_id,
-              from: busInfo.source || "",
-              to: busInfo.destination || "",
+              busId: row.trip_id,
+              bus: [row.bus_name, row.bus_number].filter(Boolean).join(" · ") || "Bus",
+              from: row.boarding_name || "",
+              to: row.dropping_name || "",
               date: row.journey_date,
               seats: Array.isArray(row.seats) ? row.seats.map(Number) : [],
-              people: Array.isArray(row.passenger_details) ? row.passenger_details : [],
+              people: [],
               total: Number(row.total_fare || 0),
-              paymentMethod: row.payment_method || "pay_later",
-              paymentStatus: row.payment_status || "pending",
+              paymentMethod: "not_recorded",
+              paymentStatus: "not_recorded",
               status: row.status,
               customerName: row.customer_name,
               customerPhone: row.customer_phone,
@@ -2134,32 +2164,10 @@
             addText("p", "Route: " + booking.from + " → " + booking.to, card);
             addText("p", "Date: " + booking.date, card);
             addText("p", "Seats: " + booking.seats.join(", "), card);
-            addText("p", "Passengers: " + booking.people.map((p) => p.name || "").filter(Boolean).join(", "), card);
+            addText("p", "Passenger details: PNR lookup par surakshit rakhe gaye hain.", card);
             addText("p", "Fare: " + money(booking.total), card);
             addText("p", "Payment Method: " + paymentMethodLabel(row.payment_method), card);
-            const payStatusLine = addText("p", "Payment Status: " + paymentStatusLabel(row.payment_status), card);
-            const payStatusSelect = document.createElement("select");
-            [ ["pending", "Pending"], ["paid", "Paid"], ["refunded", "Refunded"] ].forEach(([value, label]) => {
-              const option = document.createElement("option"); option.value = value; option.textContent = label; payStatusSelect.appendChild(option);
-            });
-            payStatusSelect.value = row.payment_status || "pending";
-            payStatusSelect.setAttribute("aria-label", "Update payment status for " + booking.id);
-            const updatePayButton = addText("button", "UPDATE PAYMENT STATUS", card);
-            updatePayButton.type = "button";
-            updatePayButton.onclick = async function () {
-              updatePayButton.disabled = true;
-              try {
-                await adminBusRequest("/rest/v1/bookings?pnr=eq." + encodeURIComponent(booking.id), {
-                  method: "PATCH", headers: { Prefer: "return=representation" },
-                  body: JSON.stringify({ payment_status: payStatusSelect.value })
-                });
-                payStatusLine.textContent = "Payment Status: " + paymentStatusLabel(payStatusSelect.value);
-                alert("Payment status update ho gaya.");
-              } catch (error) { alert("Payment status update nahi hua: " + error.message); }
-              finally { updatePayButton.disabled = false; }
-            };
-            card.appendChild(payStatusSelect);
-            card.appendChild(updatePayButton);
+            addText("p", "Payment status: V2 booking record mein abhi available nahi hai.", card);
             addText("p", "Booked: " + (row.created_at ? new Date(row.created_at).toLocaleString() : "—"), card);
             const viewButton = addText("button", "VIEW TICKET", card);
             viewButton.type = "button";
@@ -2205,8 +2213,9 @@
       }
       // Export bookings as CSV
       $("exportBookingsBtn").onclick = function () {
-        if (!bookings.length) {
-          alert("Export karne ke liye koi booking nahi hai.");
+        const exportBookings = latestAdminReportRows || [];
+        if (!exportBookings.length) {
+          alert("Export ke liye pehle Admin Panel refresh karein. Koi booking nahi mili.");
           return;
         }
         const headers = [
@@ -2224,22 +2233,21 @@
           "Booking Created At",
           "Cancelled At",
         ];
-        const rows = bookings.map(function (b) {
-          const people = b.people || [];
+        const rows = exportBookings.map(function (b) {
           return [
-            b.id,
-            statusOf(b).toUpperCase(),
-            b.bus,
-            b.from,
-            b.to,
-            b.date,
+            b.pnr,
+            String(b.status || "").toUpperCase(),
+            [b.bus_name, b.bus_number, b.bus_type].filter(Boolean).join(" "),
+            b.boarding_name,
+            b.dropping_name,
+            b.journey_date,
             (b.seats || []).join(", "),
-            people.map((p) => p.name).join(", "),
-            people.map((p) => p.age).join(", "),
-            people.map((p) => p.phone).join(", "),
-            b.total,
-            b.createdAt || "",
-            b.cancelledAt || "",
+            b.customer_name || "",
+            "",
+            b.customer_phone || "",
+            b.total_fare,
+            b.created_at || "",
+            b.cancelled_at || "",
           ];
         });
         const csv =
