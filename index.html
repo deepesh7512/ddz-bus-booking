@@ -1083,7 +1083,7 @@
       if (refreshNotificationsButton) refreshNotificationsButton.addEventListener("click", loadAdminNotifications);
       async function loadAdminBookingsFromSupabase() {
         // V2 bookings are stored in app_bookings, not the legacy bookings table.
-        const rows = await adminBusRequest("/rest/v1/app_bookings?select=id,pnr,trip_id,customer_name,customer_phone,customer_email,boarding_name_snapshot,dropping_name_snapshot,seats,fare,status,created_at,cancelled_at&order=created_at.desc");
+        const rows = await adminBusRequest("/rest/v1/app_bookings?select=id,pnr,trip_id,customer_name,customer_phone,customer_email,boarding_name_snapshot,dropping_name_snapshot,seats,fare,status,payment_method,payment_status,created_at,cancelled_at&order=created_at.desc");
         if (!Array.isArray(rows)) return [];
         return await Promise.all(rows.map(async (row) => {
           let ticket = null;
@@ -1101,8 +1101,8 @@
             destination: ticket?.dropping_name || row.dropping_name_snapshot || "",
             journey_date: ticket?.journey_date || "",
             total_fare: Number(row.fare ?? ticket?.total_fare ?? 0),
-            payment_method: "not_recorded",
-            payment_status: "not_recorded",
+            payment_method: row.payment_method || "pay_later",
+            payment_status: row.payment_status || "pending",
             passenger_details: [],
             pnr: row.pnr,
             status: row.status,
@@ -2167,12 +2167,16 @@
             updatePayButton.onclick = async function () {
               updatePayButton.disabled = true;
               try {
-                await adminBusRequest("/rest/v1/bookings?pnr=eq." + encodeURIComponent(booking.id), {
+                const updatedRows = await adminBusRequest("/rest/v1/app_bookings?pnr=eq." + encodeURIComponent(booking.id) + "&select=id,pnr,payment_status,payment_method", {
                   method: "PATCH", headers: { Prefer: "return=representation" },
                   body: JSON.stringify({ payment_status: payStatusSelect.value })
                 });
-                payStatusLine.textContent = "Payment Status: " + paymentStatusLabel(payStatusSelect.value);
-                alert("Payment status update ho gaya.");
+                if (!Array.isArray(updatedRows) || updatedRows.length !== 1) {
+                  throw new Error("Database mein koi booking update nahi hui. Supabase SQL aur Admin RLS policy check karein.");
+                }
+                row.payment_status = updatedRows[0].payment_status || payStatusSelect.value;
+                payStatusLine.textContent = "Payment Status: " + paymentStatusLabel(row.payment_status);
+                alert("Payment status Supabase database mein save ho gaya.");
               } catch (error) { alert("Payment status update nahi hua: " + error.message); }
               finally { updatePayButton.disabled = false; }
             };
