@@ -2763,11 +2763,11 @@
             req('app_route_stops?select=id,route_id,stop_order,stop_name,arrival_time,departure_time&order=stop_order'),
             req('app_trips?select=id,route_id,bus_id,journey_date,status&order=journey_date.desc&limit=200')
           ]);
-          fill('v2BusOperator',operators,'id',x=>x.operator_name);fill('v2RouteBus',buses,'id',x=>x.bus_name+' ('+(x.bus_number||'No number')+')');fill('v2StopRoute',routes,'id',x=>x.route_name);fill('v2TripRoute',routes,'id',x=>x.route_name);fill('v2FareTrip',trips,'id',x=>x.journey_date+' | '+(routes.find(r=>r.id===x.route_id)?.route_name||x.id));
+          fill('v2BusOperator',operators,'id',x=>x.operator_name);fill('v2RouteBus',buses,'id',x=>x.bus_name+' ('+(x.bus_number||'No number')+')');fill('v2StopRoute',routes,'id',x=>x.route_name+' | '+(buses.find(b=>b.id===x.bus_id)?.bus_name||'Bus not found')+' ('+(buses.find(b=>b.id===x.bus_id)?.bus_number||'No number')+')');fill('v2TripRoute',routes,'id',x=>x.route_name+' | '+(buses.find(b=>b.id===x.bus_id)?.bus_name||'Bus not found')+' ('+(buses.find(b=>b.id===x.bus_id)?.bus_number||'No number')+')');fill('v2FareTrip',trips,'id',x=>x.journey_date+' | '+(routes.find(r=>r.id===x.route_id)?.route_name||x.id));
           list('v2Operators',operators,x=>x.operator_name+' | '+(x.phone||'')+' | '+(x.active?'Active':'Inactive'));
           list('v2Buses',buses,x=>x.bus_name+' | '+(x.bus_number||'')+' | '+x.total_seats+' seats | '+(x.active?'Active':'Inactive'));
           list('v2Routes',routes,x=>x.route_name+' | '+(buses.find(b=>b.id===x.bus_id)?.bus_name||'')+' | '+(x.active?'Active':'Inactive'));
-          list('v2RouteStops',routeStops,x=>x.stop_order+'. '+x.stop_name+' | '+(x.arrival_time||'')+' / '+(x.departure_time||''));
+          list('v2RouteStops',routeStops,x=>{const r=routes.find(y=>y.id===x.route_id);const b=r?buses.find(y=>y.id===r.bus_id):null;return (r?.route_name||'Unknown route')+' | '+(b?.bus_name||'Unknown bus')+' ('+(b?.bus_number||'No number')+') | Stop '+x.stop_order+': '+x.stop_name+' | Arrival '+(x.arrival_time||'—')+' / Departure '+(x.departure_time||'—');});
           list('v2TripsAdmin',trips,x=>(x.journey_date)+' | '+(routes.find(r=>r.id===x.route_id)?.route_name||'')+' | '+x.status);
           await loadFareSelectors();msg('V2 Admin data loaded.');
         }catch(e){msg('V2 Admin data load error: '+e.message,true);}
