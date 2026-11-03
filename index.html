@@ -769,7 +769,7 @@
         </form>
         <div id="pnrResult"></div>
       </section>
-      <section id="cancelPanel">
+      <section id="cancelPanel" hidden>
         <h2>Cancel Booking</h2>
         <form id="cancelForm">
           <label>PNR Number</label>
@@ -1116,7 +1116,10 @@
         }));
       }
       async function cancelAdminBookingOnSupabase(pnr) {
-        throw new Error("Admin cancellation ko V2 phone-verification workflow se alag se configure karna hoga. Customer cancellation page use karein.");
+        const result = await adminBusRequest("/rest/v1/rpc/app_admin_cancel_booking", {
+          method: "POST", body: JSON.stringify({ p_pnr: pnr })
+        });
+        return Array.isArray(result) ? result[0] : result;
       }
       async function getBookedSeatsFromSupabase(busId, date) {
         const data = await supabaseRpc("get_booked_seats", {
@@ -1247,9 +1250,10 @@
         return buses.find((b) => String(b.id) === String(id));
       }
       function showCustomer() {
-        ["searchPanel", "pnrPanel", "cancelPanel"].forEach((id) => {
+        ["searchPanel", "pnrPanel"].forEach((id) => {
           $(id).hidden = false;
         });
+        $("cancelPanel").hidden = true;
         [
           "results",
           "seatPanel",
@@ -1924,6 +1928,8 @@
         const stats = $("bookingStats");
         const session = readDemoAuthSession();
         if (!container || !session?.userId || !session?.access_token) return;
+        const oldHeading = container.querySelector("h3");
+        if (oldHeading) container.replaceChildren();
         const heading = document.createElement("h3");
         heading.textContent = "V2 Booking History";
         container.appendChild(heading);
@@ -1961,6 +1967,26 @@
               addText("p", "Total Fare: " + money(item.total_fare), card);
               const view = addText("button", "View Ticket Details", card); view.type = "button";
               view.onclick = () => { $("lookupPnr").value = item.booking_pnr; $("dashboardPanel").hidden = true; $("pnrPanel").hidden = false; $("pnrForm").requestSubmit(); };
+              if (status === "confirmed") {
+                const cancel = addText("button", "Cancel Ticket", card);
+                cancel.type = "button";
+                cancel.className = "danger";
+                cancel.onclick = async () => {
+                  if (!confirm("Kya aap PNR " + item.booking_pnr + " ki booking cancel karna chahte hain?")) return;
+                  cancel.disabled = true;
+                  try {
+                    const result = await rpc("app_cancel_my_booking", { p_pnr: item.booking_pnr });
+                    const cancelled = Array.isArray(result) ? result[0] : result;
+                    alert("Aapki booking cancel ho gayi. PNR: " + (cancelled?.booking_pnr || item.booking_pnr));
+                    const list = $("myBookingsList"); if (list) list.replaceChildren();
+                    const stats = $("bookingStats"); if (stats) stats.replaceChildren();
+                    await renderV2AccountBookings();
+                  } catch (err) {
+                    alert("Cancellation nahi hui: " + err.message);
+                    cancel.disabled = false;
+                  }
+                };
+              }
             } catch (err) { addText("p", "PNR " + row.pnr + " load nahi hua: " + err.message, card); }
           }
           const summary = document.createElement("p");
@@ -2183,6 +2209,23 @@
             const printTicketButton = addText("button", "PRINT TICKET", card);
             printTicketButton.type = "button";
             printTicketButton.onclick = function () { openAdminTicket(booking, true); };
+            if (String(row.status).toLowerCase() === "confirmed") {
+              const adminCancelButton = addText("button", "CANCEL BOOKING", card);
+              adminCancelButton.type = "button";
+              adminCancelButton.className = "danger";
+              adminCancelButton.onclick = async function () {
+                if (!confirm("Admin ke roop mein PNR " + booking.id + " cancel karein? Yeh action booking ko cancelled mark karega.")) return;
+                adminCancelButton.disabled = true;
+                try {
+                  await cancelAdminBookingOnSupabase(booking.id);
+                  alert("Booking cancel ho gayi. PNR: " + booking.id);
+                  renderAdmin();
+                } catch (error) {
+                  alert("Admin cancellation fail: " + error.message);
+                  adminCancelButton.disabled = false;
+                }
+              };
+            }
             bookingContainer.appendChild(card);
           });
         }).catch(function (error) {
@@ -2812,12 +2855,13 @@
         }catch(err){showV2Message(q("seatList"),"Seat availability check nahi ho payi: "+err.message);return;}
         q("seatPanel").hidden=false;q("passengerPanel").hidden=true;q("ticketPanel").hidden=true;if(card)card.insertAdjacentElement("afterend",q("seatPanel"));q("seatPanel").scrollIntoView({behavior:"smooth"});
       }
-      q("continueBtn").onclick=function(){if(!v2Trip||!seats.length){alert("Pehle seat select karein.");return;}const bs=v2Stops.find(x=>x.id===q("v2Boarding").value),ds=v2Stops.find(x=>x.id===q("v2Dropping").value);if(!bs||!ds||bs.stop_order>=ds.stop_order||!v2Fares.some(x=>x.boarding_stop_id===bs.id&&x.dropping_stop_id===ds.id)){alert("Valid boarding aur dropping stop chunein.");return;}v2Boarding=bs.id;v2Dropping=ds.id;v2Fare=Number(v2Fares.find(x=>x.boarding_stop_id===bs.id&&x.dropping_stop_id===ds.id).fare);q("passengers").replaceChildren();[...seats].sort((a,b)=>a-b).forEach((seat,i)=>{const box=document.createElement("div");box.className="passenger";addText("h3",`Passenger ${i+1} — Seat ${seat}`,box);const n=document.createElement("input");n.name="name";n.placeholder="Passenger Name";n.required=true;box.appendChild(n);const age=document.createElement("input");age.name="age";age.type="number";age.min=1;age.max=120;age.placeholder="Age";age.required=true;box.appendChild(age);const ph=document.createElement("input");ph.name="phone";ph.placeholder="10-digit mobile number";ph.inputMode="numeric";ph.maxLength=10;ph.pattern="[6-9][0-9]{9}";ph.required=true;restrictMobile(ph);box.appendChild(ph);q("passengers").appendChild(box);});q("bookingSummary").textContent=`${bus.name} | ${v2Stops.find(x=>x.id===v2Boarding).stop_name} → ${v2Stops.find(x=>x.id===v2Dropping).stop_name} | ${journeyDate} | Seats ${seats.join(", ")} | Total ${money(v2Fare*seats.length)}`;q("passengerPanel").hidden=false;q("passengerPanel").scrollIntoView({behavior:"smooth"});};
-      q("passengerForm").onsubmit=async function(e){e.preventDefault();if(!v2Trip||!seats.length)return;const people=[...q("passengers").children].map(box=>({name:box.querySelector('[name="name"]').value.trim(),age:Number(box.querySelector('[name="age"]').value),phone:box.querySelector('[name="phone"]').value.trim()}));if(people.some(p=>!p.name||!Number.isInteger(p.age)||p.age<1||p.age>120||!/^[6-9][0-9]{9}$/.test(p.phone))){alert("Passenger details check karein.");return;}const submit=q("passengerForm").querySelector('button[type="submit"]');submit.disabled=true;try{const data=await rpc("app_create_booking",{p_trip_id:v2Trip.trip.id,p_boarding_stop_id:v2Boarding,p_dropping_stop_id:v2Dropping,p_seats:[...seats].sort((a,b)=>a-b),p_customer_name:people[0].name,p_customer_phone:people[0].phone,p_customer_email:readDemoAuthSession()?.email||null});const row=Array.isArray(data)?data[0]:data;if(!row?.booking_pnr)throw new Error("Booking PNR response nahi mila.");const account=readDemoAuthSession();if(account?.email){const historyKey="apniBus_v2_account_pnrs_v1";let history=[];try{history=JSON.parse(localStorage.getItem(historyKey)||"[]");}catch{history=[];}if(!Array.isArray(history))history=[];if(!history.some(x=>x.pnr===row.booking_pnr&&x.email===account.email)){history.push({pnr:row.booking_pnr,email:account.email,createdAt:new Date().toISOString()});localStorage.setItem(historyKey,JSON.stringify(history));}}const booking={id:row.booking_pnr,bus:bus.name,from:v2Stops.find(x=>x.id===v2Boarding).stop_name,to:v2Stops.find(x=>x.id===v2Dropping).stop_name,date:journeyDate,seats:[...seats].sort((a,b)=>a-b),people,total:Number(row.total_fare),paymentMethod:q("paymentMethod").value||"pay_later",paymentStatus:"pending",status:"confirmed",createdAt:new Date().toISOString(),boardingTime:v2Stops.find(x=>x.id===v2Boarding).departure_time,droppingTime:v2Stops.find(x=>x.id===v2Dropping).arrival_time};renderTicket(booking);q("seatPanel").hidden=true;q("passengerPanel").hidden=true;q("ticketPanel").hidden=false;q("ticketPanel").scrollIntoView({behavior:"smooth"});alert("Booking successful! PNR: "+booking.id);seats=[];}catch(err){alert("Booking nahi hui: "+err.message+". Seat refresh karke try karein.");try{await openV2(v2Trips.find(x=>x.trip.id===v2Trip.trip.id));}catch(_){}}finally{submit.disabled=false;}};
+      q("continueBtn").onclick=function(){if(!readDemoAuthSession()){alert("Ticket book karne ke liye pehle My Account mein login ya registration karein.");openDemoAuth();return;}if(!v2Trip||!seats.length){alert("Pehle seat select karein.");return;}const bs=v2Stops.find(x=>x.id===q("v2Boarding").value),ds=v2Stops.find(x=>x.id===q("v2Dropping").value);if(!bs||!ds||bs.stop_order>=ds.stop_order||!v2Fares.some(x=>x.boarding_stop_id===bs.id&&x.dropping_stop_id===ds.id)){alert("Valid boarding aur dropping stop chunein.");return;}v2Boarding=bs.id;v2Dropping=ds.id;v2Fare=Number(v2Fares.find(x=>x.boarding_stop_id===bs.id&&x.dropping_stop_id===ds.id).fare);q("passengers").replaceChildren();[...seats].sort((a,b)=>a-b).forEach((seat,i)=>{const box=document.createElement("div");box.className="passenger";addText("h3",`Passenger ${i+1} — Seat ${seat}`,box);const n=document.createElement("input");n.name="name";n.placeholder="Passenger Name";n.required=true;box.appendChild(n);const age=document.createElement("input");age.name="age";age.type="number";age.min=1;age.max=120;age.placeholder="Age";age.required=true;box.appendChild(age);const ph=document.createElement("input");ph.name="phone";ph.placeholder="10-digit mobile number";ph.inputMode="numeric";ph.maxLength=10;ph.pattern="[6-9][0-9]{9}";ph.required=true;restrictMobile(ph);box.appendChild(ph);q("passengers").appendChild(box);});q("bookingSummary").textContent=`${bus.name} | ${v2Stops.find(x=>x.id===v2Boarding).stop_name} → ${v2Stops.find(x=>x.id===v2Dropping).stop_name} | ${journeyDate} | Seats ${seats.join(", ")} | Total ${money(v2Fare*seats.length)}`;q("passengerPanel").hidden=false;q("passengerPanel").scrollIntoView({behavior:"smooth"});};
+      q("passengerForm").onsubmit=async function(e){e.preventDefault();if(!readDemoAuthSession()){alert("Booking ke liye customer login zaroori hai.");openDemoAuth();return;}if(!v2Trip||!seats.length)return;const people=[...q("passengers").children].map(box=>({name:box.querySelector('[name="name"]').value.trim(),age:Number(box.querySelector('[name="age"]').value),phone:box.querySelector('[name="phone"]').value.trim()}));if(people.some(p=>!p.name||!Number.isInteger(p.age)||p.age<1||p.age>120||!/^[6-9][0-9]{9}$/.test(p.phone))){alert("Passenger details check karein.");return;}const submit=q("passengerForm").querySelector('button[type="submit"]');submit.disabled=true;try{const data=await rpc("app_create_booking",{p_trip_id:v2Trip.trip.id,p_boarding_stop_id:v2Boarding,p_dropping_stop_id:v2Dropping,p_seats:[...seats].sort((a,b)=>a-b),p_customer_name:people[0].name,p_customer_phone:people[0].phone,p_customer_email:readDemoAuthSession()?.email||null});const row=Array.isArray(data)?data[0]:data;if(!row?.booking_pnr)throw new Error("Booking PNR response nahi mila.");const account=readDemoAuthSession();if(account?.email){const historyKey="apniBus_v2_account_pnrs_v1";let history=[];try{history=JSON.parse(localStorage.getItem(historyKey)||"[]");}catch{history=[];}if(!Array.isArray(history))history=[];if(!history.some(x=>x.pnr===row.booking_pnr&&x.email===account.email)){history.push({pnr:row.booking_pnr,email:account.email,createdAt:new Date().toISOString()});localStorage.setItem(historyKey,JSON.stringify(history));}}const booking={id:row.booking_pnr,bus:bus.name,from:v2Stops.find(x=>x.id===v2Boarding).stop_name,to:v2Stops.find(x=>x.id===v2Dropping).stop_name,date:journeyDate,seats:[...seats].sort((a,b)=>a-b),people,total:Number(row.total_fare),paymentMethod:q("paymentMethod").value||"pay_later",paymentStatus:"pending",status:"confirmed",createdAt:new Date().toISOString(),boardingTime:v2Stops.find(x=>x.id===v2Boarding).departure_time,droppingTime:v2Stops.find(x=>x.id===v2Dropping).arrival_time};renderTicket(booking);q("seatPanel").hidden=true;q("passengerPanel").hidden=true;q("ticketPanel").hidden=false;q("ticketPanel").scrollIntoView({behavior:"smooth"});alert("Booking successful! PNR: "+booking.id);seats=[];}catch(err){alert("Booking nahi hui: "+err.message+". Seat refresh karke try karein.");try{await openV2(v2Trips.find(x=>x.trip.id===v2Trip.trip.id));}catch(_){}}finally{submit.disabled=false;}};
       // Limited-information PNR lookup as defined by the V2 RPC.
       q("pnrForm").onsubmit=async function(e){e.preventDefault();const pnr=q("lookupPnr").value.trim(),out=q("pnrResult");out.replaceChildren();try{const data=await rpc("app_lookup_booking",{p_pnr:pnr});const x=Array.isArray(data)?data[0]:data;if(!x||!x.booking_pnr){showV2Message(out,"Is PNR se booking nahi mili.");return;}addText("h3","Ticket Details",out);[["PNR",x.booking_pnr],["Status",String(x.booking_status).toUpperCase()],["Bus",x.bus_name],["Bus Number",x.bus_number],["Bus Type",x.bus_type],["Journey Date",x.journey_date],["Boarding",x.boarding_name+" — "+(x.boarding_time||"—")],["Dropping",x.dropping_name+" — "+(x.dropping_time||"—")],["Seats",(x.seats||[]).join(", ")],["Total Fare",money(x.total_fare)],["Booked At",x.booked_at?new Date(x.booked_at).toLocaleString("en-IN"):"—"]].forEach(([k,v])=>{const p=document.createElement("p");addText("strong",k+": ",p);addText("span",v,p);out.appendChild(p);});}catch(err){showV2Message(out,"PNR lookup nahi ho paya: "+err.message);}};
-      // Preview ticket first; user must explicitly confirm cancellation.
-      q("cancelForm").onsubmit=async function(e){e.preventDefault();const pnr=q("cancelPnr").value.trim(),phone=q("cancelPhone").value.trim(),out=q("cancelResult");out.replaceChildren();if(!/^[6-9][0-9]{9}$/.test(phone)){showV2Message(out,"Valid 10-digit mobile number enter karein.");return;}try{const data=await rpc("app_lookup_booking",{p_pnr:pnr});const x=Array.isArray(data)?data[0]:data;if(!x||!x.booking_pnr){showV2Message(out,"PNR nahi mila.");return;}[["PNR",x.booking_pnr],["Status",String(x.booking_status).toUpperCase()],["Bus",x.bus_name],["Date",x.journey_date],["Route",x.boarding_name+" → "+x.dropping_name],["Seats",(x.seats||[]).join(", ")],["Fare",money(x.total_fare)]].forEach(([k,v])=>addText("p",k+": "+v,out));if(x.booking_status!=="confirmed"){addText("p","Yeh booking pehle hi cancel hai.",out);return;}addText("p","Ticket details check karne ke baad hi cancellation confirm karein.",out);const btn=addText("button","Confirm Cancellation",out);btn.type="button";btn.className="danger";btn.onclick=async()=>{if(!confirm("PNR "+pnr+" ki booking permanently cancel karein?"))return;btn.disabled=true;try{const result=await rpc("app_cancel_booking",{p_pnr:pnr,p_customer_phone:phone});const r=Array.isArray(result)?result[0]:result;showV2Message(out,"Booking cancel ho gayi. PNR: "+(r?.booking_pnr||pnr),"cancelled");}catch(err){btn.disabled=false;addText("p","Cancellation fail: "+err.message,out);}};}catch(err){showV2Message(out,"Cancellation preview load nahi hua: "+err.message);}};
+      // Public PNR + phone cancellation is disabled. Cancellation is available only
+      // from authenticated customer account or verified Admin Panel.
+      if (q("cancelForm")) q("cancelForm").onsubmit = (e) => { e.preventDefault(); showV2Message(q("cancelResult"), "Cancellation ke liye My Account mein login karein."); };
       // Ticket renderer now uses stop-specific times and avoids claiming V1 payment was collected.
       const originalRenderTicket=renderTicket;
       renderTicket=function(b){originalRenderTicket(b);const ticket=q("ticket");if(b.boardingTime||b.droppingTime){const p=document.createElement("p");p.textContent="Boarding: "+(b.boardingTime||"—")+" | Dropping: "+(b.droppingTime||"—");ticket.appendChild(p);}};
