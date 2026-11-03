@@ -849,7 +849,7 @@
         <form id="v2RouteForm">
           <label>Bus</label><select id="v2RouteBus" required></select>
           <label>Route Name (e.g. Shahdol to Rewa)</label><input id="v2RouteName" required />
-          <label>Fare Type</label><select id="v2FareType"><option value="stage">Stage / Stop-wise</option><option value="fixed">Fixed</option></select>
+          <label>Fare Type</label><select id="v2FareType" required><option value="manual">Manual (Stop-wise fares)</option><option value="automatic">Automatic</option></select>
           <button type="submit">Add Route</button>
         </form><div id="v2Routes"></div>
         <h3>4. Route Stoppages</h3>
