@@ -825,6 +825,57 @@
         </form>
         <h3>Manage Buses</h3>
         <div id="adminBuses"></div>
+        <hr />
+        <h2>V2 Admin Dashboard</h2>
+        <p>V2 Operators, Buses, Routes, Stoppages, Trips aur Fares yahan manage karein.</p>
+        <div id="v2AdminMessage" role="status" aria-live="polite"></div>
+        <h3>1. Operators</h3>
+        <form id="v2OperatorForm">
+          <label>Operator Name</label><input id="v2OperatorName" required />
+          <label>Phone</label><input id="v2OperatorPhone" inputmode="tel" />
+          <label>Email</label><input id="v2OperatorEmail" type="email" />
+          <button type="submit">Add Operator</button>
+        </form><div id="v2Operators"></div>
+        <h3>2. Buses</h3>
+        <form id="v2BusForm">
+          <label>Operator</label><select id="v2BusOperator" required></select>
+          <label>Bus Name</label><input id="v2BusName" required />
+          <label>Bus Number</label><input id="v2BusNumber" />
+          <label>Bus Type</label><select id="v2BusType"><option>AC Seater</option><option>Non AC Seater</option><option>AC Sleeper</option><option>Non AC Sleeper</option></select>
+          <label>Total Seats</label><input id="v2BusSeats" type="number" min="1" max="100" value="40" required />
+          <button type="submit">Add Bus</button>
+        </form><div id="v2Buses"></div>
+        <h3>3. Routes</h3>
+        <form id="v2RouteForm">
+          <label>Bus</label><select id="v2RouteBus" required></select>
+          <label>Route Name (e.g. Shahdol to Rewa)</label><input id="v2RouteName" required />
+          <label>Fare Type</label><select id="v2FareType"><option value="stage">Stage / Stop-wise</option><option value="fixed">Fixed</option></select>
+          <button type="submit">Add Route</button>
+        </form><div id="v2Routes"></div>
+        <h3>4. Route Stoppages</h3>
+        <form id="v2StopForm">
+          <label>Route</label><select id="v2StopRoute" required></select>
+          <label>Stop Name</label><input id="v2StopName" required />
+          <label>Stop Order (1, 2, 3...)</label><input id="v2StopOrder" type="number" min="1" required />
+          <label>Arrival Time</label><input id="v2StopArrival" type="time" />
+          <label>Departure Time</label><input id="v2StopDeparture" type="time" />
+          <button type="submit">Add Stoppage</button>
+        </form><div id="v2RouteStops"></div>
+        <h3>5. Trips / Journey Schedule</h3>
+        <form id="v2TripForm">
+          <label>Route</label><select id="v2TripRoute" required></select>
+          <label>Journey Date</label><input id="v2TripDate" type="date" required />
+          <button type="submit">Create Trip & Copy Stoppages</button>
+        </form><div id="v2TripsAdmin"></div>
+        <h3>6. Trip Fares</h3>
+        <form id="v2TripFareForm">
+          <label>Trip</label><select id="v2FareTrip" required></select>
+          <label>Boarding Stop</label><select id="v2FareBoarding" required></select>
+          <label>Dropping Stop</label><select id="v2FareDropping" required></select>
+          <label>Fare (₹)</label><input id="v2FareAmount" type="number" min="1" step="0.01" required />
+          <button type="submit">Save / Update Fare</button>
+        </form><div id="v2TripFares"></div>
+        <hr />
         <h3>Notifications</h3>
         <p>New bookings, cancellations aur payment updates ki recent activity.</p>
         <div id="adminNotifications" aria-live="polite">Notifications load ho rahi hain...</div>
@@ -2690,6 +2741,59 @@
         adminPanel.prepend(logoutButton);
         adminPanel.hidden = true; adminLoginPanel.hidden = true;
       })();
+    </script>
+
+    <script>
+    /* APNI BUS BOOKING V2 ADMIN MANAGEMENT */
+    (() => {
+      const $a = id => document.getElementById(id);
+      const msg = (text, bad=false) => { const el=$a('v2AdminMessage'); if(el){el.textContent=text;el.style.color=bad?'#b71c1c':'#176b35';} };
+      const api = '/rest/v1/';
+      const enc = v => encodeURIComponent(v);
+      const req = (path, options={}) => adminBusRequest(api+path, { ...options, headers:{ Prefer:'return=representation', ...(options.headers||{}) } });
+      const fill = (id, rows, value, label, first='Select...') => { const el=$a(id); if(!el)return; const old=el.value; el.replaceChildren(); const op=document.createElement('option');op.value='';op.textContent=first;el.appendChild(op);(rows||[]).forEach(x=>{const o=document.createElement('option');o.value=x[value];o.textContent=label(x);el.appendChild(o);}); if([...el.options].some(o=>o.value===old))el.value=old; };
+      const list = (id, rows, render) => {const el=$a(id);if(!el)return;el.replaceChildren();if(!rows.length){el.textContent='No records yet.';return;}rows.forEach(x=>{const d=document.createElement('p');d.textContent=render(x);el.appendChild(d);});};
+      let operators=[], buses=[], routes=[], routeStops=[], trips=[], tripStops=[], tripFares=[];
+      async function loadAll(){
+        try{
+          [operators,buses,routes,routeStops,trips]=await Promise.all([
+            req('app_operators?select=id,operator_name,phone,email,active&order=operator_name'),
+            req('app_buses?select=id,operator_id,bus_name,bus_number,bus_type,total_seats,active&order=bus_name'),
+            req('app_routes?select=id,bus_id,route_name,fare_type,active&order=route_name'),
+            req('app_route_stops?select=id,route_id,stop_order,stop_name,arrival_time,departure_time&order=stop_order'),
+            req('app_trips?select=id,route_id,bus_id,journey_date,status&order=journey_date.desc&limit=200')
+          ]);
+          fill('v2BusOperator',operators,'id',x=>x.operator_name);fill('v2RouteBus',buses,'id',x=>x.bus_name+' ('+(x.bus_number||'No number')+')');fill('v2StopRoute',routes,'id',x=>x.route_name);fill('v2TripRoute',routes,'id',x=>x.route_name);fill('v2FareTrip',trips,'id',x=>x.journey_date+' | '+(routes.find(r=>r.id===x.route_id)?.route_name||x.id));
+          list('v2Operators',operators,x=>x.operator_name+' | '+(x.phone||'')+' | '+(x.active?'Active':'Inactive'));
+          list('v2Buses',buses,x=>x.bus_name+' | '+(x.bus_number||'')+' | '+x.total_seats+' seats | '+(x.active?'Active':'Inactive'));
+          list('v2Routes',routes,x=>x.route_name+' | '+(buses.find(b=>b.id===x.bus_id)?.bus_name||'')+' | '+(x.active?'Active':'Inactive'));
+          list('v2RouteStops',routeStops,x=>x.stop_order+'. '+x.stop_name+' | '+(x.arrival_time||'')+' / '+(x.departure_time||''));
+          list('v2TripsAdmin',trips,x=>(x.journey_date)+' | '+(routes.find(r=>r.id===x.route_id)?.route_name||'')+' | '+x.status);
+          await loadFareSelectors();msg('V2 Admin data loaded.');
+        }catch(e){msg('V2 Admin data load error: '+e.message,true);}
+      }
+      async function loadFareSelectors(){
+        const tripId=$a('v2FareTrip')?.value;if(!tripId)return;
+        try{tripStops=await req('app_trip_stops?select=id,stop_order,stop_name,arrival_time,departure_time&trip_id=eq.'+enc(tripId)+'&order=stop_order');
+          fill('v2FareBoarding',tripStops,'id',x=>x.stop_order+'. '+x.stop_name);fill('v2FareDropping',tripStops,'id',x=>x.stop_order+'. '+x.stop_name);
+          tripFares=await req('app_trip_fares?select=id,boarding_stop_id,dropping_stop_id,fare&trip_id=eq.'+enc(tripId));
+          list('v2TripFares',tripFares,x=>(tripStops.find(s=>s.id===x.boarding_stop_id)?.stop_name||'?')+' → '+(tripStops.find(s=>s.id===x.dropping_stop_id)?.stop_name||'?')+' : ₹'+x.fare);
+        }catch(e){msg('Fare selector error: '+e.message,true);}
+      }
+      const bind=(id,fn)=>{const f=$a(id);if(f)f.addEventListener('submit',async e=>{e.preventDefault();const b=f.querySelector('button[type=submit]');if(b)b.disabled=true;try{await fn();f.reset();await loadAll();}catch(err){msg(err.message,true);}finally{if(b)b.disabled=false;}});};
+      bind('v2OperatorForm',async()=>{await req('app_operators',{method:'POST',body:JSON.stringify({operator_name:$a('v2OperatorName').value.trim(),phone:$a('v2OperatorPhone').value.trim()||null,email:$a('v2OperatorEmail').value.trim()||null,active:true})});msg('Operator added.');});
+      bind('v2BusForm',async()=>{await req('app_buses',{method:'POST',body:JSON.stringify({operator_id:$a('v2BusOperator').value,bus_name:$a('v2BusName').value.trim(),bus_number:$a('v2BusNumber').value.trim()||null,bus_type:$a('v2BusType').value,total_seats:Number($a('v2BusSeats').value),active:true})});msg('Bus added.');});
+      bind('v2RouteForm',async()=>{await req('app_routes',{method:'POST',body:JSON.stringify({bus_id:$a('v2RouteBus').value,route_name:$a('v2RouteName').value.trim(),fare_type:$a('v2FareType').value,active:true})});msg('Route added.');});
+      bind('v2StopForm',async()=>{await req('app_route_stops',{method:'POST',body:JSON.stringify({route_id:$a('v2StopRoute').value,stop_name:$a('v2StopName').value.trim(),stop_order:Number($a('v2StopOrder').value),arrival_time:$a('v2StopArrival').value||null,departure_time:$a('v2StopDeparture').value||null})});msg('Route stoppage added.');});
+      bind('v2TripForm',async()=>{const routeId=$a('v2TripRoute').value;const route=routes.find(x=>x.id===routeId);if(!route)throw Error('Route select karein.');const stops=routeStops.filter(x=>x.route_id===routeId).sort((a,b)=>a.stop_order-b.stop_order);if(stops.length<2)throw Error('Trip banane se pehle route mein kam se kam 2 stoppages add karein.');const date=$a('v2TripDate').value;const created=await req('app_trips',{method:'POST',body:JSON.stringify({route_id:routeId,bus_id:route.bus_id,journey_date:date,status:'scheduled'})});const trip=created[0];try{await req('app_trip_stops',{method:'POST',body:JSON.stringify(stops.map(s=>({trip_id:trip.id,original_stop_id:s.id,stop_order:s.stop_order,stop_name:s.stop_name,arrival_time:s.arrival_time,departure_time:s.departure_time})))});}catch(e){await req('app_trips?id=eq.'+enc(trip.id),{method:'DELETE'});throw Error('Trip stoppages copy nahi hue: '+e.message);}msg('Trip created. Ab Trip Fares section mein har required boarding-dropping pair ka fare add karein.');});
+      bind('v2TripFareForm',async()=>{const tripId=$a('v2FareTrip').value,boarding=$a('v2FareBoarding').value,dropping=$a('v2FareDropping').value;const a=tripStops.find(x=>x.id===boarding),b=tripStops.find(x=>x.id===dropping);if(!a||!b||a.stop_order>=b.stop_order)throw Error('Boarding aur dropping stop ka order sahi chunein.');const amount=Number($a('v2FareAmount').value);const existing=tripFares.find(x=>x.boarding_stop_id===boarding&&x.dropping_stop_id===dropping);if(existing)await req('app_trip_fares?id=eq.'+enc(existing.id),{method:'PATCH',body:JSON.stringify({fare:amount})});else await req('app_trip_fares',{method:'POST',body:JSON.stringify({trip_id:tripId,boarding_stop_id:boarding,dropping_stop_id:dropping,fare:amount})});msg('Trip fare saved.');});
+      if($a('v2FareTrip'))$a('v2FareTrip').addEventListener('change',loadFareSelectors);
+      const adminTab=$a('adminTab');if(adminTab)adminTab.addEventListener('click',()=>{setTimeout(()=>{if(!$a('adminPanel').hidden&&getAdminAccessToken())loadAll();},100);});
+      const originalRenderAdmin=window.renderAdmin;
+      document.addEventListener('DOMContentLoaded',()=>{});
+      // Also load after successful admin login when the panel is opened.
+      const panel=$a('adminPanel');if(panel){new MutationObserver(()=>{if(!panel.hidden&&getAdminAccessToken())loadAll();}).observe(panel,{attributes:true,attributeFilter:['hidden']});}
+    })();
     </script>
 
     <script>
