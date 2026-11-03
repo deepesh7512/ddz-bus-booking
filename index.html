@@ -622,9 +622,71 @@
           grid-template-columns: repeat(2, minmax(0, 1fr));
         }
       }
+
+      /* Apni Bus Booking — premium visual refresh (layout and behaviour preserved) */
+      :root{--brand:#c62828;--brand2:#ef4444;--ink:#172033;--muted:#64748b;--surface:#ffffff;--line:#e6eaf0;--soft:#fff5f5;--shadow:0 14px 38px rgba(15,23,42,.075)}
+      html{scroll-behavior:smooth;scroll-padding-top:22px}
+      body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;background:radial-gradient(ellipse at 8% 0%,#fff1f2 0,transparent 34%),linear-gradient(180deg,#f8fafc 0%,#f1f5f9 100%);color:var(--ink);line-height:1.6}
+      header{position:relative;isolation:isolate;overflow:hidden;text-align:left;padding:34px max(20px,calc((100% - 1080px)/2)) 28px;background:linear-gradient(118deg,#7f1d1d 0%,#b91c1c 48%,#f05252 100%);box-shadow:0 12px 35px rgba(127,29,29,.2)}
+      header:before,header:after{content:"";position:absolute;z-index:-1;border:1px solid rgba(255,255,255,.16);border-radius:50%;pointer-events:none}
+      header:before{width:330px;height:330px;right:-80px;top:-210px;box-shadow:0 0 0 35px rgba(255,255,255,.035),0 0 0 75px rgba(255,255,255,.025)}
+      header:after{width:150px;height:150px;right:18%;bottom:-112px;background:rgba(255,255,255,.06)}
+      header h1{font-size:clamp(27px,4vw,40px);font-weight:850;letter-spacing:-1.2px;text-shadow:0 2px 12px rgba(0,0,0,.12)}
+      header p{font-size:14px;letter-spacing:.2px;margin:5px 0 22px;color:rgba(255,255,255,.85)}
+      nav{justify-content:flex-start;gap:10px;position:relative;z-index:1}
+      nav button{padding:10px 17px;border:1px solid rgba(255,255,255,.32);border-radius:999px;background:rgba(255,255,255,.12);color:#fff;backdrop-filter:blur(10px);font-weight:700}
+      nav button:hover{background:#fff;color:#991b1b;transform:translateY(-2px)}
+      main{width:min(1080px,100%);margin:34px auto 64px;padding:0 20px}
+      section{padding:clamp(20px,3vw,30px);margin-bottom:22px;border:1px solid rgba(226,232,240,.9);border-radius:20px;background:rgba(255,255,255,.94);box-shadow:var(--shadow);animation:panelIn .42s cubic-bezier(.2,.7,.2,1) both}
+      section h2{font-size:clamp(21px,2.5vw,27px);letter-spacing:-.55px;color:#172033;margin-bottom:20px}
+      section h3{letter-spacing:-.25px}
+      label{color:#344256;font-size:13px;letter-spacing:.1px}
+      input,select{padding:13px 14px;border:1px solid #d9e0e9;border-radius:11px;background:#fbfdff;transition:border-color .2s,box-shadow .2s,background .2s}
+      input:hover,select:hover{border-color:#b8c4d3}
+      input:focus,select:focus{border-color:#e24b4b;background:#fff;box-shadow:0 0 0 4px rgba(220,38,38,.09)}
+      button{border-radius:11px;padding:11px 18px;background:linear-gradient(135deg,#b91c1c,#e34242);box-shadow:0 5px 12px rgba(185,28,28,.13);transition:transform .2s,box-shadow .2s,filter .2s}
+      button:hover{filter:brightness(1.04);box-shadow:0 8px 18px rgba(185,28,28,.2);transform:translateY(-2px)}
+      button:active{transform:translateY(0) scale(.98)}
+      button:disabled{opacity:.58;cursor:wait;transform:none;box-shadow:none}
+      .bus,.passenger,.booking{padding:20px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(145deg,#fff,#fcfdff);box-shadow:0 5px 18px rgba(15,23,42,.035);transition:transform .22s,box-shadow .22s,border-color .22s}
+      .bus:hover,.booking:hover{transform:translateY(-3px);border-color:#f2b5b5;box-shadow:0 13px 28px rgba(15,23,42,.08)}
+      .seat{border-radius:10px;box-shadow:none;background:#e8f8ef;color:#087443;border-color:#b9ebcf}
+      .seat.selected{background:linear-gradient(135deg,#2563eb,#4f8df7);border-color:#2563eb;box-shadow:0 5px 12px rgba(37,99,235,.2)}
+      .summary{border:1px solid #ffe0e0;background:linear-gradient(135deg,#fff1f2,#fff8f8);color:#991b1b;border-radius:13px;padding:16px}
+      #authPanel,#adminLoginPanel{border-top:0;max-width:620px;box-shadow:0 18px 48px rgba(15,23,42,.09)}
+      #adminPanel{border-top:0;background:rgba(255,255,255,.97)}
+      #adminPanel>h2,#adminLoginPanel h2{color:#991b1b}
+      #adminPanel h3{color:#8b2020;padding-bottom:8px;border-bottom:1px solid #f1dada}
+      .admin-stat{border:1px solid #f4d1d1;border-radius:16px;background:linear-gradient(145deg,#fff,#fff7f7);box-shadow:0 6px 16px rgba(127,29,29,.045)}
+      #authMessage,#adminLoginMessage{border:1px solid #fee2e2;background:#fff7f7}
+      #pnrPanel{border-left:4px solid #d84a4a}
+      hr{border:0;border-top:1px solid #e8edf3;margin:28px 0}
+      @keyframes panelIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+      @keyframes spin{to{transform:rotate(360deg)}}
+      @keyframes shimmer{0%{background-position:100% 0}100%{background-position:-100% 0}}
+      #appBusyBar{position:fixed;z-index:10002;inset:0 0 auto;height:3px;background:linear-gradient(90deg,#fca5a5,#fff,#ef4444);background-size:200% 100%;animation:shimmer 1.1s linear infinite;opacity:0;transition:opacity .18s;pointer-events:none}
+      #appBusyOverlay{position:fixed;z-index:10001;inset:0;display:grid;place-items:center;padding:20px;background:rgba(15,23,42,.28);backdrop-filter:blur(5px);opacity:0;visibility:hidden;transition:opacity .2s,visibility .2s}
+      #appBusyOverlay.visible{opacity:1;visibility:visible}
+      .app-busy-card{width:min(310px,100%);padding:26px 24px;border:1px solid rgba(255,255,255,.8);border-radius:22px;background:rgba(255,255,255,.97);box-shadow:0 22px 70px rgba(15,23,42,.2);text-align:center;animation:panelIn .22s ease-out}
+      .app-busy-spinner{width:42px;height:42px;margin:0 auto 14px;border:4px solid #fee2e2;border-top-color:#c62828;border-right-color:#ef4444;border-radius:50%;animation:spin .78s linear infinite}
+      .app-busy-title{font-size:15px;font-weight:800;color:#172033}
+      .app-busy-subtitle{margin-top:4px;font-size:12px;color:#64748b}
+      #appBusyBar.active{opacity:1}
+      @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+      @media(max-width:600px){header{padding:25px 18px 22px}nav{display:grid;grid-template-columns:1fr 1fr;gap:8px}nav button{font-size:12px;padding:10px 9px}nav button:last-child{grid-column:1/-1}main{margin:22px auto 44px;padding:0 13px}section{border-radius:16px;padding:19px;margin-bottom:16px}.seats{gap:7px}}
+
     </style>
   </head>
   <body>
+    <div id="appBusyBar" aria-hidden="true"></div>
+    <div id="appBusyOverlay" role="status" aria-live="polite" aria-label="Processing">
+      <div class="app-busy-card">
+        <div class="app-busy-spinner" aria-hidden="true"></div>
+        <div class="app-busy-title">Please wait…</div>
+        <div class="app-busy-subtitle">Aapka request process ho raha hai</div>
+      </div>
+    </div>
+
     <header>
       <h1>🚌 Apni Bus Booking</h1>
       <p>Book your journey easily</p>
@@ -913,6 +975,35 @@
         <p id="restoreMessage" role="status" aria-live="polite"></p>
       </section>
     </main>
+
+    <script>
+      // Global Supabase/network processing indicator. Does not alter request payloads or app features.
+      (function(){
+        const nativeFetch=window.fetch.bind(window);
+        let pending=0, showTimer=null, hideTimer=null, startedAt=0;
+        function show(){
+          const overlay=document.getElementById("appBusyOverlay");
+          const bar=document.getElementById("appBusyBar");
+          if(overlay)overlay.classList.add("visible");
+          if(bar)bar.classList.add("active");
+        }
+        function hide(){
+          const overlay=document.getElementById("appBusyOverlay");
+          const bar=document.getElementById("appBusyBar");
+          if(overlay)overlay.classList.remove("visible");
+          if(bar)bar.classList.remove("active");
+        }
+        window.fetch=function(...args){
+          pending++;
+          if(pending===1){startedAt=Date.now();clearTimeout(hideTimer);showTimer=setTimeout(show,220);}
+          return nativeFetch(...args).finally(()=>{
+            pending=Math.max(0,pending-1);
+            if(pending===0){clearTimeout(showTimer);const elapsed=Date.now()-startedAt;hideTimer=setTimeout(hide,Math.max(120,elapsed<450?450-elapsed:120));}
+          });
+        };
+        window.addEventListener("pageshow",hide);
+      })();
+    </script>
     <script>
       const $ = (id) => document.getElementById(id);
       // Supabase setup: paste your Project URL and Publishable key below.
