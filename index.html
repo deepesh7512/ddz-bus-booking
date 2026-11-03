@@ -622,35 +622,14 @@
           grid-template-columns: repeat(2, minmax(0, 1fr));
         }
       }
-      /* Unified V2 experience: retire duplicate V1 admin controls without deleting data. */
-      #adminPanel > #busForm,
-      #adminPanel > h3:has(+ #adminBuses),
-      #adminPanel > #adminBuses,
-      #adminPanel > #exportBookingsBtn,
-      #adminPanel > #backupDataBtn,
-      #adminPanel > #restoreBackupFile,
-      #adminPanel > #restoreBackupBtn,
-      #adminPanel > #restoreMessage,
-      #adminPanel > h3:has(+ p + label[for="restoreBackupFile"]) {
-        display: none !important;
-      }
-      #adminPanel { border: 0; box-shadow: none; background: transparent; padding: 0; }
-      #adminPanel > h2 { background: linear-gradient(135deg,#991b1b,#dc2626); color:#fff; padding:20px 22px; border-radius:16px; }
-      #adminPanel > p, #v2AdminMessage { background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:12px 15px; }
-      #adminPanel h3 { margin-top:24px; padding-bottom:9px; border-bottom:1px solid #e5e7eb; color:#991b1b; }
-      #adminPanel form { background:#fff; border:1px solid #e5e7eb; border-radius:14px; padding:18px; margin:12px 0; }
-      #adminPanel form button[type="submit"] { min-width:150px; }
-      #adminPanel #adminBookings, #adminPanel #adminNotifications, #adminPanel #adminBookingReports,
-      #v2Operators, #v2Buses, #v2Routes, #v2RouteStops, #v2TripsAdmin, #v2TripFares { background:#fff; border-radius:12px; }
-      #adminPanel hr { border:0; border-top:1px solid #e5e7eb; margin:24px 0; }
     </style>
   </head>
   <body>
     <header>
       <h1>🚌 Apni Bus Booking</h1>
-      <p>Search buses • Choose seats • Book your journey</p>
+      <p>Book your journey easily</p>
       <nav>
-        <button id="customerTab" type="button">Home</button>
+        <button id="customerTab" type="button">Customer Website</button>
         <button id="accountTab" type="button">My Account</button>
         <button id="adminTab" type="button">Admin Panel</button>
       </nav>
@@ -828,7 +807,8 @@
       </section>
       <section id="adminPanel" hidden>
         <h2>Admin Panel</h2>
-        <form id="busForm">
+        <!-- Legacy V1 bus form retained in source for rollback, but disabled in the V2 interface. -->
+        <form id="busForm" hidden aria-hidden="true">
           <label>Bus Name</label><input id="busName" required />
           <label>Bus Type</label>
           <select id="busType">
@@ -844,11 +824,9 @@
           <label>Fare</label><input id="fare" type="number" min="1" required />
           <button type="submit">Add Bus</button>
         </form>
-        <h3>Manage Buses</h3>
-        <div id="adminBuses"></div>
-        <hr />
-        <h2>Operations Dashboard</h2>
-        <p>Manage operators, buses, routes, stoppages, trips and fares from one dashboard.</p>
+        <div id="adminBuses" hidden aria-hidden="true"></div>
+        <h2>V2 Admin Dashboard</h2>
+        <p>V2 Operators, Buses, Routes, Stoppages, Trips aur Fares yahan manage karein.</p>
         <div id="v2AdminMessage" role="status" aria-live="polite"></div>
         <h3>1. Operators</h3>
         <form id="v2OperatorForm">
@@ -1103,17 +1081,42 @@
       const refreshNotificationsButton = $("refreshNotificationsBtn");
       if (refreshNotificationsButton) refreshNotificationsButton.addEventListener("click", loadAdminNotifications);
       async function loadAdminBookingsFromSupabase() {
-        const rows = await adminBusRequest("/rest/v1/bookings?select=id,pnr,bus_id,customer_name,customer_phone,customer_email,journey_date,seats,passenger_details,total_fare,status,payment_method,payment_status,created_at,cancelled_at,buses(bus_name,source,destination)&order=created_at.desc");
-        return Array.isArray(rows) ? rows : [];
+        // V2 bookings are stored in app_bookings, not the legacy bookings table.
+        const rows = await adminBusRequest("/rest/v1/app_bookings?select=id,pnr,trip_id,customer_name,customer_phone,customer_email,boarding_name_snapshot,dropping_name_snapshot,seats,fare,status,payment_method,payment_status,created_at,cancelled_at&order=created_at.desc");
+        if (!Array.isArray(rows)) return [];
+        return await Promise.all(rows.map(async (row) => {
+          let ticket = null;
+          try {
+            const found = await adminBusRequest("/rest/v1/rpc/app_lookup_booking", {
+              method: "POST", body: JSON.stringify({ p_pnr: row.pnr })
+            });
+            ticket = Array.isArray(found) ? found[0] : found;
+          } catch (err) { console.warn("Ticket detail lookup failed for", row.pnr, err); }
+          return {
+            ...row,
+            bus_id: row.trip_id,
+            bus_name: ticket?.bus_name || ticket?.bus_type || "Bus details unavailable",
+            bus_number: ticket?.bus_number || ticket?.registration_number || "—",
+            source: ticket?.boarding_name || row.boarding_name_snapshot || "Boarding stop unavailable",
+            destination: ticket?.dropping_name || row.dropping_name_snapshot || "Dropping stop unavailable",
+            journey_date: ticket?.journey_date || row.journey_date || "—",
+            total_fare: Number(row.fare ?? ticket?.total_fare ?? 0),
+            payment_method: row.payment_method || "pay_later",
+            payment_status: row.payment_status || "pending",
+            passenger_details: Array.isArray(ticket?.passengers)
+              ? ticket.passengers
+              : Array.isArray(ticket?.passenger_details)
+                ? ticket.passenger_details
+                : [{ name: row.customer_name || ticket?.customer_name || "—", age: ticket?.customer_age || "—", phone: row.customer_phone || ticket?.customer_phone || "—" }],
+            customer_name: row.customer_name || ticket?.customer_name || "—",
+            customer_phone: row.customer_phone || ticket?.customer_phone || "—",
+            pnr: row.pnr,
+            status: row.status,
+          };
+        }));
       }
       async function cancelAdminBookingOnSupabase(pnr) {
-        const data = await adminBusRequest("/rest/v1/bookings?pnr=eq." + encodeURIComponent(pnr) + "&status=eq.confirmed", {
-          method: "PATCH",
-          headers: { Prefer: "return=representation" },
-          body: JSON.stringify({ status: "cancelled", cancelled_at: new Date().toISOString() })
-        });
-        if (!Array.isArray(data) || !data.length) throw new Error("Booking update nahi hui. Booking shayad pehle hi cancel hai.");
-        return data[0];
+        throw new Error("Admin cancellation ko V2 phone-verification workflow se alag se configure karna hoga. Customer cancellation page use karein.");
       }
       async function getBookedSeatsFromSupabase(busId, date) {
         const data = await supabaseRpc("get_booked_seats", {
@@ -1130,6 +1133,7 @@
           id: row.pnr,
           busId: row.bus_id,
           bus: row.bus_name || "Bus",
+          busNumber: row.bus_number || "—",
           from: row.source || "",
           to: row.destination || "",
           date: row.journey_date,
@@ -1605,6 +1609,7 @@
         [
           ["PNR", b.id],
           ["Bus", b.bus],
+          ["Bus Number", b.busNumber || "—"],
           ["Route", b.from + " → " + b.to],
           ["Journey Date", b.date],
           ["Departure", findBus(b.busId)?.departure || "—"],
@@ -1674,22 +1679,7 @@
         actions.className = "ticket-admin-actions";
         addWhatsAppShareButton(actions, booking, "SHARE ON WHATSAPP");
         if (statusOf(booking) === "confirmed") {
-          const cancelButton = addText("button", "CANCEL TICKET", actions);
-          cancelButton.type = "button";
-          cancelButton.className = "danger";
-          cancelButton.onclick = async function () {
-            if (!confirm("PNR " + booking.id + " ki ticket cancel karna chahte hain?")) return;
-            cancelButton.disabled = true;
-            try {
-              await cancelAdminBookingOnSupabase(booking.id);
-              alert("Ticket successfully cancel ho gayi.");
-              $("ticketPanel").hidden = true;
-              renderAdmin();
-            } catch (error) {
-              alert("Cancellation error: " + error.message);
-              cancelButton.disabled = false;
-            }
-          };
+          addText("span", "Customer cancellation is handled through the verified V2 cancellation form.", actions);
         } else {
           const note = addText("span", "This ticket is already cancelled.", actions);
           note.className = "cancelled";
@@ -2023,9 +2013,9 @@
         const confirmed = selected.filter((r) => r.status === "confirmed");
         const cancelled = selected.filter((r) => r.status === "cancelled");
         const paid = confirmed.filter((r) => r.payment_status === "paid");
-        const pending = confirmed.filter((r) => !r.payment_status || r.payment_status === "pending");
+        const pending = confirmed.filter((r) => r.payment_status === "pending");
         const refunded = selected.filter((r) => r.payment_status === "refunded");
-        const sum = (list) => list.reduce((total, r) => total + Number(r.total_fare || 0), 0);
+        const sum = (list) => list.reduce((total, r) => total + Number(r.fare ?? r.total_fare ?? 0), 0);
         const metrics = [
           ["Total Bookings", selected.length],
           ["Confirmed Tickets", confirmed.length],
@@ -2070,12 +2060,12 @@
         loadAdminNotifications();
         const busContainer = $("adminBuses");
         const bookingContainer = $("adminBookings");
-        busContainer.replaceChildren();
+        if (busContainer) { busContainer.replaceChildren(); busContainer.hidden = true; }
+        const legacyBusForm = $("busForm");
+        if (legacyBusForm) legacyBusForm.hidden = true;
         bookingContainer.replaceChildren();
-        if (!buses.length) {
-          addText("p", "Koi bus available nahi hai.", busContainer);
-        }
-        buses.forEach((b) => {
+        /* V1 buses table is intentionally not rendered. Use V2 app_buses CRUD below. */
+        if (false) buses.forEach((b) => {
           const card = document.createElement("div");
           card.className = "bus";
           addText("h3", b.name, card);
@@ -2125,17 +2115,17 @@
             return;
           }
           remoteBookings.forEach(function (row) {
-            const busInfo = row.buses || {};
             const booking = {
               id: row.pnr,
-              busId: row.bus_id,
-              bus: busInfo.bus_name || "Bus #" + row.bus_id,
-              from: busInfo.source || "",
-              to: busInfo.destination || "",
-              date: row.journey_date,
+              busId: row.trip_id,
+              bus: row.bus_name || "Bus details unavailable",
+              busNumber: row.bus_number || "—",
+              from: row.source || row.boarding_name_snapshot || "",
+              to: row.destination || row.dropping_name_snapshot || "",
+              date: row.journey_date || "—",
               seats: Array.isArray(row.seats) ? row.seats.map(Number) : [],
               people: Array.isArray(row.passenger_details) ? row.passenger_details : [],
-              total: Number(row.total_fare || 0),
+              total: Number(row.total_fare ?? row.fare ?? 0),
               paymentMethod: row.payment_method || "pay_later",
               paymentStatus: row.payment_status || "pending",
               status: row.status,
@@ -2151,7 +2141,7 @@
             status.className = row.status === "cancelled" ? "cancelled" : "status";
             addText("p", "Customer: " + (row.customer_name || "—"), card);
             addText("p", "Mobile: " + (row.customer_phone || "—"), card);
-            addText("p", "Bus: " + booking.bus, card);
+            addText("p", "Bus: " + booking.bus + " | Bus Number: " + booking.busNumber, card);
             addText("p", "Route: " + booking.from + " → " + booking.to, card);
             addText("p", "Date: " + booking.date, card);
             addText("p", "Seats: " + booking.seats.join(", "), card);
@@ -2170,12 +2160,16 @@
             updatePayButton.onclick = async function () {
               updatePayButton.disabled = true;
               try {
-                await adminBusRequest("/rest/v1/bookings?pnr=eq." + encodeURIComponent(booking.id), {
+                const updatedRows = await adminBusRequest("/rest/v1/app_bookings?pnr=eq." + encodeURIComponent(booking.id) + "&select=id,pnr,payment_status,payment_method", {
                   method: "PATCH", headers: { Prefer: "return=representation" },
                   body: JSON.stringify({ payment_status: payStatusSelect.value })
                 });
-                payStatusLine.textContent = "Payment Status: " + paymentStatusLabel(payStatusSelect.value);
-                alert("Payment status update ho gaya.");
+                if (!Array.isArray(updatedRows) || updatedRows.length !== 1) {
+                  throw new Error("Database mein koi booking update nahi hui. Supabase SQL aur Admin RLS policy check karein.");
+                }
+                row.payment_status = updatedRows[0].payment_status || payStatusSelect.value;
+                payStatusLine.textContent = "Payment Status: " + paymentStatusLabel(row.payment_status);
+                alert("Payment status Supabase database mein save ho gaya.");
               } catch (error) { alert("Payment status update nahi hua: " + error.message); }
               finally { updatePayButton.disabled = false; }
             };
@@ -2616,12 +2610,7 @@
           try {
             const data = await adminAuthRequest("/auth/v1/token?grant_type=password", { method: "POST", body: JSON.stringify({ email, password }) });
             if (!data.access_token || !data.user?.id) throw new Error("Login token nahi mila.");
-            // Authentication alone is not Admin authorization. Verify the exact Admin UID and server-side role.
-            const APPROVED_ADMIN_UID = "7807d399-fbc2-4a41-8fd9-8e0547c03a0d";
-            if (data.user.id !== APPROVED_ADMIN_UID) {
-              try { await adminAuthRequest("/auth/v1/logout", { method: "POST", headers: { Authorization: "Bearer " + data.access_token } }); } catch (_) {}
-              throw new Error("Is account ko Admin permission nahi hai. Sirf authorized Admin account login kar sakta hai.");
-            }
+            // Authentication alone is not Admin authorization. Verify membership server-side.
             const roleResponse = await fetch(SUPABASE_URL.replace(/\/$/, "") + "/rest/v1/rpc/app_is_admin", {
               method: "POST",
               headers: { apikey: SUPABASE_PUBLISHABLE_KEY, Authorization: "Bearer " + data.access_token, "Content-Type": "application/json" },
@@ -2831,7 +2820,10 @@
       // Ticket renderer now uses stop-specific times and avoids claiming V1 payment was collected.
       const originalRenderTicket=renderTicket;
       renderTicket=function(b){originalRenderTicket(b);const ticket=q("ticket");if(b.boardingTime||b.droppingTime){const p=document.createElement("p");p.textContent="Boarding: "+(b.boardingTime||"—")+" | Dropping: "+(b.droppingTime||"—");ticket.appendChild(p);}};
-      // Keep the legacy Admin Panel and V1 management code unchanged.
+      // V2 admin bookings/reports use app_bookings + app_lookup_booking. Legacy V1 bus UI is hidden.
+      // NOTE: app_create_booking currently receives only the first passenger name/mobile; the UI's
+      // additional passenger ages/details are shown on the local ticket but are not guaranteed
+      // to be persisted until the database RPC/schema is extended safely.
     })();
     </script>
   </body>
