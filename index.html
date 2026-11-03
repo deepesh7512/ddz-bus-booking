@@ -1975,7 +1975,14 @@
                   if (!confirm("Kya aap PNR " + item.booking_pnr + " ki booking cancel karna chahte hain?")) return;
                   cancel.disabled = true;
                   try {
-                    const result = await rpc("app_cancel_my_booking", { p_pnr: item.booking_pnr });
+                    const response = await fetch(SUPABASE_URL.replace(/\/$/, "") + "/rest/v1/rpc/app_cancel_my_booking", {
+                      method: "POST",
+                      headers: customerAuthHeaders(),
+                      body: JSON.stringify({ p_pnr: item.booking_pnr })
+                    });
+                    const responseText = await response.text();
+                    let result; try { result = responseText ? JSON.parse(responseText) : null; } catch { result = responseText; }
+                    if (!response.ok) throw new Error(result?.message || result?.details || String(result || response.status));
                     const cancelled = Array.isArray(result) ? result[0] : result;
                     alert("Aapki booking cancel ho gayi. PNR: " + (cancelled?.booking_pnr || item.booking_pnr));
                     const list = $("myBookingsList"); if (list) list.replaceChildren();
