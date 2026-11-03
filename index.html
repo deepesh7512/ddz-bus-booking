@@ -2616,6 +2616,23 @@
           try {
             const data = await adminAuthRequest("/auth/v1/token?grant_type=password", { method: "POST", body: JSON.stringify({ email, password }) });
             if (!data.access_token || !data.user?.id) throw new Error("Login token nahi mila.");
+            // Authentication alone is not Admin authorization. Verify the exact Admin UID and server-side role.
+            const APPROVED_ADMIN_UID = "7807d399-fbc2-4a41-8fd9-8e0547c03a0d";
+            if (data.user.id !== APPROVED_ADMIN_UID) {
+              try { await adminAuthRequest("/auth/v1/logout", { method: "POST", headers: { Authorization: "Bearer " + data.access_token } }); } catch (_) {}
+              throw new Error("Is account ko Admin permission nahi hai. Sirf authorized Admin account login kar sakta hai.");
+            }
+            const roleResponse = await fetch(SUPABASE_URL.replace(/\/$/, "") + "/rest/v1/rpc/app_is_admin", {
+              method: "POST",
+              headers: { apikey: SUPABASE_PUBLISHABLE_KEY, Authorization: "Bearer " + data.access_token, "Content-Type": "application/json" },
+              body: "{}"
+            });
+            const roleRaw = await roleResponse.text();
+            let isAdmin = null; try { isAdmin = roleRaw ? JSON.parse(roleRaw) : null; } catch (_) { isAdmin = null; }
+            if (!roleResponse.ok || isAdmin !== true) {
+              try { await adminAuthRequest("/auth/v1/logout", { method: "POST", headers: { Authorization: "Bearer " + data.access_token } }); } catch (_) {}
+              throw new Error("Is account ko Admin permission nahi hai. Customer account se Admin Panel mein login nahi kar sakte.");
+            }
             sessionStorage.setItem("apniBus_admin_access_token_v1", data.access_token);
             if (data.refresh_token) sessionStorage.setItem("apniBus_admin_refresh_token_v1", data.refresh_token);
             sessionStorage.setItem(ADMIN_SESSION_KEY, "true");
