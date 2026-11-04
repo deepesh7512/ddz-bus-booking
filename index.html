@@ -2696,10 +2696,24 @@ function validateV2Backup(data) {
     "app_booking_segments"
   ];
 
+  if (
+  !data.rowCounts ||
+  typeof data.rowCounts !== "object"
+) {
+  return "Backup rowCounts missing ya invalid hai.";
+}
+
   for (const table of requiredTables) {
     if (!Array.isArray(data.tables[table])) {
       return "Backup mein " + table + " ka data missing ya invalid hai.";
     }
+
+    if (
+  !Number.isInteger(data.rowCounts[table]) ||
+  data.rowCounts[table] !== data.tables[table].length
+) {
+  return table + " ke rowCounts aur actual records match nahi kar rahe.";
+}
 
     for (const row of data.tables[table]) {
       if (!row || typeof row !== "object" || Array.isArray(row)) {
@@ -2759,21 +2773,27 @@ $("restoreBackupBtn").onclick = async function () {
     return;
   }
 
-  const validationError = validateV2Backup(data);
+const validationError = validateV2Backup(data);
 
-  if (data.exportedAt) {
-    const backupDate = new Date(data.exportedAt);
-    
-    if (Number.isNaN(backupDate.getTime())) {
-      message.textContent = "Backup date invalid hai.";
-      return;
-    }
-  }
+if (validationError) {
+  message.textContent = validationError;
+  return;
+}
 
-  if (validationError) {
-    message.textContent = validationError;
-    return;
-  }
+if (
+  typeof data.exportedAt !== "string" ||
+  !data.exportedAt.trim()
+) {
+  message.textContent = "Backup date missing hai.";
+  return;
+}
+
+const backupDate = new Date(data.exportedAt);
+
+if (Number.isNaN(backupDate.getTime())) {
+  message.textContent = "Backup date invalid hai.";
+  return;
+}
 
   const restoreOrder = [
     "app_operators",
