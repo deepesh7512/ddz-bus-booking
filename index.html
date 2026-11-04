@@ -2826,98 +2826,56 @@ $("restoreBackupBtn").onclick = async function () {
     );
   }
 
-async function insertOne(table, row) {
-  return await adminBusRequest(
-    "/rest/v1/" + table + "?on_conflict=id",
-    {
-      method: "POST",
-      headers: {
-        Prefer: "resolution=ignore-duplicates,return=representation"
-      },
-      body: JSON.stringify(row)
-    }
-  );
-}
-
   try {
     for (const table of restoreOrder) {
       const rows = data.tables[table];
-
       for (let start = 0; start < rows.length; start += 100) {
         const chunk = rows.slice(start, start + 100);
-
         message.textContent =
           "Restore chal raha hai: " + table +
           "\nProcessed: " + processed + " / " + totalRecords;
-
         try {
           const result = await adminBusRequest(
-            "/rest/v1/" + table,
-            {
-              method: "POST",
-              headers: {
-                Prefer: "return=representation"
+            "/rest/v1/" + table + "?on_conflict=id", {
+              method: "POST",headers: {
+                Prefer: "resolution=ignore-duplicates,return=representation"
               },
               body: JSON.stringify(chunk)
             }
           );
-
-          inserted += Array.isArray(result)
-            ? result.length
-            : chunk.length;
-
+          
+          const insertedNow = Array.isArray(result) ? result.length : 0;
+          inserted += insertedNow;
+          skipped += chunk.length - insertedNow;
           processed += chunk.length;
-
         } catch (batchError) {
-          for (const row of chunk) {
-            try {
-              await insertOne(table, row);
-              inserted++;
-            } catch (rowError) {
-              if (isDuplicateError(rowError)) {
-                skipped++;
-              } else {
-                failed++;
-
-                if (errors.length < 10) {
-                  errors.push(
-                    table + ": " +
-                    String(rowError?.message || rowError)
-                  );
-                }
-              }
-            }
-
-            processed++;
-
-            if (processed % 20 === 0 || processed === totalRecords) {
-              message.textContent =
-                "Restore chal raha hai...\n" +
-                "Processed: " + processed + " / " + totalRecords +
-                "\nInserted: " + inserted +
-                "\nSkipped: " + skipped +
-                "\nFailed: " + failed;
-            }
+          failed += chunk.length;
+          processed += chunk.length;
+          
+          if (errors.length < 10) {
+            errors.push(
+              table + ": " + String(batchError?.message || batchError)
+            );
           }
         }
       }
     }
-
+    
     message.textContent =
       "RESTORE COMPLETE\n\n" +
       "Inserted: " + inserted +
       "\nSkipped: " + skipped +
       "\nFailed: " + failed +
       (errors.length
-        ? "\n\nSample errors:\n" + errors.join("\n")
-        : "");
-
+       ? "\n\nSample errors:\n" + errors.join("\n")
+       : "");
+    
     if (failed === 0) {
       alert("Restore process complete ho gaya.");
     } else {
       alert("Restore complete hua, lekin kuch records fail hue. Details Restore Message mein dekhein.");
     }
-
+    
   } catch (error) {
     message.textContent =
       "Restore process mein error:\n" +
@@ -2925,13 +2883,11 @@ async function insertOne(table, row) {
       "\n\nInserted: " + inserted +
       "\nSkipped: " + skipped +
       "\nFailed: " + failed;
-
+    
   } finally {
     button.disabled = false;
   }
 };
-
-
       
       // ===============================
       // INITIALIZE APP
