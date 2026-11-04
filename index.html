@@ -2815,17 +2815,6 @@ $("restoreBackupBtn").onclick = async function () {
   let processed = 0;
   const errors = [];
 
-  function isDuplicateError(error) {
-    const msg = String(error?.message || error).toLowerCase();
-
-    return (
-      msg.includes("duplicate key") ||
-      msg.includes("unique constraint") ||
-      msg.includes("already exists") ||
-      msg.includes("23505")
-    );
-  }
-
   try {
     for (const table of restoreOrder) {
       const rows = data.tables[table];
