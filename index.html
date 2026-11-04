@@ -707,8 +707,18 @@
         animation:spin .65s linear infinite;
         box-shadow:0 0 18px rgba(220,38,38,.12);
       }
-      .app-busy-title{font-size:15px;font-weight:800;color:#172033}
-      .app-busy-subtitle{margin-top:4px;font-size:12px;color:#64748b}
+      .app-busy-title{
+        font-size:17px;
+        font-weight:800;
+        letter-spacing:-.3px;
+        color:#991b1b;
+      }
+      .app-busy-subtitle{
+        margin-top:7px;
+        font-size:13px;
+        line-height:1.6;
+        color:#64748b;
+      }
       #appBusyBar.active{opacity:1}
       @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
       @media(max-width:600px){header{padding:25px 18px 22px}nav{display:grid;grid-template-columns:1fr 1fr;gap:8px}nav button{font-size:12px;padding:10px 9px}nav button:last-child{grid-column:1/-1}main{margin:22px auto 44px;padding:0 13px}section{border-radius:16px;padding:19px;margin-bottom:16px}.seats{gap:7px}}
