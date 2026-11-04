@@ -2852,30 +2852,97 @@ if (Number.isNaN(backupDate.getTime())) {
         message.textContent =
           "Restore chal raha hai: " + table +
           "\nProcessed: " + processed + " / " + totalRecords;
+try {
+  // STEP 1: Supabase mein existing IDs check karein
+  const idFilter = chunk
+    .map(row => encodeURIComponent(row.id))
+    .join(",");
+
+  const existingRows = await adminBusRequest(
+    "/rest/v1/" + table +
+    "?select=id&id=in.(" + idFilter + ")"
+  );
+
+  const existingIds = new Set(
+    existingRows.map(row => row.id)
+  );
+
+  // STEP 2: Sirf naye records alag karein
+  const newRows = chunk.filter(
+    row => !existingIds.has(row.id)
+  );
+
+  skipped += chunk.length - newRows.length;
+
+  // STEP 3: Naye records insert karein
+  if (newRows.length > 0) {
+    try {
+      const result = await adminBusRequest(
+        "/rest/v1/" + table + "?on_conflict=id",
+        {
+          method: "POST",
+          headers: {
+            Prefer: "resolution=ignore-duplicates,return=representation"
+          },
+          body: JSON.stringify(newRows)
+        }
+      );
+
+      const insertedNow = Array.isArray(result)
+        ? result.length
+        : 0;
+
+      inserted += insertedNow;
+      skipped += newRows.length - insertedNow;
+
+    } catch (batchError) {
+
+      // Batch fail hone par individual records try karein
+      for (const row of newRows) {
         try {
           const result = await adminBusRequest(
-            "/rest/v1/" + table + "?on_conflict=id", {
-              method: "POST",headers: {
+            "/rest/v1/" + table + "?on_conflict=id",
+            {
+              method: "POST",
+              headers: {
                 Prefer: "resolution=ignore-duplicates,return=representation"
               },
-              body: JSON.stringify(chunk)
+              body: JSON.stringify(row)
             }
           );
-          
-          const insertedNow = Array.isArray(result) ? result.length : 0;
-          inserted += insertedNow;
-          skipped += chunk.length - insertedNow;
-          processed += chunk.length;
-        } catch (batchError) {
-          failed += chunk.length;
-          processed += chunk.length;
-          
+
+          if (Array.isArray(result) && result.length > 0) {
+            inserted++;
+          } else {
+            skipped++;
+          }
+
+        } catch (rowError) {
+          failed++;
+
           if (errors.length < 10) {
             errors.push(
-              table + ": " + String(batchError?.message || batchError)
+              table + ": " +
+              String(rowError?.message || rowError)
             );
           }
         }
+      }
+    }
+  }
+
+} catch (chunkError) {
+  failed += chunk.length;
+
+  if (errors.length < 10) {
+    errors.push(
+      table + ": " +
+      String(chunkError?.message || chunkError)
+    );
+  }
+}
+
+processed += chunk.length;
       }
     }
     
@@ -2906,8 +2973,6 @@ if (Number.isNaN(backupDate.getTime())) {
     button.disabled = false;
   }
 };
-
-      
       // ===============================
       // INITIALIZE APP
       // ===============================
