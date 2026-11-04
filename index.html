@@ -1309,38 +1309,38 @@
       }
 
       $("dateDisplay").addEventListener("input", function () {
-  const digits = this.value.replace(/\D/g, "").slice(0, 8);
-
-  let formatted = digits;
-  if (digits.length > 4) {
-    formatted = digits.slice(0, 2) + "/" + digits.slice(2, 4) + "/" + digits.slice(4);
-  } else if (digits.length > 2) {
-    formatted = digits.slice(0, 2) + "/" + digits.slice(2);
-  }
-
-  this.value = formatted;
-
-  const hiddenDate = $("date");
-  hiddenDate.value = "";
-
-  if (digits.length === 8) {
-    const day = Number(digits.slice(0, 2));
-    const month = Number(digits.slice(2, 4));
-    const year = Number(digits.slice(4, 8));
-    const check = new Date(year, month - 1, day);
-
-    if (
-      check.getFullYear() === year &&
-      check.getMonth() === month - 1 &&
-      check.getDate() === day
-    ) {
-      hiddenDate.value =
-        year + "-" +
-        String(month).padStart(2, "0") + "-" +
-        String(day).padStart(2, "0");
-    }
-  }
-});
+        const digits = this.value.replace(/\D/g, "").slice(0, 8);
+        let formatted = digits;
+        if (digits.length > 4) {
+          formatted = digits.slice(0, 2) + "/" + digits.slice(2, 4) + "/" + digits.slice(4);
+        } else if (digits.length > 2) {
+          formatted = digits.slice(0, 2) + "/" + digits.slice(2);
+        }
+        this.value = formatted;
+        const hiddenDate = $("date");
+        hiddenDate.value = "";
+        if (digits.length === 8) {
+          const day = Number(digits.slice(0, 2));
+          const month = Number(digits.slice(2, 4));
+          const year = Number(digits.slice(4, 8));
+          const check = new Date(year, month - 1, day);
+          if (
+            check.getFullYear() === year && check.getMonth() === month - 1 && check.getDate() === day
+          ) {
+            hiddenDate.value =
+              year + "-" + String(month).padStart(2, "0") + "-" + String(day).padStart(2, "0");
+          }
+        }
+      });
+      
+      $("datePicker").addEventListener("change", function () {
+        if (!this.value) return;
+        const parts = this.value.split("-");
+        $("dateDisplay").value =
+          parts[2] + "/" + parts[1] + "/" + parts[0];
+        $("date").value = this.value;
+      });
+      
       function statusOf(b) {
         return b.status === "cancelled" ? "cancelled" : "confirmed";
       }
