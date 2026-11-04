@@ -702,11 +702,12 @@
         <form id="searchForm">
           <label>From</label><input id="from" value="Shahdol" required />
           <label>To</label><input id="to" value="Rewa" required />
-          <label>Journey Date</label><input id="date" type="date" required />
           <label>Journey Date (DD/MM/YYYY)</label>
-<input id="dateDisplay" type="text" placeholder="DD/MM/YYYY"
-       inputmode="numeric" maxlength="10" required />
-<input id="date" type="hidden" />
+          <div style="display:flex; gap:8px;">
+            <input id="dateDisplay" type="text" placeholder="DD/MM/YYYY" inputmode="numeric" maxlength="10" required style="flex:1;" />
+            <input id="datePicker" type="date" style="width:48px;" />
+          </div>
+          <input id="date" type="hidden" />
           <button type="submit">Search Buses</button>
         </form>
       </section>
@@ -869,30 +870,11 @@
           />
           <button type="submit">Login as Admin</button>
         </form>
-        <button type="button" id="adminLoginBackBtn">Back to Website</button>
+        <button type="button" id="adminLoginBackBtn">Back to Home</button>
       </section>
       <section id="adminPanel" hidden>
-        <h2>Admin Panel</h2>
-        <!-- Legacy V1 bus form retained in source for rollback, but disabled in the V2 interface. -->
-        <form id="busForm" hidden aria-hidden="true">
-          <label>Bus Name</label><input id="busName" required />
-          <label>Bus Type</label>
-          <select id="busType">
-            <option>AC Seater</option>
-            <option>Non-AC Seater</option>
-            <option>AC Sleeper</option>
-            <option>Non-AC Sleeper</option>
-          </select>
-          <label>From</label><input id="busFrom" placeholder="Shahdol" required />
-          <label>To</label><input id="busTo" placeholder="Rewa" required />
-          <label>Departure</label><input id="departure" type="time" value="00:00:00" required />
-          <label>Arrival</label><input id="arrival" type="time" value="08:00:00" required />
-          <label>Fare</label><input id="fare" type="number" min="1" required />
-          <button type="submit">Add Bus</button>
-        </form>
-        <div id="adminBuses" hidden aria-hidden="true"></div>
-        <h2>V2 Admin Dashboard</h2>
-        <p>V2 Operators, Buses, Routes, Stoppages, Trips aur Fares yahan manage karein.</p>
+        <h2>Admin Panel & Dashboard</h2>
+        <p>Operators, Buses, Routes, Stoppages, Trips & Fares Management.</p>
         <div id="v2AdminMessage" role="status" aria-live="polite"></div>
         <h3>1. Operators</h3>
         <form id="v2OperatorForm">
