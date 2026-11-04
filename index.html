@@ -2095,7 +2095,7 @@
         const cardArea = document.createElement("div");
         container.appendChild(cardArea);
         try {
-          const url = SUPABASE_URL.replace(/\/$/, "") + "/rest/v1/app_bookings?select=pnr,status,created_at&customer_user_id=eq." + encodeURIComponent(session.userId) + "&order=created_at.desc";
+          const url = SUPABASE_URL.replace(/\/$/, "") + "/rest/v1/app_bookings?select=pnr,status,created_at,passenger_details&customer_user_id=eq." + encodeURIComponent(session.userId) + "&order=created_at.desc";
           const response = await fetch(url, { headers: customerAuthHeaders() });
           const raw = await response.text();
           let rows; try { rows = raw ? JSON.parse(raw) : []; } catch { rows = []; }
@@ -2123,6 +2123,24 @@
               addText("p", "Journey Date: " + (item.journey_date || "—"), card);
               addText("p", "Route: " + (item.boarding_name || "—") + " → " + (item.dropping_name || "—"), card);
               addText("p", "Seats: " + ((item.seats || []).join(", ") || "—"), card);
+              const passengers = Array.isArray(row.passenger_details)
+  ? row.passenger_details
+  : [];
+
+if (passengers.length) {
+  addText("h4", "Passenger Details", card);
+
+  passengers.forEach((p) => {
+    addText(
+      "p",
+      "Seat " + (p.seat_no || "—") +
+      " | Name: " + (p.name || "—") +
+      " | Age: " + (p.age || "—") +
+      " | Mobile: " + (p.phone || "—"),
+      card
+    );
+  });
+}
               addText("p", "Total Fare: " + money(item.total_fare), card);
               const view = addText("button", "View Ticket Details", card); view.type = "button";
               view.onclick = () => { $("lookupPnr").value = item.booking_pnr; $("dashboardPanel").hidden = true; $("pnrPanel").hidden = false; $("pnrForm").requestSubmit(); };
