@@ -1174,13 +1174,21 @@
           <label>Arrival Time</label><input id="v2StopArrival" type="time" />
           <label>Departure Time</label><input id="v2StopDeparture" type="time" />
           <button type="submit">Add Stoppage</button>
-        </form><div id="v2RouteStops"></div>
+        </form>
+<div id="v2RouteStops"></div>
+</div>
+
+<div class="admin-section-view" data-admin-view="trips">
         <h3>5. Trips / Journey Schedule</h3>
         <form id="v2TripForm">
           <label>Route</label><select id="v2TripRoute" required></select>
           <label>Journey Date</label><input id="v2TripDate" type="date" required />
           <button type="submit">Create Trip & Copy Stoppages</button>
-        </form><div id="v2TripsAdmin"></div>
+        </form>
+<div id="v2TripsAdmin"></div>
+</div>
+
+<div class="admin-section-view" data-admin-view="fares">
         <h3>6. Trip Fares</h3>
         <form id="v2TripFareForm">
           <label>Trip</label><select id="v2FareTrip" required></select>
@@ -1188,12 +1196,19 @@
           <label>Dropping Stop</label><select id="v2FareDropping" required></select>
           <label>Fare (₹)</label><input id="v2FareAmount" type="number" min="1" step="0.01" required />
           <button type="submit">Save / Update Fare</button>
-        </form><div id="v2TripFares"></div>
+        </form>
+<div id="v2TripFares"></div>
+</div>
+
+<div class="admin-section-view" data-admin-view="notifications">
         <hr />
         <h3>Notifications</h3>
         <p>New bookings, cancellations aur payment updates ki recent activity.</p>
         <div id="adminNotifications" aria-live="polite">Notifications load ho rahi hain...</div>
         <button id="refreshNotificationsBtn" type="button">REFRESH NOTIFICATIONS</button>
+  </div>
+
+<div class="admin-section-view" data-admin-view="reports">
         <hr />
         <h3>Booking & Revenue Reports</h3>
         <p>Daily, weekly aur monthly booking, collection aur pending payment ka summary.</p>
@@ -1205,9 +1220,15 @@
         </select>
         <button id="refreshBookingReportsBtn" type="button">REFRESH REPORT</button>
         <div id="adminBookingReports" aria-live="polite"></div>
+        </div>
+
+<div class="admin-section-view" data-admin-view="bookings">
         <hr />
         <h3>All Bookings</h3>
         <div id="adminBookings"></div>
+</div>
+
+<div class="admin-section-view" data-admin-view="backup">
         <hr />
         <h3>Data Backup & Export</h3>
         <p>Download your demo data for backup or reporting.</p>
@@ -1226,6 +1247,8 @@
         />
         <button id="restoreBackupBtn" type="button">Restore Full Backup</button>
         <p id="restoreMessage" role="status" aria-live="polite"></p>
+  </div>
+</div>
       </section>
     </main>
 
@@ -3421,6 +3444,27 @@ processed += chunk.length;
       const adminTab=$a('adminTab');if(adminTab)adminTab.addEventListener('click',()=>{setTimeout(()=>{if(!$a('adminPanel').hidden&&getAdminAccessToken())loadAll();},100);});
       const originalRenderAdmin=window.renderAdmin;
       document.addEventListener('DOMContentLoaded',()=>{});
+
+      /* ADMIN SIDEBAR NAVIGATION */
+const adminNavButtons = document.querySelectorAll(".admin-nav-btn");
+const adminViews = document.querySelectorAll(".admin-section-view");
+
+adminNavButtons.forEach(button => {
+  button.addEventListener("click", () => {
+    const target = button.dataset.adminTarget;
+
+    adminNavButtons.forEach(item => {
+      item.classList.toggle("active", item === button);
+    });
+
+    adminViews.forEach(view => {
+      view.classList.toggle(
+        "active",
+        view.dataset.adminView === target
+      );
+    });
+  });
+});
       // Also load after successful admin login when the panel is opened.
       const panel=$a('adminPanel');if(panel){new MutationObserver(()=>{if(!panel.hidden&&getAdminAccessToken())loadAll();}).observe(panel,{attributes:true,attributeFilter:['hidden']});}
     })();
