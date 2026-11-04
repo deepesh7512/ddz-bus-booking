@@ -1923,7 +1923,8 @@
       // ===============================
       // ADMIN: ADD BUS
       // ===============================
-      $("busForm").onsubmit = async function (e) {
+      const busForm = $("busForm");
+      if (busForm) busForm.onsubmit = async function (e) {
         e.preventDefault();
         const name = $("busName").value.trim();
         const busFrom = $("busFrom").value.trim();
