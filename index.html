@@ -2826,15 +2826,18 @@ $("restoreBackupBtn").onclick = async function () {
     );
   }
 
-  async function insertOne(table, row) {
-    await adminBusRequest("/rest/v1/" + table, {
+async function insertOne(table, row) {
+  return await adminBusRequest(
+    "/rest/v1/" + table + "?on_conflict=id",
+    {
       method: "POST",
       headers: {
-        Prefer: "return=minimal"
+        Prefer: "resolution=ignore-duplicates,return=representation"
       },
       body: JSON.stringify(row)
-    });
-  }
+    }
+  );
+}
 
   try {
     for (const table of restoreOrder) {
