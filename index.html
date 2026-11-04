@@ -2749,7 +2749,6 @@
           catch(err){ localStorage.removeItem(SESSION_KEY); openAuth(); showMessage("Session refresh nahi hua: "+err.message+". Dobara login karein."); }
         });
         el("customerTab").addEventListener("click", function(){ authPanel.hidden=true; showCustomer(); });
-        el("adminTab").addEventListener("click", function(){ authPanel.hidden=true; showAdmin(); });
         authSwitchBtn.addEventListener("click", function(){ setMode(!registerMode); });
         el("regMobile").addEventListener("input", function(){ this.value=this.value.replace(/\D/g,"").slice(0,10); });
         registerForm.addEventListener("submit", async function(event){
