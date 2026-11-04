@@ -2545,26 +2545,126 @@ card.appendChild(updatePayButton);
         );
         alert("Bookings CSV download shuru ho gaya.");
       };
-      // Download complete JSON backup
-      $("backupDataBtn").onclick = function () {
-        const backup = {
-          app: "Apni Bus Booking",
-          backupVersion: 1,
-          exportedAt: new Date().toISOString(),
-          buses: buses,
-          bookings: bookings,
-        };
-        const json = JSON.stringify(backup, null, 2);
-        downloadFile(
-          "apni-bus-backup-" + today() + ".json",
-          json,
-          "application/json;charset=utf-8;",
+
+      
+// V2 Supabase: Complete JSON Backup
+$("backupDataBtn").onclick = async function () {
+  const button = $("backupDataBtn");
+
+  const backupTables = [
+    "app_operators",
+    "app_buses",
+    "app_routes",
+    "app_route_stops",
+    "app_route_pair_fares",
+    "app_route_segment_fares",
+    "app_trips",
+    "app_trip_stops",
+    "app_trip_fares",
+    "app_bookings",
+    "app_booking_segments",
+    "admin_notifications"
+  ];
+
+  if (!getAdminAccessToken()) {
+    alert("V2 Backup ke liye pehle Admin Panel mein login karein.");
+    return;
+  }
+
+  if (!confirm(
+    "V2 Supabase ka complete data backup download hoga.\n\n" +
+    "Ismein customer aur passenger ki personal details bhi hongi.\n" +
+    "Backup file ko surakshit aur private rakhein.\n\n" +
+    "Kya aap backup shuru karna chahte hain?"
+  )) {
+    return;
+  }
+
+  button.disabled = true;
+  const originalText = button.textContent;
+  button.textContent = "Backup ban raha hai...";
+
+  try {
+    const tables = {};
+    const rowCounts = {};
+    const pageSize = 500;
+
+    for (const table of backupTables) {
+      const allRows = [];
+      let offset = 0;
+
+      while (true) {
+        const rows = await adminBusRequest(
+          "/rest/v1/" + table + "?select=*",
+          {
+            method: "GET",
+            headers: {
+              Range: offset + "-" + (offset + pageSize - 1),
+              "Range-Unit": "items"
+            }
+          }
         );
-        alert("Full JSON backup download shuru ho gaya.");
-      };
+
+        if (!Array.isArray(rows)) {
+          throw new Error(table + " se valid data nahi mila.");
+        }
+
+        allRows.push(...rows);
+
+        if (rows.length < pageSize) {
+          break;
+        }
+
+        offset += pageSize;
+      }
+
+      tables[table] = allRows;
+      rowCounts[table] = allRows.length;
+    }
+
+    const backup = {
+      app: "Apni Bus Booking",
+      backupVersion: 2,
+      backupType: "supabase_v2",
+      exportedAt: new Date().toISOString(),
+      tables: tables,
+      rowCounts: rowCounts
+    };
+
+    const json = JSON.stringify(backup, null, 2);
+
+    downloadFile(
+      "apni-bus-v2-backup-" + today() + ".json",
+      json,
+      "application/json;charset=utf-8;"
+    );
+
+    const totalRows = Object.values(rowCounts)
+      .reduce((total, count) => total + count, 0);
+
+    alert(
+      "V2 Supabase Backup download shuru ho gaya!\n\n" +
+      "Total tables: " + backupTables.length + "\n" +
+      "Total records: " + totalRows
+    );
+
+  } catch (error) {
+    console.error("V2 Backup failed:", error);
+    alert(
+      "V2 Backup nahi ban saka.\n\n" +
+      error.message +
+      "\n\nKoi partial backup download nahi kiya gaya."
+    );
+  } finally {
+    button.disabled = false;
+    button.textContent = originalText;
+  }
+};
+
+      
       /* ===============================
-   STEP 8: RESTORE JSON BACKUP
-================================ */
+          STEP 8: RESTORE JSON BACKUP
+       ================================ */
       function validateBackup(data) {
         if (
           !data ||
