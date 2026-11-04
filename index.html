@@ -2660,193 +2660,276 @@ $("backupDataBtn").onclick = async function () {
     button.textContent = originalText;
   }
 };
-
-      
       /* ===============================
           STEP 8: RESTORE JSON BACKUP
        ================================ */
-      function validateBackup(data) {
-        if (
-          !data ||
-          data.app !== "Apni Bus Booking" ||
-          data.backupVersion !== 1 ||
-          !Array.isArray(data.buses) ||
-          !Array.isArray(data.bookings)
-        ) {
-          return "Invalid backup file. Apni Bus Booking JSON file select karein.";
-        }
-        // Validate buses before changing current data.
-        const busIds = new Set();
-        for (const b of data.buses) {
-          if (
-            !b ||
-            (typeof b.id !== "string" && typeof b.id !== "number") ||
-            !String(b.id).trim() ||
-            typeof b.name !== "string" ||
-            typeof b.from !== "string" ||
-            typeof b.to !== "string" ||
-            typeof b.departure !== "string" ||
-            typeof b.arrival !== "string" ||
-            !Number.isFinite(Number(b.fare)) ||
-            Number(b.fare) < 1 ||
-            busIds.has(String(b.id))
-          ) {
-            return "Backup mein bus details invalid hain.";
-          }
-          busIds.add(String(b.id));
-        }
-        // Validate bookings before replacing current data.
-        const bookingIds = new Set();
-        for (const b of data.bookings) {
-          if (
-            !b ||
-            (typeof b.id !== "string" && typeof b.id !== "number") ||
-            !String(b.id).trim() ||
-            typeof b.bus !== "string" ||
-            typeof b.from !== "string" ||
-            typeof b.to !== "string" ||
-            typeof b.date !== "string" ||
-            !Array.isArray(b.seats) ||
-            !Array.isArray(b.people) ||
-            !Number.isFinite(Number(b.total)) ||
-            Number(b.total) < 0 ||
-            (b.status !== undefined &&
-              !["confirmed", "cancelled"].includes(b.status)) ||
-            bookingIds.has(String(b.id))
-          ) {
-            return "Backup mein booking details invalid hain.";
-          }
-          if (b.seats.some((s) => !Number.isInteger(s) || s < 1 || s > 20)) {
-            return "Backup mein seat numbers invalid hain.";
-          }
-          if (
-            b.people.length !== b.seats.length ||
-            b.people.some(
-              (p) =>
-                !p ||
-                typeof p.name !== "string" ||
-                !Number.isInteger(Number(p.age)) ||
-                Number(p.age) < 1 ||
-                Number(p.age) > 120 ||
-                typeof p.phone !== "string" ||
-                !/^[6-9][0-9]{9}$/.test(p.phone),
-            )
-          ) {
-            return "Backup mein passenger details invalid hain.";
-          }
-          bookingIds.add(String(b.id));
-        }
-        // Step 9A: Detect duplicate active seat assignments.
-        const occupiedSeats = new Set();
-        for (const b of data.bookings) {
-          if (b.status === "cancelled") {
-            continue;
-          }
-          for (const seat of b.seats) {
-            const key = [String(b.busId), b.date, String(seat)].join("|");
-            if (occupiedSeats.has(key)) {
-              return (
-                "Backup mein duplicate seat booking mili: " +
-                "Bus ID " +
-                b.busId +
-                ", Date " +
-                b.date +
-                ", Seat " +
-                seat +
-                ". Restore nahi kiya gaya."
-              );
-            }
-            occupiedSeats.add(key);
-          }
-        }
-        return "";
+
+
+
+/* ===============================
+   STEP 8: V2 ADD-ONLY RESTORE
+================================ */
+
+function validateV2Backup(data) {
+  if (
+    !data ||
+    data.app !== "Apni Bus Booking" ||
+    data.backupVersion !== 2 ||
+    data.backupType !== "supabase_v2" ||
+    !data.tables ||
+    typeof data.tables !== "object"
+  ) {
+    return "Invalid V2 backup file select karein.";
+  }
+
+  const requiredTables = [
+    "app_operators",
+    "app_buses",
+    "app_routes",
+    "app_route_stops",
+    "app_route_pair_fares",
+    "app_route_segment_fares",
+    "app_trips",
+    "app_trip_stops",
+    "app_trip_fares",
+    "app_bookings",
+    "app_booking_segments"
+  ];
+
+  for (const table of requiredTables) {
+    if (!Array.isArray(data.tables[table])) {
+      return "Backup mein " + table + " ka data missing ya invalid hai.";
+    }
+
+    for (const row of data.tables[table]) {
+      if (!row || typeof row !== "object" || Array.isArray(row)) {
+        return table + " mein invalid record mila.";
       }
-      $("restoreBackupBtn").onclick = async function () {
-        const fileInput = $("restoreBackupFile");
-        const message = $("restoreMessage");
-        const file = fileInput.files[0];
-        message.textContent = "";
-        if (!file) {
-          message.textContent = "Pehle JSON backup file choose karein.";
-          return;
-        }
-        if (!file.name.toLowerCase().endsWith(".json")) {
-          message.textContent = "Sirf .json backup file select karein.";
-          return;
-        }
-        let data;
-        try {
-          const content = await file.text();
-          data = JSON.parse(content);
-        } catch {
-          message.textContent = "File read nahi hui ya JSON invalid hai.";
-          return;
-        }
-        const error = validateBackup(data);
-        if (error) {
-          message.textContent = error;
-          return;
-        }
-        const confirmed = confirm(
-          "WARNING: Current buses aur bookings replace ho jayengi.\n\n" +
-            "Backup buses: " +
-            data.buses.length +
-            "\n" +
-            "Backup bookings: " +
-            data.bookings.length +
-            "\n\n" +
-            "Kya aapne current data ka backup liya hai? Restore karein?",
-        );
-        if (!confirmed) {
-          message.textContent = "Restore cancel kar diya gaya.";
-          return;
-        }
-        // Keep the current data in memory for rollback.
-        const oldBuses = buses;
-        const oldBookings = bookings;
-        // Keep current browser storage as an additional safeguard.
-        const oldStoredBuses = localStorage.getItem("apniBus_buses_v2");
-        const oldStoredBookings = localStorage.getItem("apniBus_bookings_v2");
-        buses = data.buses;
-        bookings = data.bookings;
-        if (!save()) {
-          // Restore previous in-memory data.
-          buses = oldBuses;
-          bookings = oldBookings;
-          // Try to restore the original storage values too.
-          try {
-            if (oldStoredBuses === null) {
-              localStorage.removeItem("apniBus_buses_v2");
-            } else {
-              localStorage.setItem("apniBus_buses_v2", oldStoredBuses);
-            }
-            if (oldStoredBookings === null) {
-              localStorage.removeItem("apniBus_bookings_v2");
-            } else {
-              localStorage.setItem("apniBus_bookings_v2", oldStoredBookings);
-            }
-          } catch {
-            message.textContent =
-              "Restore fail hua. Storage rollback bhi fail hua; current data check karein.";
-            return;
-          }
-          message.textContent =
-            "Restore save nahi hua. Purana data wapas rakha gaya.";
-          return;
-        }
-        // Refresh the interface using restored data.
-        renderAdmin();
-        if (!$("dashboardPanel").hidden) {
-          renderMyBookings();
-        }
+
+      if (
+        typeof row.id !== "string" ||
+        !row.id.trim()
+      ) {
+        return table + " mein invalid record ID mili.";
+      }
+    }
+  }
+
+  for (const booking of data.tables.app_bookings) {
+    if (
+      typeof booking.pnr !== "string" ||
+      !booking.pnr.trim()
+    ) {
+      return "Backup mein booking PNR invalid hai.";
+    }
+  }
+
+  return "";
+}
+
+$("restoreBackupBtn").onclick = async function () {
+  const fileInput = $("restoreBackupFile");
+  const message = $("restoreMessage");
+  const button = $("restoreBackupBtn");
+  const file = fileInput.files[0];
+
+  message.textContent = "";
+
+  if (!getAdminAccessToken()) {
+    message.textContent = "Pehle Admin Login karein.";
+    return;
+  }
+
+  if (!file) {
+    message.textContent = "Pehle JSON backup file choose karein.";
+    return;
+  }
+
+  if (!file.name.toLowerCase().endsWith(".json")) {
+    message.textContent = "Sirf .json backup file select karein.";
+    return;
+  }
+
+  let data;
+
+  try {
+    data = JSON.parse(await file.text());
+  } catch {
+    message.textContent = "File read nahi hui ya JSON invalid hai.";
+    return;
+  }
+
+  const validationError = validateV2Backup(data);
+
+  if (validationError) {
+    message.textContent = validationError;
+    return;
+  }
+
+  const restoreOrder = [
+    "app_operators",
+    "app_buses",
+    "app_routes",
+    "app_route_stops",
+    "app_route_pair_fares",
+    "app_route_segment_fares",
+    "app_trips",
+    "app_trip_stops",
+    "app_trip_fares",
+    "app_bookings",
+    "app_booking_segments"
+  ];
+
+  const totalRecords = restoreOrder.reduce(
+    (sum, table) => sum + data.tables[table].length,
+    0
+  );
+
+  if (totalRecords === 0) {
+    message.textContent = "Backup mein restore karne ke liye data nahi hai.";
+    return;
+  }
+
+  const confirmed = confirm(
+    "ADD-ONLY RESTORE\n\n" +
+    "Total records: " + totalRecords + "\n\n" +
+    "IMPORTANT:\n" +
+    "1. Existing records delete nahi honge.\n" +
+    "2. Existing records update nahi honge.\n" +
+    "3. Sirf naye records insert honge.\n" +
+    "4. Duplicate records skip honge.\n" +
+    "5. Original IDs aur PNR preserve rahenge.\n\n" +
+    "Kya aap restore shuru karna chahte hain?"
+  );
+
+  if (!confirmed) {
+    message.textContent = "Restore cancel kar diya gaya.";
+    return;
+  }
+
+  button.disabled = true;
+
+  let inserted = 0;
+  let skipped = 0;
+  let failed = 0;
+  let processed = 0;
+  const errors = [];
+
+  function isDuplicateError(error) {
+    const msg = String(error?.message || error).toLowerCase();
+
+    return (
+      msg.includes("duplicate key") ||
+      msg.includes("unique constraint") ||
+      msg.includes("already exists") ||
+      msg.includes("23505")
+    );
+  }
+
+  async function insertOne(table, row) {
+    await adminBusRequest("/rest/v1/" + table, {
+      method: "POST",
+      headers: {
+        Prefer: "return=minimal"
+      },
+      body: JSON.stringify(row)
+    });
+  }
+
+  try {
+    for (const table of restoreOrder) {
+      const rows = data.tables[table];
+
+      for (let start = 0; start < rows.length; start += 100) {
+        const chunk = rows.slice(start, start + 100);
+
         message.textContent =
-          "Backup successfully restore ho gaya! " +
-          buses.length +
-          " buses aur " +
-          bookings.length +
-          " bookings load hui.";
-        fileInput.value = "";
-      };
+          "Restore chal raha hai: " + table +
+          "\nProcessed: " + processed + " / " + totalRecords;
+
+        try {
+          const result = await adminBusRequest(
+            "/rest/v1/" + table,
+            {
+              method: "POST",
+              headers: {
+                Prefer: "return=representation"
+              },
+              body: JSON.stringify(chunk)
+            }
+          );
+
+          inserted += Array.isArray(result)
+            ? result.length
+            : chunk.length;
+
+          processed += chunk.length;
+
+        } catch (batchError) {
+          for (const row of chunk) {
+            try {
+              await insertOne(table, row);
+              inserted++;
+            } catch (rowError) {
+              if (isDuplicateError(rowError)) {
+                skipped++;
+              } else {
+                failed++;
+
+                if (errors.length < 10) {
+                  errors.push(
+                    table + ": " +
+                    String(rowError?.message || rowError)
+                  );
+                }
+              }
+            }
+
+            processed++;
+
+            if (processed % 20 === 0 || processed === totalRecords) {
+              message.textContent =
+                "Restore chal raha hai...\n" +
+                "Processed: " + processed + " / " + totalRecords +
+                "\nInserted: " + inserted +
+                "\nSkipped: " + skipped +
+                "\nFailed: " + failed;
+            }
+          }
+        }
+      }
+    }
+
+    message.textContent =
+      "RESTORE COMPLETE\n\n" +
+      "Inserted: " + inserted +
+      "\nSkipped: " + skipped +
+      "\nFailed: " + failed +
+      (errors.length
+        ? "\n\nSample errors:\n" + errors.join("\n")
+        : "");
+
+    if (failed === 0) {
+      alert("Restore process complete ho gaya.");
+    } else {
+      alert("Restore complete hua, lekin kuch records fail hue. Details Restore Message mein dekhein.");
+    }
+
+  } catch (error) {
+    message.textContent =
+      "Restore process mein error:\n" +
+      String(error?.message || error) +
+      "\n\nInserted: " + inserted +
+      "\nSkipped: " + skipped +
+      "\nFailed: " + failed;
+
+  } finally {
+    button.disabled = false;
+  }
+};
+
+
+      
       // ===============================
       // INITIALIZE APP
       // ===============================
