@@ -1054,6 +1054,37 @@ select {
 .data-table .row-action.danger{background:#fff1f2;border-color:#fecdd3;color:#be123c}
 .data-table .status-pill{display:inline-block;padding:4px 8px;border-radius:20px;background:#f1f5f9;font-weight:700;text-transform:capitalize}
 @media(max-width:760px){.data-table-wrap{overflow-x:auto}.data-table{min-width:760px}}
+
+.journey-date-wrap{display:flex;align-items:stretch;gap:12px;max-width:100%;margin:8px 0 14px;}
+.journey-date-trigger{flex:0 0 190px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;border:1px solid #b91c1c;border-radius:12px;background:#fff;color:#1f2937;text-align:left;cursor:pointer;min-height:72px;}
+.journey-date-trigger small{display:block;color:#64748b;font-size:10px;font-weight:700;letter-spacing:.08em;margin-bottom:5px;}
+.journey-date-trigger strong{font-size:15px;font-weight:800;}
+.journey-calendar-icon{font-size:23px;color:#b71c1c;}
+.journey-date-suggestions{display:flex;align-items:stretch;gap:8px;flex:1;min-width:0;overflow-x:auto;padding:1px 1px 5px;}
+.journey-date-chip{flex:1 0 76px;min-width:76px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:9px 7px;border:1px solid #dbe2ea;border-radius:11px;background:#fff;color:#334155;cursor:pointer;}
+.journey-date-chip small{font-size:11px;color:#64748b;font-weight:600;}
+.journey-date-chip strong{font-size:16px;font-weight:800;}
+.journey-date-chip.selected{border:2px solid #b91c1c;background:#fff1f2;color:#991b1b;padding:8px 6px;}
+.journey-date-chip.selected small{color:#991b1b;}
+.journey-calendar-backdrop{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;background:transparent;}
+.journey-calendar-backdrop[hidden]{display:none;}
+.journey-calendar{position:relative;width:min(370px,100%);padding:18px;background:#fff;border:1px solid #e5e7eb;border-radius:20px;box-shadow:none;}
+.journey-calendar-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:-2px 0 16px;padding:2px 0 13px;border-bottom:1px solid #f1f5f9;}
+.journey-calendar-head strong{font-size:17px;font-weight:800;letter-spacing:-.02em;color:#111827;}
+.journey-calendar-head button{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border:1px solid #e5e7eb;border-radius:11px;background:#f8fafc;font-size:23px;line-height:1;cursor:pointer;color:#374151;transition:background .15s,border-color .15s;}
+.journey-calendar-head button:hover:not(:disabled){background:#fff1f2;border-color:#fecaca;color:#991b1b;}
+.journey-calendar-head button:disabled{opacity:.3;cursor:not-allowed;}
+.journey-calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;text-align:center;}
+.journey-calendar-grid span{display:flex;align-items:center;justify-content:center;min-height:34px;padding:5px 0;color:#94a3b8;font-size:11px;font-weight:800;letter-spacing:.04em;}
+.journey-calendar-grid button{height:40px;border:1px solid transparent;border-radius:12px;background:#f8fafc;color:#1f2937;cursor:pointer;font-size:13px;font-weight:700;transition:background .15s,border-color .15s,transform .15s;}
+.journey-calendar-grid button:hover:not(:disabled){background:#fff1f2;border-color:#fecaca;color:#991b1b;transform:translateY(-1px);}
+.journey-calendar-grid button:disabled{background:transparent;color:#d1d5db;cursor:not-allowed;}
+.journey-calendar-grid button.selected{background:#b71c1c;border-color:#b71c1c;color:#fff;}
+.journey-calendar-grid button.today{border-color:#b91c1c;color:#991b1b;background:#fff;}
+.journey-calendar-grid button.today.selected{background:#b71c1c;color:#fff;}
+.journey-calendar-note{margin:15px 0 0;padding-top:11px;border-top:1px solid #f1f5f9;color:#94a3b8;font-size:11px;text-align:center;}
+@media(max-width:650px){.journey-date-wrap{flex-direction:column;gap:8px}.journey-date-trigger{flex:0 0 auto;width:100%;min-height:62px}.journey-date-suggestions{width:100%;}.journey-date-chip{flex:0 0 72px;}}
+
 </style>
   </head>
   <body>
@@ -1081,10 +1112,25 @@ select {
         <form id="searchForm">
           <label>From</label><input id="from" value="Shahdol" required />
           <label>To</label><input id="to" value="Rewa" required />
-          <label>Journey Date (DD/MM/YYYY)</label>
-          <div style="display:flex; gap:8px;">
-            <input id="dateDisplay" type="text" placeholder="DD/MM/YYYY" inputmode="numeric" maxlength="10" required style="flex:1;" />
-            <input id="datePicker" type="date" style="width:48px;" />
+          <label>Journey Date</label>
+          <div class="journey-date-wrap">
+            <button id="dateDisplay" class="journey-date-trigger" type="button" aria-haspopup="dialog" aria-expanded="false">
+              <span><small id="journeyDateEyebrow">JOURNEY DATE · TODAY</small><strong id="journeyDateLabel"></strong></span>
+              <span class="journey-calendar-icon" aria-hidden="true">▦</span>
+            </button>
+            <div id="journeyDateSuggestions" class="journey-date-suggestions" aria-label="Suggested journey dates"></div>
+          </div>
+          <div id="journeyCalendarBackdrop" class="journey-calendar-backdrop" hidden>
+            <div id="journeyCalendar" class="journey-calendar" role="dialog" aria-modal="true" aria-label="Select journey date">
+              <div class="journey-calendar-head">
+                <button id="calendarPrev" type="button" aria-label="Previous month">‹</button>
+                <strong id="calendarMonthLabel"></strong>
+                <button id="calendarNext" type="button" aria-label="Next month">›</button>
+              </div>
+              <div class="journey-calendar-grid" id="calendarWeekdays"></div>
+              <div class="journey-calendar-grid" id="calendarDays"></div>
+              <p class="journey-calendar-note">Past dates are unavailable. Select today or a future date.</p>
+            </div>
           </div>
           <input id="date" type="hidden" />
           <button type="submit">Search Buses</button>
@@ -1849,39 +1895,61 @@ select {
         );
       }
 
-      $("dateDisplay").addEventListener("input", function () {
-        const digits = this.value.replace(/\D/g, "").slice(0, 8);
-        let formatted = digits;
-        if (digits.length > 4) {
-          formatted = digits.slice(0, 2) + "/" + digits.slice(2, 4) + "/" + digits.slice(4);
-        } else if (digits.length > 2) {
-          formatted = digits.slice(0, 2) + "/" + digits.slice(2);
+      let calendarMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+      const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+      function formatJourneyDate(iso) {
+        if (!iso) return "Select your journey date";
+        const [y,m,d] = iso.split("-").map(Number);
+        return String(d).padStart(2,"0") + "/" + String(m).padStart(2,"0") + "/" + y;
+      }
+      function shortJourneyDate(iso) {
+        const [y,m,d]=iso.split("-").map(Number); const dt=new Date(y,m-1,d);
+        return {day: String(d).padStart(2,"0"), weekday: ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][dt.getDay()]};
+      }
+      function updateJourneyDateUI() {
+        const selected=$("date").value||today();
+        const t=today();
+        $("journeyDateEyebrow").textContent = selected===t ? "JOURNEY DATE · TODAY" : "JOURNEY DATE";
+        $("journeyDateLabel").textContent = formatJourneyDate(selected);
+        const host=$("journeyDateSuggestions"); host.replaceChildren();
+        for(let i=0;i<7;i++){
+          const dt=new Date();dt.setHours(12,0,0,0);dt.setDate(dt.getDate()+i);
+          const iso=dt.getFullYear()+"-"+String(dt.getMonth()+1).padStart(2,"0")+"-"+String(dt.getDate()).padStart(2,"0");
+          const parts=shortJourneyDate(iso);const btn=document.createElement("button");btn.type="button";btn.className="journey-date-chip"+(iso===selected?" selected":"");
+          const small=document.createElement("small");small.textContent=i===0?"Today":i===1?"Tomorrow":parts.weekday;
+          const strong=document.createElement("strong");strong.textContent=parts.day;
+          const month=document.createElement("small");month.textContent=dt.toLocaleString("en-IN",{month:"short"});
+          btn.append(small,strong,month);btn.setAttribute("aria-pressed",String(iso===selected));
+          btn.onclick=()=>selectJourneyDate(iso);host.appendChild(btn);
         }
-        this.value = formatted;
-        const hiddenDate = $("date");
-        hiddenDate.value = "";
-        if (digits.length === 8) {
-          const day = Number(digits.slice(0, 2));
-          const month = Number(digits.slice(2, 4));
-          const year = Number(digits.slice(4, 8));
-          const check = new Date(year, month - 1, day);
-          if (
-            check.getFullYear() === year && check.getMonth() === month - 1 && check.getDate() === day
-          ) {
-            hiddenDate.value =
-              year + "-" + String(month).padStart(2, "0") + "-" + String(day).padStart(2, "0");
-          }
+      }
+      function selectJourneyDate(iso){if(iso<today())return;$("date").value=iso;updateJourneyDateUI();$("journeyCalendarBackdrop").hidden=true;$("dateDisplay").setAttribute("aria-expanded","false");}
+      function renderJourneyCalendar() {
+        const min = today();const year = calendarMonth.getFullYear(), month = calendarMonth.getMonth();
+        $("calendarMonthLabel").textContent = monthNames[month] + " " + year;
+        $("calendarPrev").disabled = year < Number(min.slice(0,4)) || (year === Number(min.slice(0,4)) && month <= Number(min.slice(5,7))-1);
+        $("calendarNext").disabled = false;
+        const weekdays = $("calendarWeekdays"); weekdays.replaceChildren();
+        ["Su","Mo","Tu","We","Th","Fr","Sa"].forEach(x=>{const el=document.createElement("span");el.textContent=x;weekdays.appendChild(el);});
+        const days = $("calendarDays"); days.replaceChildren();
+        const firstDay = new Date(year,month,1).getDay();const count = new Date(year,month+1,0).getDate();
+        for(let i=0;i<firstDay;i++){const blank=document.createElement("span");days.appendChild(blank);}
+        for(let day=1;day<=count;day++){
+          const iso=year+"-"+String(month+1).padStart(2,"0")+"-"+String(day).padStart(2,"0");
+          const btn=document.createElement("button");btn.type="button";btn.textContent=String(day);btn.disabled=iso<min;
+          if(iso===min)btn.classList.add("today");if(iso===$("date").value)btn.classList.add("selected");
+          btn.setAttribute("aria-label",formatJourneyDate(iso));btn.onclick=()=>selectJourneyDate(iso);days.appendChild(btn);
         }
+      }
+      $("dateDisplay").addEventListener("click",function(){
+        const backdrop=$("journeyCalendarBackdrop");backdrop.hidden=false;this.setAttribute("aria-expanded","true");
+        const selected=$("date").value||today();const [y,m]=selected.split("-").map(Number);calendarMonth=new Date(y,m-1,1);renderJourneyCalendar();
       });
-      
-      $("datePicker").addEventListener("change", function () {
-        if (!this.value) return;
-        const parts = this.value.split("-");
-        $("dateDisplay").value =
-          parts[2] + "/" + parts[1] + "/" + parts[0];
-        $("date").value = this.value;
-      });
-      
+      $("calendarPrev").onclick=()=>{calendarMonth=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()-1,1);renderJourneyCalendar();};
+      $("calendarNext").onclick=()=>{calendarMonth=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()+1,1);renderJourneyCalendar();};
+      $("journeyCalendarBackdrop").addEventListener("click",e=>{if(e.target.id==="journeyCalendarBackdrop"){$("journeyCalendarBackdrop").hidden=true;$("dateDisplay").setAttribute("aria-expanded","false");}});
+      document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("journeyCalendarBackdrop").hidden){$("journeyCalendarBackdrop").hidden=true;$("dateDisplay").setAttribute("aria-expanded","false");}});
+
       function statusOf(b) {
         return b.status === "cancelled" ? "cancelled" : "confirmed";
       }
@@ -1978,7 +2046,7 @@ select {
         });
       };
       $("date").value = today();
-      $("date").min = today();
+      updateJourneyDateUI();
       // Mobile field: digits only, maximum 10.
       function restrictMobile(input) {
         input.addEventListener("input", function () {
@@ -2267,7 +2335,7 @@ select {
           ["Bus Number", b.busNumber || "—"],
           ["Route", b.from + " → " + b.to],
           ["Journey Date", b.date],
-          ["Departure", findBus(b.busId)?.departure || "—"],
+          ["Departure", b.departureTime || b.boardingTime || findBus(b.busId)?.departure || "—"],
           ["Seats", (b.seats || []).join(", ")],
           ["Total Fare", money(b.total)],
           ["Payment Method", paymentMethodLabel(b.paymentMethod)],
@@ -3657,6 +3725,7 @@ document.querySelectorAll(".quick-action-btn").forEach(button => {
         e.preventDefault();
         const f=q("from").value.trim(), t=q("to").value.trim(), date=q("date").value;
         if(!f||!t||f.toLowerCase()===t.toLowerCase()||!date){alert("From, To aur journey date sahi bharein.");return;}
+        if(date < today()) { q("date").value=""; q("journeyDateLabel").textContent="Select your journey date"; alert("Pichhli date par booking nahi ho sakti. Aaj ya aane wali date chunein."); return; }
         from=f;to=t;journeyDate=date; const list=q("busList");list.replaceChildren();
         try {
           const trips=await rest(`/app_trips?select=id,route_id,bus_id,journey_date,status&journey_date=eq.${esc(date)}&status=eq.scheduled&order=created_at.asc`);
@@ -3705,7 +3774,7 @@ document.querySelectorAll(".quick-action-btn").forEach(button => {
       }
       q("continueBtn").onclick=function(){if(!readDemoAuthSession()){alert("Ticket book karne ke liye pehle My Account mein login ya registration karein.");openDemoAuth();return;}if(!currentTrip||!seats.length){alert("Pehle seat select karein.");return;}const bs=currentStops.find(x=>x.id===q("currentBoarding").value),ds=currentStops.find(x=>x.id===q("currentDropping").value);if(!bs||!ds||bs.stop_order>=ds.stop_order||!currentFares.some(x=>x.boarding_stop_id===bs.id&&x.dropping_stop_id===ds.id)){alert("Valid boarding aur dropping stop chunein.");return;}currentBoarding=bs.id;currentDropping=ds.id;currentFare=Number(currentFares.find(x=>x.boarding_stop_id===bs.id&&x.dropping_stop_id===ds.id).fare);q("passengers").replaceChildren();[...seats].sort((a,b)=>a-b).forEach((seat,i)=>{const box=document.createElement("div");box.className="passenger";addText("h3",`Passenger ${i+1} — Seat ${seat}`,box);const n=document.createElement("input");n.name="name";n.placeholder="Passenger Name";n.required=true;box.appendChild(n);const age=document.createElement("input");age.name="age";age.type="number";age.min=1;age.max=120;age.placeholder="Age";age.required=true;box.appendChild(age);const ph=document.createElement("input");ph.name="phone";ph.placeholder="10-digit mobile number";ph.inputMode="numeric";ph.maxLength=10;ph.pattern="[6-9][0-9]{9}";ph.required=true;restrictMobile(ph);box.appendChild(ph);q("passengers").appendChild(box);});q("bookingSummary").textContent=`${bus.name} | ${currentStops.find(x=>x.id===currentBoarding).stop_name} → ${currentStops.find(x=>x.id===currentDropping).stop_name} | ${journeyDate} | Seats ${seats.join(", ")} | Total ${money(currentFare*seats.length)}`;q("passengerPanel").hidden=false;q("passengerPanel").scrollIntoView({behavior:"smooth"});};
       q("passengerForm").onsubmit=async function(e){e.preventDefault();if(!readDemoAuthSession()){alert("Booking ke liye customer login zaroori hai.");openDemoAuth();return;}if(!currentTrip||!seats.length)return;const people=[...q("passengers").children].map(box=>({name:box.querySelector('[name="name"]').value.trim(),age:Number(box.querySelector('[name="age"]').value),phone:box.querySelector('[name="phone"]').value.trim()}));if(people.some(p=>!p.name||!Number.isInteger(p.age)||p.age<1||p.age>120||!/^[6-9][0-9]{9}$/.test(p.phone))){alert("Passenger details check karein.");return;}const submit=q("passengerForm").querySelector('button[type="submit"]');submit.disabled=true;
-        try{const sortedSeats=[...seats].sort((a,b)=>a-b);const data=await rpc("app_create_booking",{p_trip_id:currentTrip.trip.id,p_boarding_stop_id:currentBoarding,p_dropping_stop_id:currentDropping,p_seats:sortedSeats,p_customer_name:people[0].name,p_customer_phone:people[0].phone,p_passenger_details:people.map((p,i)=>({seat_no:sortedSeats[i],name:p.name,age:p.age,phone:p.phone})),p_payment_method:q("paymentMethod").value||"pay_later",p_customer_email:readDemoAuthSession()?.email||null});const row=Array.isArray(data)?data[0]:data;if(!row?.booking_pnr)throw new Error("Booking PNR response nahi mila.");const booking={id:row.booking_pnr,bus:bus.name,from:currentStops.find(x=>x.id===currentBoarding).stop_name,to:currentStops.find(x=>x.id===currentDropping).stop_name,date:journeyDate,seats:[...seats].sort((a,b)=>a-b),people,total:Number(row.total_fare),paymentMethod:q("paymentMethod").value||"pay_later",paymentStatus:"pending",status:"confirmed",createdAt:new Date().toISOString(),boardingTime:currentStops.find(x=>x.id===currentBoarding).departure_time,droppingTime:currentStops.find(x=>x.id===currentDropping).arrival_time};renderTicket(booking);q("seatPanel").hidden=true;q("passengerPanel").hidden=true;q("ticketPanel").hidden=false;q("ticketPanel").scrollIntoView({behavior:"smooth"});alert("Booking successful! PNR: "+booking.id);seats=[];}catch(err){alert("Booking nahi hui: "+err.message+". Seat refresh karke try karein.");try{await openTrip(currentTrips.find(x=>x.trip.id===currentTrip.trip.id));}catch(_){}}finally{submit.disabled=false;}};
+        try{const sortedSeats=[...seats].sort((a,b)=>a-b);const data=await rpc("app_create_booking",{p_trip_id:currentTrip.trip.id,p_boarding_stop_id:currentBoarding,p_dropping_stop_id:currentDropping,p_seats:sortedSeats,p_customer_name:people[0].name,p_customer_phone:people[0].phone,p_passenger_details:people.map((p,i)=>({seat_no:sortedSeats[i],name:p.name,age:p.age,phone:p.phone})),p_payment_method:q("paymentMethod").value||"pay_later",p_customer_email:readDemoAuthSession()?.email||null});const row=Array.isArray(data)?data[0]:data;if(!row?.booking_pnr)throw new Error("Booking PNR response nahi mila.");const selectedBoarding=currentStops.find(x=>x.id===currentBoarding),selectedDropping=currentStops.find(x=>x.id===currentDropping);const booking={id:row.booking_pnr,bus:currentTrip.bus.bus_name,busNumber:currentTrip.bus.bus_number||"—",busId:currentTrip.bus.id,tripId:currentTrip.trip.id,from:selectedBoarding.stop_name,to:selectedDropping.stop_name,date:journeyDate,seats:[...seats].sort((a,b)=>a-b),people,total:Number(row.total_fare),paymentMethod:q("paymentMethod").value||"pay_later",paymentStatus:"pending",status:"confirmed",createdAt:new Date().toISOString(),departureTime:selectedBoarding.departure_time||"—",boardingTime:selectedBoarding.departure_time||"—",droppingTime:selectedDropping.arrival_time||"—"};renderTicket(booking);q("seatPanel").hidden=true;q("passengerPanel").hidden=true;q("ticketPanel").hidden=false;q("ticketPanel").scrollIntoView({behavior:"smooth"});alert("Booking successful! PNR: "+booking.id);seats=[];}catch(err){alert("Booking nahi hui: "+err.message+". Seat refresh karke try karein.");try{await openTrip(currentTrips.find(x=>x.trip.id===currentTrip.trip.id));}catch(_){}}finally{submit.disabled=false;}};
       // Limited-information PNR lookup as defined by the current RPC.
       q("pnrForm").onsubmit=async function(e){e.preventDefault();const pnr=q("lookupPnr").value.trim(),out=q("pnrResult");out.replaceChildren();try{const data=await rpc("app_lookup_booking",{p_pnr:pnr});const x=Array.isArray(data)?data[0]:data;if(!x||!x.booking_pnr){showStatusMessage(out,"Is PNR se booking nahi mili.");return;}addText("h3","Ticket Details",out);[["PNR",x.booking_pnr],["Status",String(x.booking_status).toUpperCase()],["Bus",x.bus_name],["Bus Number",x.bus_number],["Bus Type",x.bus_type],["Journey Date",x.journey_date],["Boarding",x.boarding_name+" — "+(x.boarding_time||"—")],["Dropping",x.dropping_name+" — "+(x.dropping_time||"—")],["Seats",(x.seats||[]).join(", ")],["Total Fare",money(x.total_fare)],["Booked At",x.booked_at?new Date(x.booked_at).toLocaleString("en-IN"):"—"]].forEach(([k,v])=>{const p=document.createElement("p");addText("strong",k+": ",p);addText("span",v,p);out.appendChild(p);});}catch(err){showStatusMessage(out,"PNR lookup nahi ho paya: "+err.message);}};
       // Public PNR + phone cancellation is disabled. Cancellation is available only
