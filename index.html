@@ -2761,6 +2761,15 @@ $("restoreBackupBtn").onclick = async function () {
 
   const validationError = validateV2Backup(data);
 
+  if (data.exportedAt) {
+    const backupDate = new Date(data.exportedAt);
+    
+    if (Number.isNaN(backupDate.getTime())) {
+      message.textContent = "Backup date invalid hai.";
+      return;
+    }
+  }
+
   if (validationError) {
     message.textContent = validationError;
     return;
