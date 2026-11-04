@@ -723,6 +723,156 @@
       @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
       @media(max-width:600px){header{padding:25px 18px 22px}nav{display:grid;grid-template-columns:1fr 1fr;gap:8px}nav button{font-size:12px;padding:10px 9px}nav button:last-child{grid-column:1/-1}main{margin:22px auto 44px;padding:0 13px}section{border-radius:16px;padding:19px;margin-bottom:16px}.seats{gap:7px}}
 
+      
+/* =====================================
+   APNI BUS BOOKING - ADMIN SIDEBAR
+===================================== */
+
+#adminPanel {
+  border: 0;
+  border-radius: 18px;
+  background: #f8fafc;
+  padding: 24px;
+  box-shadow: 0 8px 30px rgba(15, 23, 42, .06);
+}
+
+.admin-layout {
+  display: grid;
+  grid-template-columns: 235px minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
+  margin-top: 22px;
+}
+
+.admin-sidebar {
+  position: sticky;
+  top: 15px;
+  background: #202b3c;
+  color: white;
+  border-radius: 16px;
+  padding: 18px 12px;
+}
+
+.admin-sidebar-title {
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 800;
+  padding: 8px 12px 18px;
+}
+
+.admin-nav-btn {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 10px;
+  padding: 12px;
+  margin: 4px 0;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #dbe4f0;
+  text-align: left;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.admin-nav-btn:hover,
+.admin-nav-btn.active {
+  background: #b91c1c;
+  color: #ffffff;
+}
+
+.admin-content {
+  min-width: 0;
+  padding: 22px;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 5px 22px rgba(15, 23, 42, .05);
+}
+
+.admin-section-view {
+  display: none;
+}
+
+.admin-section-view.active {
+  display: block;
+}
+
+.admin-content h3 {
+  margin-top: 8px !important;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e5e7eb;
+  color: #991b1b;
+}
+
+.admin-content form {
+  max-width: 650px;
+  padding: 18px;
+  margin: 16px 0 22px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #fafafa;
+}
+
+.admin-content input,
+.admin-content select {
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.admin-content button[type="submit"] {
+  border-radius: 8px;
+  font-weight: 700;
+}
+
+.admin-content table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-content th,
+.admin-content td {
+  padding: 11px;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+}
+
+@media (max-width: 760px) {
+  #adminPanel {
+    padding: 12px;
+  }
+
+  .admin-layout {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .admin-sidebar {
+    position: static;
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding: 10px;
+  }
+
+  .admin-sidebar-title {
+    display: none;
+  }
+
+  .admin-nav-btn {
+    width: auto;
+    min-width: max-content;
+    margin: 0;
+    padding: 10px 12px;
+  }
+
+  .admin-content {
+    padding: 14px;
+  }
+}
+
+
+      
     </style>
   </head>
   <body>
