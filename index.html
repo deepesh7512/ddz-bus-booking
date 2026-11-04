@@ -900,7 +900,58 @@
   color: #1e293b;
   font-size: 28px;
   font-weight: 800;
-}  
+}
+
+      /* RECENT BOOKINGS OVERVIEW */
+.admin-recent-bookings {
+  margin-top: 25px;
+  padding: 20px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, .05);
+}
+
+.admin-recent-bookings h3 {
+  margin-top: 0;
+  color: #991b1b;
+}
+
+.admin-recent-bookings table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+
+.admin-recent-bookings th,
+.admin-recent-bookings td {
+  padding: 11px;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+  font-size: 13px;
+}
+
+.admin-recent-bookings th {
+  background: #f8fafc;
+  color: #475569;
+}
+
+.admin-recent-bookings .recent-status {
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+@media (max-width: 760px) {
+  .admin-recent-bookings {
+    overflow-x: auto;
+    padding: 12px;
+  }
+
+  .admin-recent-bookings table {
+    min-width: 650px;
+  }
+}
+      
     </style>
   </head>
   <body>
@@ -1196,7 +1247,15 @@
       
     </div>
 
-    <div class="admin-section-view active" data-admin-view="operators">
+    <div class="admin-recent-bookings">
+  <h3>Recent Bookings</h3>
+  <p>हाल की 5 बुकिंग की जानकारी</p>
+  <div id="overviewRecentBookings">
+    Bookings load हो रही हैं...
+  </div>
+</div>
+
+    <div class="admin-section-view" data-admin-view="operators">
 
         <h3>1. Operators</h3>
         <form id="v2OperatorForm">
@@ -3541,6 +3600,71 @@ try {
   setOverviewStat("overviewBookings", "—");
   setOverviewStat("overviewTodayBookings", "—");
   setOverviewStat("overviewTodayRevenue", "—");
+}
+          // LOAD RECENT 5 BOOKINGS
+const recentContainer = $a("overviewRecentBookings");
+
+if (recentContainer) {
+  try {
+    const recentRows = await req(
+      "app_bookings?select=pnr,customer_name,boarding_name_snapshot,dropping_name_snapshot,created_at,fare,status&order=created_at.desc&limit=5"
+    );
+
+    recentContainer.replaceChildren();
+
+    if (!recentRows.length) {
+      recentContainer.textContent = "Abhi koi booking available nahi hai.";
+    } else {
+      const table = document.createElement("table");
+      const thead = document.createElement("thead");
+      const headerRow = document.createElement("tr");
+
+      ["PNR", "Customer", "Route", "Booking Date", "Fare", "Status"]
+        .forEach(label => {
+          const th = document.createElement("th");
+          th.textContent = label;
+          headerRow.appendChild(th);
+        });
+
+      thead.appendChild(headerRow);
+      table.appendChild(thead);
+
+      const tbody = document.createElement("tbody");
+
+      recentRows.forEach(booking => {
+        const row = document.createElement("tr");
+
+        const values = [
+          booking.pnr || "—",
+          booking.customer_name || "—",
+          (booking.boarding_name_snapshot || "?") +
+            " → " +
+            (booking.dropping_name_snapshot || "?"),
+          booking.created_at
+            ? new Date(booking.created_at).toLocaleString("en-IN", {
+                timeZone: "Asia/Kolkata"
+              })
+            : "—",
+          "₹" + Number(booking.fare || 0).toLocaleString("en-IN"),
+          booking.status || "—"
+        ];
+
+        values.forEach(value => {
+          const td = document.createElement("td");
+          td.textContent = String(value);
+          row.appendChild(td);
+        });
+
+        tbody.appendChild(row);
+      });
+
+      table.appendChild(tbody);
+      recentContainer.appendChild(table);
+    }
+  } catch (error) {
+    recentContainer.textContent =
+      "Recent bookings load error: " + error.message;
+  }
 }
           fill('v2BusOperator',operators,'id',x=>x.operator_name);fill('v2RouteBus',buses,'id',x=>x.bus_name+' ('+(x.bus_number||'No number')+')');fill('v2StopRoute',routes,'id',x=>x.route_name+' | '+(buses.find(b=>b.id===x.bus_id)?.bus_name||'Bus not found')+' ('+(buses.find(b=>b.id===x.bus_id)?.bus_number||'No number')+')');fill('v2TripRoute',routes,'id',x=>x.route_name+' | '+(buses.find(b=>b.id===x.bus_id)?.bus_name||'Bus not found')+' ('+(buses.find(b=>b.id===x.bus_id)?.bus_number||'No number')+')');fill('v2FareTrip',trips,'id',x=>x.journey_date+' | '+(routes.find(r=>r.id===x.route_id)?.route_name||x.id));
           list('v2Operators',operators,x=>x.operator_name+' | '+(x.phone||'')+' | '+(x.active?'Active':'Inactive'));
