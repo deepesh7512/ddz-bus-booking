@@ -838,20 +838,21 @@ select {
 }
 
 @media (max-width: 760px) {
+
   .admin-layout {
     grid-template-columns: 1fr;
     gap: 12px;
   }
 
   .admin-sidebar {
-    position: static;
-    display: flex;
-    width: 100%;
-    box-sizing: border-box;
-    gap: 6px;
-    overflow-x: auto;
-    padding: 10px;
-  }
+  position: static;
+  display: flex;
+  width: 100%;
+  box-sizing: border-box;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 10px;
+}
 
   .admin-sidebar-title {
     display: none;
@@ -868,7 +869,6 @@ select {
     padding: 12px;
   }
 }
-
 /* ADMIN OVERVIEW STATISTICS */
 .admin-stats-grid {
   display: grid;
@@ -1000,7 +1000,8 @@ select {
   box-sizing: border-box;
   overflow-x: auto;
 }
-/* MOBILE RESPONSIVE */
+
+/* Mobile Responsive */
 @media (max-width: 760px) {
   header {
     padding: 16px 12px;
