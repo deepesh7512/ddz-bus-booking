@@ -1073,7 +1073,64 @@
       <section id="adminPanel" hidden>
         <h2>Admin Panel & Dashboard</h2>
         <p>Operators, Buses, Routes, Stoppages, Trips & Fares Management.</p>
-        <div id="v2AdminMessage" role="status" aria-live="polite"></div>
+        
+<div id="v2AdminMessage" role="status" aria-live="polite"></div>
+
+<div class="admin-layout">
+
+  <aside class="admin-sidebar">
+    <div class="admin-sidebar-title">
+      APNI BUS BOOKING
+      <small style="display:block;font-size:11px;font-weight:400;margin-top:5px;">
+        ADMIN PANEL
+      </small>
+    </div>
+
+    <button type="button" class="admin-nav-btn active" data-admin-target="overview">
+      🏠 Overview
+    </button>
+    <button type="button" class="admin-nav-btn" data-admin-target="operators">
+      👥 Operators
+    </button>
+    <button type="button" class="admin-nav-btn" data-admin-target="buses">
+      🚌 Buses
+    </button>
+    <button type="button" class="admin-nav-btn" data-admin-target="routes">
+      🛣️ Routes
+    </button>
+    <button type="button" class="admin-nav-btn" data-admin-target="stoppages">
+      📍 Stoppages
+    </button>
+    <button type="button" class="admin-nav-btn" data-admin-target="trips">
+      📅 Trips
+    </button>
+    <button type="button" class="admin-nav-btn" data-admin-target="fares">
+      ₹ Trip Fares
+    </button>
+    <button type="button" class="admin-nav-btn" data-admin-target="notifications">
+      🔔 Notifications
+    </button>
+    <button type="button" class="admin-nav-btn" data-admin-target="reports">
+      📊 Reports
+    </button>
+    <button type="button" class="admin-nav-btn" data-admin-target="bookings">
+      🎫 All Bookings
+    </button>
+    <button type="button" class="admin-nav-btn" data-admin-target="backup">
+      💾 Backup & Restore
+    </button>
+  </aside>
+
+  <div class="admin-content">
+
+    <div class="admin-section-view active" data-admin-view="overview">
+      <h3>Dashboard Overview</h3>
+      <p>Welcome to Apni Bus Booking Admin Dashboard.</p>
+      <p>अपना Management Section देखने के लिए बाईं ओर Menu चुनें।</p>
+    </div>
+
+    <div class="admin-section-view active" data-admin-view="operators">
+
         <h3>1. Operators</h3>
         <form id="v2OperatorForm">
           <label>Operator Name</label><input id="v2OperatorName" required />
