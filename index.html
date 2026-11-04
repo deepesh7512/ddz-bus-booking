@@ -1078,7 +1078,32 @@ nav {
     box-sizing: border-box;
   }
 }
-      
+      /* DESKTOP FULL WIDTH FIX */
+main {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 24px 0 40px !important;
+  padding: 0 20px !important;
+}
+
+#adminPanel {
+  width: 100% !important;
+  max-width: none !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+/* MOBILE SPACING */
+@media (max-width: 760px) {
+  main {
+    padding: 0 10px !important;
+    margin: 15px 0 25px !important;
+  }
+
+  #adminPanel {
+    padding: 10px !important;
+  }
+}
     </style>
   </head>
   <body>
