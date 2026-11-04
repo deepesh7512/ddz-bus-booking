@@ -1180,6 +1180,15 @@
   <div class="admin-stat-card">
     <span>Total Bookings</span>
     <strong id="overviewBookings">0</strong>
+    <div class="admin-stat-card">
+  <span>Today's Bookings</span>
+  <strong id="overviewTodayBookings">0</strong>
+</div>
+
+<div class="admin-stat-card">
+  <span>Today's Revenue</span>
+  <strong id="overviewTodayRevenue">₹0</strong>
+</div>
   </div>
 
 </div>
@@ -3484,10 +3493,52 @@ setOverviewStat("overviewRoutes", routes.length);
 setOverviewStat("overviewTrips", trips.length);
 
 try {
-  const bookingRows = await req("app_bookings?select=id");
+  const bookingRows = await req(
+    "app_bookings?select=id,created_at,status,payment_status,fare,seats"
+  );
+
   setOverviewStat("overviewBookings", bookingRows.length);
+
+  const today = new Date().toLocaleDateString("en-CA", {
+    timeZone: "Asia/Kolkata"
+  });
+
+  const todayBookings = bookingRows.filter(booking => {
+    const bookingDate = new Date(booking.created_at)
+      .toLocaleDateString("en-CA", {
+        timeZone: "Asia/Kolkata"
+      });
+
+    return bookingDate === today && booking.status !== "cancelled";
+  });
+
+  setOverviewStat(
+    "overviewTodayBookings",
+    todayBookings.length
+  );
+
+  const todayRevenue = todayBookings
+    .filter(booking =>
+      booking.status === "confirmed" &&
+      booking.payment_status === "paid"
+    )
+    .reduce((total, booking) => {
+      const seatCount = Array.isArray(booking.seats)
+        ? booking.seats.length
+        : 0;
+
+      return total + (Number(booking.fare || 0) * seatCount);
+    }, 0);
+
+  setOverviewStat(
+    "overviewTodayRevenue",
+    "₹" + todayRevenue.toLocaleString("en-IN")
+  );
+
 } catch (error) {
   setOverviewStat("overviewBookings", "—");
+  setOverviewStat("overviewTodayBookings", "—");
+  setOverviewStat("overviewTodayRevenue", "—");
 }
           fill('v2BusOperator',operators,'id',x=>x.operator_name);fill('v2RouteBus',buses,'id',x=>x.bus_name+' ('+(x.bus_number||'No number')+')');fill('v2StopRoute',routes,'id',x=>x.route_name+' | '+(buses.find(b=>b.id===x.bus_id)?.bus_name||'Bus not found')+' ('+(buses.find(b=>b.id===x.bus_id)?.bus_number||'No number')+')');fill('v2TripRoute',routes,'id',x=>x.route_name+' | '+(buses.find(b=>b.id===x.bus_id)?.bus_name||'Bus not found')+' ('+(buses.find(b=>b.id===x.bus_id)?.bus_number||'No number')+')');fill('v2FareTrip',trips,'id',x=>x.journey_date+' | '+(routes.find(r=>r.id===x.route_id)?.route_name||x.id));
           list('v2Operators',operators,x=>x.operator_name+' | '+(x.phone||'')+' | '+(x.active?'Active':'Inactive'));
