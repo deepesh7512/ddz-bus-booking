@@ -951,6 +951,46 @@
     min-width: 650px;
   }
 }
+
+      /* ADMIN QUICK ACTIONS */
+.admin-quick-actions {
+  margin-top: 22px;
+  padding: 20px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, .05);
+}
+
+.admin-quick-actions h3 {
+  margin-top: 0;
+  color: #991b1b;
+}
+
+.quick-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+  margin-top: 15px;
+}
+
+.quick-action-btn {
+  padding: 15px;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  background: #fff7f7;
+  color: #991b1b;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: .2s;
+}
+
+.quick-action-btn:hover {
+  background: #b91c1c;
+  color: #ffffff;
+  transform: translateY(-2px);
+}
       
     </style>
   </head>
@@ -3737,6 +3777,21 @@ adminNavButtons.forEach(button => {
         view.dataset.adminView === target
       );
     });
+  });
+});
+
+      // QUICK ACTION BUTTONS
+document.querySelectorAll(".quick-action-btn").forEach(button => {
+  button.addEventListener("click", () => {
+    const target = button.dataset.adminTarget;
+
+    const navButton = document.querySelector(
+      '.admin-nav-btn[data-admin-target="' + target + '"]'
+    );
+
+    if (navButton) {
+      navButton.click();
+    }
   });
 });
       // Also load after successful admin login when the panel is opened.
