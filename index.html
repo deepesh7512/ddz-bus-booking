@@ -1207,7 +1207,7 @@
       if (refreshNotificationsButton) refreshNotificationsButton.addEventListener("click", loadAdminNotifications);
       async function loadAdminBookingsFromSupabase() {
         // V2 bookings are stored in app_bookings, not the legacy bookings table.
-        const rows = await adminBusRequest("/rest/v1/app_bookings?select=id,pnr,trip_id,customer_name,customer_phone,customer_email,boarding_name_snapshot,dropping_name_snapshot,seats,fare,status,payment_method,payment_status,created_at,cancelled_at&order=created_at.desc");
+        const rows = await adminBusRequest("/rest/v1/app_bookings?select=id,pnr,trip_id,customer_name,customer_phone,customer_email,boarding_name_snapshot,dropping_name_snapshot,seats,fare,status,payment_method,payment_status,passenger_details,created_at,cancelled_at&order=created_at.desc");
         if (!Array.isArray(rows)) return [];
         return await Promise.all(rows.map(async (row) => {
           let ticket = null;
@@ -1228,11 +1228,13 @@
             total_fare: Number(row.fare ?? ticket?.total_fare ?? 0),
             payment_method: row.payment_method || "pay_later",
             payment_status: row.payment_status || "pending",
-            passenger_details: Array.isArray(ticket?.passengers)
+            passenger_details: Array.isArray(row.passenger_details) && row.passenger_details.length
+              ? row.passenger_details
+              : Array.isArray(ticket?.passengers)
               ? ticket.passengers
               : Array.isArray(ticket?.passenger_details)
-                ? ticket.passenger_details
-                : [{ name: row.customer_name || ticket?.customer_name || "—", age: ticket?.customer_age || "—", phone: row.customer_phone || ticket?.customer_phone || "—" }],
+              ? ticket.passenger_details
+              : [{ name: row.customer_name || ticket?.customer_name || "—", age: ticket?.customer_age || "—", phone: row.customer_phone || ticket?.customer_phone || "—" }],
             customer_name: row.customer_name || ticket?.customer_name || "—",
             customer_phone: row.customer_phone || ticket?.customer_phone || "—",
             pnr: row.pnr,
