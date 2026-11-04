@@ -991,6 +991,93 @@
   color: #ffffff;
   transform: translateY(-2px);
 }
+
+      /* =================================
+   FULL WIDTH RESPONSIVE LAYOUT
+================================= */
+
+/* Header and Navbar */
+header {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 22px 3%;
+}
+
+nav {
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* Admin Panel Full Width */
+#adminPanel {
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+/* Admin Layout */
+.admin-layout {
+  width: 100%;
+  grid-template-columns: 235px minmax(0, 1fr);
+  box-sizing: border-box;
+}
+
+.admin-content {
+  width: 100%;
+  box-sizing: border-box;
+  overflow-x: auto;
+}
+
+/* Mobile Responsive */
+@media (max-width: 760px) {
+  header {
+    padding: 16px 12px;
+  }
+
+  nav {
+    justify-content: center;
+    gap: 7px;
+  }
+
+  nav button {
+    flex: 1 1 130px;
+  }
+
+  #adminPanel {
+    padding: 10px;
+  }
+
+  .admin-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .admin-sidebar {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .admin-content {
+    padding: 12px;
+  }
+
+  .admin-content form {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .admin-content input,
+  .admin-content select {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+}
       
     </style>
   </head>
@@ -1241,11 +1328,6 @@
   </aside>
 
   <div class="admin-content">
-
-
-
-
-    
     <div class="admin-section-view active" data-admin-view="overview">
       <h3>Dashboard Overview</h3>
       <p>Welcome to Apni Bus Booking Admin Dashboard.</p>
