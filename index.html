@@ -703,6 +703,10 @@
           <label>From</label><input id="from" value="Shahdol" required />
           <label>To</label><input id="to" value="Rewa" required />
           <label>Journey Date</label><input id="date" type="date" required />
+          <label>Journey Date (DD/MM/YYYY)</label>
+<input id="dateDisplay" type="text" placeholder="DD/MM/YYYY"
+       inputmode="numeric" maxlength="10" required />
+<input id="date" type="hidden" />
           <button type="submit">Search Buses</button>
         </form>
       </section>
@@ -1321,6 +1325,40 @@
           String(d.getDate()).padStart(2, "0")
         );
       }
+
+      $("dateDisplay").addEventListener("input", function () {
+  const digits = this.value.replace(/\D/g, "").slice(0, 8);
+
+  let formatted = digits;
+  if (digits.length > 4) {
+    formatted = digits.slice(0, 2) + "/" + digits.slice(2, 4) + "/" + digits.slice(4);
+  } else if (digits.length > 2) {
+    formatted = digits.slice(0, 2) + "/" + digits.slice(2);
+  }
+
+  this.value = formatted;
+
+  const hiddenDate = $("date");
+  hiddenDate.value = "";
+
+  if (digits.length === 8) {
+    const day = Number(digits.slice(0, 2));
+    const month = Number(digits.slice(2, 4));
+    const year = Number(digits.slice(4, 8));
+    const check = new Date(year, month - 1, day);
+
+    if (
+      check.getFullYear() === year &&
+      check.getMonth() === month - 1 &&
+      check.getDate() === day
+    ) {
+      hiddenDate.value =
+        year + "-" +
+        String(month).padStart(2, "0") + "-" +
+        String(day).padStart(2, "0");
+    }
+  }
+});
       function statusOf(b) {
         return b.status === "cancelled" ? "cancelled" : "confirmed";
       }
