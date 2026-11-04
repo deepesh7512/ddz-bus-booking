@@ -1053,10 +1053,14 @@
       const CUSTOMER_SESSION_KEY = "apniBus_customer_auth_session_v2";
       function readDemoAuthSession() {
         try {
-          const session = JSON.parse(localStorage.getItem(CUSTOMER_SESSION_KEY) || "null");
-          if (!session || !session.access_token || !session.user?.id || !session.user?.email) return null;
-          return { ...session, email: session.user.email, userId: session.user.id };
-        } catch { return null; }
+          const current = session();
+          if (!current || !current.access_token || !current.user?.id || !current.user?.email) {
+            return null;
+          }
+          return {...current, email: current.user.email, userId: current.user.id};
+        } catch {
+          return null;
+        }
       }
       function getCustomerAccessToken() {
         return readDemoAuthSession()?.access_token || "";
