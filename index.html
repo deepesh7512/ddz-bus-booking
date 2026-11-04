@@ -870,9 +870,37 @@
     padding: 14px;
   }
 }
+/* ADMIN OVERVIEW STATISTICS */
+.admin-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 15px;
+  margin-top: 22px;
+}
 
+.admin-stat-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-left: 4px solid #b91c1c;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, .05);
+}
 
-      
+.admin-stat-card span {
+  display: block;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.admin-stat-card strong {
+  display: block;
+  margin-top: 10px;
+  color: #1e293b;
+  font-size: 28px;
+  font-weight: 800;
+}  
     </style>
   </head>
   <body>
@@ -3444,6 +3472,23 @@ processed += chunk.length;
             req('app_route_stops?select=id,route_id,stop_order,stop_name,arrival_time,departure_time&order=stop_order'),
             req('app_trips?select=id,route_id,bus_id,journey_date,status&order=journey_date.desc&limit=200')
           ]);
+          // UPDATE OVERVIEW STATISTICS
+const setOverviewStat = (id, value) => {
+  const el = $a(id);
+  if (el) el.textContent = String(value);
+};
+
+setOverviewStat("overviewOperators", operators.length);
+setOverviewStat("overviewBuses", buses.length);
+setOverviewStat("overviewRoutes", routes.length);
+setOverviewStat("overviewTrips", trips.length);
+
+try {
+  const bookingRows = await req("app_bookings?select=id");
+  setOverviewStat("overviewBookings", bookingRows.length);
+} catch (error) {
+  setOverviewStat("overviewBookings", "—");
+}
           fill('v2BusOperator',operators,'id',x=>x.operator_name);fill('v2RouteBus',buses,'id',x=>x.bus_name+' ('+(x.bus_number||'No number')+')');fill('v2StopRoute',routes,'id',x=>x.route_name+' | '+(buses.find(b=>b.id===x.bus_id)?.bus_name||'Bus not found')+' ('+(buses.find(b=>b.id===x.bus_id)?.bus_number||'No number')+')');fill('v2TripRoute',routes,'id',x=>x.route_name+' | '+(buses.find(b=>b.id===x.bus_id)?.bus_name||'Bus not found')+' ('+(buses.find(b=>b.id===x.bus_id)?.bus_number||'No number')+')');fill('v2FareTrip',trips,'id',x=>x.journey_date+' | '+(routes.find(r=>r.id===x.route_id)?.route_name||x.id));
           list('v2Operators',operators,x=>x.operator_name+' | '+(x.phone||'')+' | '+(x.active?'Active':'Inactive'));
           list('v2Buses',buses,x=>x.bus_name+' | '+(x.bus_number||'')+' | '+x.total_seats+' seats | '+(x.active?'Active':'Inactive'));
