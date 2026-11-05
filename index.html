@@ -780,6 +780,12 @@
         color: #991b1b;
         transform: translateY(-2px);
       }
+      nav button[aria-current="page"] {
+        background: #fff;
+        color: #991b1b;
+        border-color: #fff;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
+      }
       main {
         width: 100%;
         max-width: none;
@@ -1924,8 +1930,8 @@
       <h1>🚌 Apni Bus Booking</h1>
       <p>Book your journey easily</p>
       <nav>
-        <button id="customerTab" type="button">Customer Website</button>
-        <button id="accountTab" type="button">My Account</button>
+        <button id="bookTab" type="button">Customer Website</button>
+        <button id="customerTab" type="button">My Account</button>
         <button id="adminTab" type="button">Admin Panel</button>
       </nav>
     </header>
@@ -2706,8 +2712,25 @@
           "Content-Type": "application/json",
         };
       }
+      // Open the customer login panel directly. Do not simulate a tab click here:
+      // the saved tab is restored before the auth click-listeners are initialized.
       function openDemoAuth() {
-        $("accountTab").click();
+        [
+          "searchPanel",
+          "results",
+          "seatPanel",
+          "passengerPanel",
+          "ticketPanel",
+          "pnrPanel",
+          "dashboardPanel",
+          "adminPanel",
+          "adminLoginPanel",
+        ].forEach((id) => {
+          const panel = $(id);
+          if (panel) panel.hidden = true;
+        });
+        const panel = $("authPanel");
+        if (panel) panel.hidden = false;
       }
       const defaultBuses = [
         {
@@ -3291,12 +3314,21 @@
         return buses.find((b) => String(b.id) === String(id));
       }
       function saveActiveTab(tabName) {
+        // Keep one canonical value in storage while accepting older saved values.
+        const canonicalTab =
+          tabName === "admin" || tabName === "adminPanel" ? "adminTab" : tabName;
         try {
-          sessionStorage.setItem("apniBus_active_tab", tabName);
+          localStorage.setItem("apniBus_activeTab", canonicalTab);
         } catch (_) {}
+        ["bookTab", "customerTab", "adminTab"].forEach((id) => {
+          const button = $(id);
+          if (!button) return;
+          if (id === canonicalTab) button.setAttribute("aria-current", "page");
+          else button.removeAttribute("aria-current");
+        });
       }
       function showCustomer() {
-        saveActiveTab("customer");
+        saveActiveTab("bookTab");
         ["searchPanel", "pnrPanel"].forEach((id) => {
           $(id).hidden = false;
         });
@@ -3315,7 +3347,7 @@
         });
       }
       function showDashboard() {
-        saveActiveTab("dashboard");
+        saveActiveTab("customerTab");
         if (!readDemoAuthSession()) {
           showCustomer();
           openDemoAuth();
@@ -3340,7 +3372,7 @@
         $("dashboardPanel").scrollIntoView({ behavior: "smooth" });
       }
       function showAdmin() {
-        saveActiveTab("admin");
+        saveActiveTab("adminTab");
         let adminLoggedIn = false;
         try {
           adminLoggedIn =
@@ -3375,7 +3407,7 @@
         $("adminPanel").hidden = false;
         renderAdmin();
       }
-      $("customerTab").onclick = showCustomer;
+      $("bookTab").onclick = showCustomer;
       $("dashboardSearchBtn").onclick = function () {
         showCustomer();
         window.scrollTo({
@@ -3383,22 +3415,32 @@
           behavior: "smooth",
         });
       };
+
       (function restoreActiveTab() {
-        let activeTab = "customer";
+        let activeTab = "bookTab";
 
         try {
           activeTab =
-            sessionStorage.getItem("apniBus_active_tab") || "customer";
+            localStorage.getItem("apniBus_activeTab") || "bookTab";
         } catch (_) {}
 
-        if (activeTab === "dashboard") {
+        if (
+          activeTab === "customerTab" ||
+          activeTab === "dashboard" ||
+          activeTab === "accountTab"
+        ) {
           showDashboard();
-        } else if (activeTab === "admin") {
+        } else if (
+          activeTab === "adminTab" ||
+          activeTab === "adminPanel" ||
+          activeTab === "admin"
+        ) {
           showAdmin();
         } else {
           showCustomer();
         }
       })();
+
       $("date").value = today();
       updateJourneyDateUI();
 
@@ -5369,13 +5411,12 @@
       // INITIALIZE APP
       // ===============================
       renderAdmin();
-      showCustomer();
       /* CUSTOMER AUTH — SUPABASE AUTH */
       (function initCustomerSupabaseAuth() {
         const SESSION_KEY = "apniBus_customer_auth_session";
         const el = (id) => document.getElementById(id);
         const authPanel = el("authPanel"),
-          accountTab = el("accountTab");
+          customerTab = el("customerTab");
         const loginForm = el("loginForm"),
           registerForm = el("registerForm");
         const authTitle = el("authTitle"),
@@ -5505,7 +5546,8 @@
           refreshAuthStatus();
           showDashboard();
         }
-        accountTab.addEventListener("click", async function () {
+        customerTab.addEventListener("click", async function () {
+          saveActiveTab("customerTab");
           try {
             const current = await refreshSessionIfNeeded();
             if (current?.access_token) {
@@ -5522,7 +5564,7 @@
             );
           }
         });
-        el("customerTab").addEventListener("click", function () {
+        el("bookTab").addEventListener("click", function () {
           authPanel.hidden = true;
           showCustomer();
         });
@@ -5666,6 +5708,8 @@
             "Apna Supabase Admin email aur password daalein.";
         }
         function openAdminPanel() {
+          saveActiveTab("admin");
+
           if (!isAdminLoggedIn()) {
             openAdminLogin();
             return;
@@ -5773,8 +5817,25 @@
           message.textContent = "Admin logout ho gaya.";
         });
         adminPanel.prepend(logoutButton);
-        adminPanel.hidden = true;
-        adminLoginPanel.hidden = true;
+
+        // Restore the Admin screen AFTER its event handlers are initialized.
+        // The earlier page-level tab restore runs before this initializer and
+        // used to be overwritten by hiding both panels here.
+        let restoreAdminTab = false;
+        try {
+          const savedTab = localStorage.getItem("apniBus_activeTab");
+          restoreAdminTab =
+            savedTab === "adminTab" ||
+            savedTab === "admin" ||
+            savedTab === "adminPanel";
+        } catch (_) {}
+
+        if (restoreAdminTab) {
+          openAdminPanel();
+        } else {
+          adminPanel.hidden = true;
+          adminLoginPanel.hidden = true;
+        }
       })();
     </script>
 
