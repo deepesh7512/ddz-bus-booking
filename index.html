@@ -1495,33 +1495,33 @@
         display:grid; grid-template-columns:repeat(auto-fit,minmax(135px,1fr));
         gap:12px; margin:12px 0 20px; line-height:1.4;
       }
-      #bookingStats .customer-stat-card, .report-metric {
+      #bookingStats .customer-stat-card, .report-metric, .admin-stat-card {
         position:relative; overflow:hidden; min-width:0; min-height:100px;
         padding:16px; border:1px solid #e2e8f0; border-radius:15px;
         background:linear-gradient(145deg,#fff 0%,#fff7f7 100%);
         box-shadow:0 7px 20px rgba(15,23,42,.055);
         transition:transform .2s ease,box-shadow .2s ease;
       }
-      #bookingStats .customer-stat-card:hover, .report-metric:hover {
+      #bookingStats .customer-stat-card:hover, .report-metric:hover, .admin-stat-card:hover {
         transform:translateY(-3px); box-shadow:0 12px 26px rgba(15,23,42,.10);
       }
-      #bookingStats .customer-stat-card span, .report-metric span {
+      #bookingStats .customer-stat-card span, .report-metric span, .admin-stat-card span {
         display:block; color:#64748b; font-size:12px; font-weight:700; letter-spacing:.2px;
       }
-      #bookingStats .customer-stat-card strong, .report-metric strong {
+      #bookingStats .customer-stat-card strong, .report-metric strong, .admin-stat-card strong {
         display:block; margin-top:8px; color:#991b1b;
         font-size:clamp(21px,2.4vw,29px); line-height:1.2; overflow-wrap:anywhere;
       }
       #adminBookingReports {
         grid-template-columns:repeat(auto-fit,minmax(min(100%,165px),1fr)); gap:14px;
       }
-      .report-metric::after, #bookingStats .customer-stat-card::after {
+      .report-metric::after, #bookingStats .customer-stat-card::after, .admin-stat-card::after {
         content:""; position:absolute; width:76px; height:76px; right:-25px; bottom:-30px;
         border-radius:50%; background:rgba(198,40,40,.07); pointer-events:none;
       }
       @media(max-width:600px) {
         #bookingStats { grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; }
-        #bookingStats .customer-stat-card, .report-metric { min-height:90px; padding:12px; }
+        #bookingStats .customer-stat-card, .report-metric, .admin-stat-card { min-height:90px; padding:12px; }
         #adminBookingReports { grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; }
         .data-table { font-size:12px; }
         .data-table th,.data-table td { padding:10px 9px; }
@@ -4461,9 +4461,8 @@
                 cancel.onclick = async () => {
                   if (
                     !confirm(
-                      "Kya aap PNR " +
-                        item.booking_pnr +
-                        " ki booking cancel karna chahte hain?",
+                      "Do you really want to cancel the booking with PNR " +
+                      item.booking_pnr + " ?",
                     )
                   )
                     return;
@@ -4519,7 +4518,10 @@
           wrap.appendChild(table);
           if (stats) {
             const paid = rows.filter((r) => String(r.payment_status || "").toLowerCase() === "paid").length;
-            const pending = rows.filter((r) => String(r.payment_status || "").toLowerCase() === "pending").length;
+            const pending = rows.filter((r) =>
+              String(r.status || "").toLowerCase() === "confirmed" &&
+              String(r.payment_status || "").toLowerCase() !== "paid"
+            ).length;
             [
               ["Total Bookings", rows.length],
               ["Confirmed", confirmed],
