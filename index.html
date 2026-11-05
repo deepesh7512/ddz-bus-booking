@@ -148,34 +148,6 @@
           padding: 12px 2px;
         }
       }
-      @media print {
-        header,
-        nav,
-        button,
-        #searchPanel,
-        #results,
-        #seatPanel,
-        #passengerPanel,
-        #pnrPanel,
-        #cancelPanel,
-        #adminPanel,
-        #dashboardPanel {
-          display: none !important;
-        }
-        body {
-          background: white;
-        }
-        main {
-          width: 100%;
-          margin: 0;
-          padding: 0;
-        }
-        #ticketPanel {
-          display: block !important;
-          box-shadow: none;
-          border: none;
-        }
-      }
       /* Step 2: Professional bus cards */
       #busList {
         display: grid;
@@ -461,45 +433,7 @@
           flex: 1 1 100%;
         }
       }
-
-      @media print {
-        .ticket-admin-actions {
-          display: none !important;
-        }
-      }
-
-      @media print {
-        @page {
-          size: A4;
-          margin: 12mm;
-        }
-        body {
-          background: #fff !important;
-          color: #111827;
-          font-size: 12px;
-        }
-        #ticketPanel {
-          display: block !important;
-          width: 100%;
-          margin: 0;
-          padding: 0;
-          border: none;
-          box-shadow: none;
-        }
-        #ticket {
-          border: 1px solid #cbd5e1;
-          border-radius: 0;
-        }
-        #ticket > h3:first-child {
-          background: #c62828 !important;
-          color: #fff !important;
-          print-color-adjust: exact;
-          -webkit-print-color-adjust: exact;
-        }
-        #ticket .passenger {
-          break-inside: avoid;
-        }
-      }
+      
       #adminBookingReports {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -576,59 +510,7 @@
           flex: 1 1 100%;
         }
       }
-      @media print {
-        #dashboardPanel {
-          display: none !important;
-        }
-      }
-      /* Step 9C-2: Final ticket print settings */
-      @media print {
-        body * {
-          visibility: hidden !important;
-        }
-        #ticketPanel,
-        #ticketPanel * {
-          visibility: visible !important;
-        }
-        #ticketPanel {
-          display: block !important;
-          position: absolute !important;
-          top: 0 !important;
-          left: 0 !important;
-          width: 100% !important;
-          margin: 0 !important;
-          padding: 0 !important;
-          border: none !important;
-          box-shadow: none !important;
-          background: white !important;
-        }
-        #ticketPanel > h2,
-        #ticketPanel > button {
-          display: none !important;
-        }
-        #ticket {
-          width: 100%;
-          border: 1px solid #cbd5e1;
-          border-radius: 8px;
-          background: white !important;
-          color: #111827 !important;
-        }
-        #ticket h3:first-child {
-          background: #b91c1c !important;
-          color: white !important;
-          padding: 16px;
-          print-color-adjust: exact;
-          -webkit-print-color-adjust: exact;
-        }
-        #ticket .passenger {
-          break-inside: avoid;
-          page-break-inside: avoid;
-        }
-        @page {
-          size: A4;
-          margin: 12mm;
-        }
-      }
+
       /* Step 10A: Login and Registration UI */
       #authPanel,
       #adminLoginPanel {
@@ -1726,7 +1608,205 @@
           flex: 0 0 72px;
         }
       }
-    </style>
+
+      /* Direct Admin Ticket Print */
+      #directPrintContainer {
+        display: none;
+      }
+
+      @media print {
+        body * {
+          visibility: hidden !important;
+        }
+
+        #ticketPanel,
+        #ticketPanel * {
+          display: none !important;
+          visibility: hidden !important;
+        }
+
+        #directPrintContainer,
+        #directPrintContainer * {
+          display: block;
+          visibility: visible !important;
+        }
+
+        #directPrintContainer {
+          position: absolute !important;
+          top: 0 !important;
+          left: 0 !important;
+          width: 100% !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          background: white !important;
+        }
+
+        #directPrintContainer #ticket {
+          width: 100% !important;
+          border: 1px solid #cbd5e1 !important;
+          background: white !important;
+        }
+
+        #directPrintContainer .ticket-admin-actions {
+          display: none !important;
+        }
+
+        @page {
+          size: A4;
+          margin: 12mm;
+        }
+      }
+
+      /* FINAL PRINT SETTINGS - APNI BUS BOOKING */
+
+      @media print {
+
+        @page {
+          size: A4;
+          margin: 12mm;
+        }
+
+        html,
+        body {
+          background: #fff !important;
+          color: #111827 !important;
+          font-size: 12px;
+        }
+
+        body * {
+          visibility: hidden !important;
+        }
+
+        /* Ticket visible */
+        #ticketPanel,
+        #ticketPanel * {
+          display: none !important;
+          visibility: hidden !important;
+        }
+
+        #directPrintContainer {
+          display: block !important;
+          position: absolute !important;
+          top: 0 !important;
+          left: 0 !important;
+          width: 100% !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          background: white !important;
+        }
+
+        #directPrintContainer,
+        #directPrintContainer * {
+          visibility: visible !important;
+        }
+
+        /* Hide ticket controls */
+        #ticketPanel > h2,
+        #ticketPanel > button,
+        .ticket-admin-actions,
+        button {
+          display: none !important;
+        }
+
+        /* Ticket design */
+        #ticket {
+          display: block !important;
+          width: 100% !important;
+          margin: 0 auto !important;
+          border: 1px solid #cbd5e1 !important;
+          border-radius: 8px !important;
+          background: #fff !important;
+          color: #111827 !important;
+          box-shadow: none !important;
+        }
+
+        #ticket > h3:first-child {
+          background: #b91c1c !important;
+          color: #fff !important;
+          padding: 16px !important;
+          print-color-adjust: exact;
+          -webkit-print-color-adjust: exact;
+        }
+
+        #ticket .passenger {
+          break-inside: avoid;
+          page-break-inside: avoid;
+        }
+
+        /* Extra direct print container */
+        #directPrintContainer:not(:empty),
+        #directPrintContainer:not(:empty) * {
+          visibility: visible !important;
+        }
+
+        #directPrintContainer:not(:empty) {
+          display: block !important;
+          position: absolute !important;
+          top: 0 !important;
+          left: 0 !important;
+          width: 100% !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          background: #fff !important;
+        }
+
+        #directPrintContainer .ticket-admin-actions {
+          display: none !important;
+        }
+      }
+
+      /* Ticket View Overlay */
+      #ticketPanel:not([hidden]) {
+        position: fixed;
+        z-index: 10000;
+        top: 20px;
+        left: 16px;
+        right: 16px;
+        width: auto;
+        max-width: 1050px;
+        box-sizing: border-box;
+        margin: 0 auto;
+        transform: none;
+        max-height: calc(100vh - 40px);
+        overflow-y: auto;
+        background: #fff;
+        box-shadow:
+          0 0 0 100vmax rgba(15, 23, 42, 0.45),
+          0 18px 45px rgba(15, 23, 42, 0.2);
+      }
+
+      @media (max-width: 600px) {
+        #ticketPanel:not([hidden]) {
+          top: 10px;
+          left: 10px;
+          right: 10px;
+          width: auto;
+          max-height: calc(100vh - 20px);
+        }
+      }
+
+      .whatsapp-share-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: auto;
+        height: 46px;
+        padding: 8px 16px;
+        border: none;
+        border-radius: 25px;
+        background: #e8f9ef;
+        color: #128c4a;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .whatsapp-share-btn:hover {
+        background: #d1f3df;
+      }
+
+      </style>
   </head>
   <body>
     <div id="appBusyBar" aria-hidden="true"></div>
@@ -1936,12 +2016,10 @@
       <section id="ticketPanel" hidden>
         <h2>Booking Ticket</h2>
         <div id="ticket"></div>
-        <button id="shareTicketBtn" type="button">
-          Share Ticket on WhatsApp
-        </button>
-        <button onclick="window.print()">Print Ticket</button>
+        <button id="shareTicketBtn" type="button">Share To WhatsApp</button>
         <button id="ticketBackBtn" type="button">← Back</button>
-        <button id="newSearch">New Search</button>
+        <button onclick="window.print()">Print Ticket</button>
+        <button id="newSearch">New Ticket</button>
       </section>
       <section id="pnrPanel">
         <h2>Find Booking / PNR</h2>
@@ -3519,9 +3597,21 @@
         window.open(url, "_blank", "noopener,noreferrer");
       }
       function addWhatsAppShareButton(parent, booking, label) {
-        const button = addText("button", label || "Share on WhatsApp", parent);
+        const button = document.createElement("button");
         button.type = "button";
+        button.className = "whatsapp-share-btn";
+        button.title = "Share on WhatsApp";
+        button.setAttribute("aria-label", "Share on WhatsApp");
+        
+      button.innerHTML = `
+        <svg viewBox="0 0 32 32" width="24" height="24" aria-hidden="true">
+          <path fill="#25D366" d="M16 2.5A13.4 13.4 0 0 0 4.4 22.6L2.5 29.5l7.1-1.9A13.5 13.5 0 1 0 16 2.5Z"/>
+          <path fill="#fff" d="M22.1 18.9c-.3-.2-2-1-2.3-1.1-.3-.1-.5-.2-.7.2-.2.3-.8 1.1-1 1.3-.2.2-.4.2-.7.1-.3-.2-1.4-.5-2.7-1.7-1-.9-1.7-2-1.9-2.3-.2-.3 0-.5.1-.7l.5-.6c.2-.2.2-.3.3-.5.1-.2 0-.4 0-.6-.1-.2-.7-1.8-1-2.4-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4-.3.3-1.2 1.1-1.2 2.7s1.2 3.1 1.4 3.3c.2.2 2.3 3.5 5.6 4.9.8.3 1.4.5 1.9.6.8.2 1.5.2 2 .1.6-.1 2-.8 2.3-1.6.3-.8.3-1.4.2-1.6-.1-.2-.3-.3-.6-.4Z"/>
+        </svg>
+        <span>Share</span>
+      `;
         button.onclick = () => shareTicketOnWhatsApp(booking);
+        parent.appendChild(button);
         return button;
       }
       function paymentMethodLabel(value) {
@@ -3697,7 +3787,7 @@
         const actions = document.createElement("div");
         actions.className = "ticket-admin-actions";
 
-        addWhatsAppShareButton(actions, booking, "SHARE ON WHATSAPP");
+        addWhatsAppShareButton(actions, booking, "Share To WhatsApp");
 
         if (statusOf(booking) === "confirmed") {
           const cancelButton = addText("button", "CANCEL BOOKING", actions);
@@ -3731,19 +3821,31 @@
               cancelButton.textContent = "CANCEL BOOKING";
             }
           };
-        } else {
-          const note = addText(
-            "span",
-            "This ticket is already cancelled.",
-            actions,
-          );
-          note.className = "cancelled";
         }
 
         ticket.appendChild(actions);
 
         if (printAfter) {
           $("ticketPanel").hidden = true;
+
+          const oldPrintContainer = $("directPrintContainer");
+          if (oldPrintContainer) oldPrintContainer.remove();
+
+          const printContainer = document.createElement("div");
+          printContainer.id = "directPrintContainer";
+
+          const printTicket = ticket.cloneNode(true);
+          printTicket.querySelector(".ticket-admin-actions")?.remove();
+
+          printContainer.appendChild(printTicket);
+          document.body.appendChild(printContainer);
+
+          const cleanupPrint = () => {
+            printContainer.remove();
+            window.removeEventListener("afterprint", cleanupPrint);
+          };
+
+          window.addEventListener("afterprint", cleanupPrint);
 
           requestAnimationFrame(() => {
             window.print();
@@ -3900,7 +4002,7 @@
             $("ticketPanel").hidden = false;
             requestAnimationFrame(() => window.print());
           };
-          addWhatsAppShareButton(result, booking, "Share Ticket on WhatsApp");
+          addWhatsAppShareButton(result, booking, "Share To WhatsApp");
         } catch (error) {
           console.error(error);
           addText(
