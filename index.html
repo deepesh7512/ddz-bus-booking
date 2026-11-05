@@ -1353,6 +1353,16 @@ select {
       <h3>Dashboard Overview</h3>
       <p>Welcome to Apni Bus Booking Admin Dashboard.</p>
       <p>अपना Management Section देखने के लिए बाईं ओर Menu चुनें।</p>
+      <div style="margin:18px 0;padding:18px;border:1px solid #fee2e2;border-radius:14px;background:#fffafa;">
+        <h3 style="margin-top:0;">🎫 Search Ticket by PNR</h3>
+        <form id="adminOverviewPnrForm" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+          <input id="adminOverviewPnr" type="text" required
+            placeholder="Enter PNR Number"
+            style="flex:1;min-width:200px;margin:0;" />
+          <button type="submit" id="adminOverviewPnrBtn">View Ticket</button>
+        </form>
+        <div id="adminOverviewPnrResult" style="margin-top:10px;" aria-live="polite"></div>
+      </div>
       <div class="admin-stats-grid">
 
   <div class="admin-stat-card">
@@ -2440,6 +2450,42 @@ select {
 
   if (printAfter) requestAnimationFrame(() => window.print());
 }
+
+const adminOverviewPnrForm = $("adminOverviewPnrForm");
+
+if (adminOverviewPnrForm) {
+  adminOverviewPnrForm.addEventListener("submit", async function(e) {
+    e.preventDefault();
+
+    const pnr = $("adminOverviewPnr").value.trim();
+    const result = $("adminOverviewPnrResult");
+    const button = $("adminOverviewPnrBtn");
+
+    result.textContent = "Ticket details search ho rahi hain...";
+    button.disabled = true;
+
+    try {
+      const row = await supabaseRpc("lookup_bus_booking", {
+        p_pnr: pnr
+      });
+
+      const booking = bookingFromRemote(row);
+
+      if (!booking) {
+        result.textContent = "Is PNR se koi booking nahi mili.";
+        return;
+      }
+
+      result.textContent = "Ticket mil gayi: " + booking.id;
+      openAdminTicket(booking, false);
+
+    } catch (error) {
+      result.textContent = "Ticket search error: " + error.message;
+    } finally {
+      button.disabled = false;
+    }
+  });
+}
       const printButton = $("printBtn");
       if (printButton) {
         printButton.onclick = () => window.print();
@@ -2762,25 +2808,18 @@ select {
             addText("p", "Supabase mein abhi koi booking nahi hai.", bookingContainer);
             return;
           }
-          const searchWrap = document.createElement("div");
-          searchWrap.style.cssText = "margin:18px 0;padding:14px;background:#fff7f7;border:1px solid #fee2e2;border-radius:12px;";
 
-          const searchTitle = document.createElement("label");
-          searchTitle.textContent = "Search Bookings";
-          searchTitle.style.cssText = "display:block;font-weight:700;margin-bottom:8px;";
-          searchWrap.appendChild(searchTitle);
+
+
+          const searchWrap = document.createElement("div");
+          searchWrap.style.cssText = "display:flex;justify-content:flex-end;align-items:center;margin:8px 0 12px;padding:0;background:transparent;border:0;";
 
           const bookingSearch = document.createElement("input");
           bookingSearch.type = "search";
-          bookingSearch.placeholder = "Trip ID / PNR / Mobile / Bus Number / Route / Date / Customer";
-          bookingSearch.style.cssText = "width:100%;margin:0;";
+          bookingSearch.placeholder = "Search PNR / Mobile / Trip...";
+          bookingSearch.style.cssText = "width:280px;max-width:100%;margin:0;padding:10px 13px;";
+
           searchWrap.appendChild(bookingSearch);
-
-          const searchInfo = document.createElement("small");
-          searchInfo.textContent = "PNR, Mobile Number, Trip ya Route se booking khojein.";
-          searchInfo.style.cssText = "display:block;margin-top:8px;color:#64748b;";
-          searchWrap.appendChild(searchInfo);
-
           bookingContainer.appendChild(searchWrap);
 
           const tableWrap=document.createElement('div');tableWrap.className='data-table-wrap';
