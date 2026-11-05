@@ -3049,6 +3049,55 @@
         };
       }
 
+      // Build one consistent ticket object for All Bookings, Recent Bookings and PNR Search.
+      function adminBookingToTicket(row, ticket = {}) {
+        if (!row && !ticket) return null;
+        const passengerRows =
+          (Array.isArray(row?.passenger_details) && row.passenger_details.length
+            ? row.passenger_details
+            : Array.isArray(ticket?.passengers) && ticket.passengers.length
+              ? ticket.passengers
+              : Array.isArray(ticket?.passenger_details)
+                ? ticket.passenger_details
+                : []);
+        const people = passengerRows.map((person) => ({
+          name: String(person?.name || person?.passenger_name || "—"),
+          age: person?.age ?? person?.passenger_age ?? "—",
+          phone: String(person?.phone || person?.mobile || person?.passenger_phone || "—"),
+        }));
+        if (!people.length) {
+          people.push({
+            name: row?.customer_name || ticket?.customer_name || "—",
+            age: ticket?.customer_age || "—",
+            phone: row?.customer_phone || ticket?.customer_phone || "—",
+          });
+        }
+        const rawSeats = Array.isArray(row?.seats) ? row.seats : ticket?.seats;
+        return {
+          id: row?.pnr || row?.booking_pnr || ticket?.booking_pnr || ticket?.pnr || "",
+          busId: row?.trip_id || row?.bus_id || null,
+          bus: row?.bus_name || ticket?.bus_name || ticket?.bus_type || "Bus details unavailable",
+          busNumber: row?.bus_number || ticket?.bus_number || ticket?.registration_number || "—",
+          from: row?.source || ticket?.boarding_name || row?.boarding_name_snapshot || "",
+          to: row?.destination || ticket?.dropping_name || row?.dropping_name_snapshot || "",
+          date: row?.journey_date || ticket?.journey_date || "—",
+          departureTime: row?.departure_time || ticket?.boarding_time || "—",
+          boardingTime: row?.boarding_time || ticket?.boarding_time || "—",
+          droppingTime: row?.dropping_time || ticket?.dropping_time || "—",
+          seats: Array.isArray(rawSeats) ? rawSeats.map(Number) : [],
+          people,
+          total: Number(row?.total_fare ?? row?.fare ?? ticket?.total_fare ?? 0),
+          paymentMethod: row?.payment_method || ticket?.payment_method || "pay_later",
+          paymentStatus: row?.payment_status || ticket?.payment_status || "pending",
+          status: row?.status || ticket?.booking_status || ticket?.status || "confirmed",
+          createdAt: row?.created_at || ticket?.booked_at || ticket?.created_at || null,
+          cancelledAt: row?.cancelled_at || ticket?.cancelled_at || null,
+          customerName: row?.customer_name || ticket?.customer_name || "—",
+          customerPhone: row?.customer_phone || ticket?.customer_phone || "—",
+          customerEmail: row?.customer_email || ticket?.customer_email || "",
+        };
+      }
+
       async function loadBusesFromSupabase() {
         if (!isSupabaseConfigured) {
           console.info(
@@ -3972,50 +4021,15 @@
                 body: JSON.stringify({ p_pnr: pnr }),
               },
             );
-
             const ticket = Array.isArray(found) ? found[0] : found;
             if (!ticket || !ticket.booking_pnr) {
               result.textContent = "Is PNR se koi booking nahi mili.";
               return;
             }
-
-            const rows = await adminBusRequest(
-              "/rest/v1/app_bookings?select=pnr,trip_id,customer_name,customer_phone,customer_email,boarding_name_snapshot,dropping_name_snapshot,seats,fare,status,payment_method,payment_status,passenger_details,created_at,cancelled_at&pnr=eq." +
-                encodeURIComponent(pnr) +
-                "&limit=1",
+            const cachedRow = (latestAdminReportRows || []).find(
+              (item) => String(item.pnr || "").toUpperCase() === pnr.toUpperCase(),
             );
-
-            const saved = Array.isArray(rows) ? rows[0] : null;
-
-            const booking = {
-              id: ticket.booking_pnr,
-              bus: ticket.bus_name || "Bus",
-              busNumber: ticket.bus_number || "—",
-              busId: saved?.trip_id || null,
-              from: ticket.boarding_name || saved?.boarding_name_snapshot || "",
-              to: ticket.dropping_name || saved?.dropping_name_snapshot || "",
-              date: ticket.journey_date || "—",
-              seats: Array.isArray(ticket.seats)
-                ? ticket.seats.map(Number)
-                : Array.isArray(saved?.seats)
-                  ? saved.seats.map(Number)
-                  : [],
-              people: Array.isArray(saved?.passenger_details)
-                ? saved.passenger_details
-                : [],
-              total: Number(ticket.total_fare ?? saved?.fare ?? 0),
-              paymentMethod: saved?.payment_method || "pay_later",
-              paymentStatus: saved?.payment_status || "pending",
-              status: ticket.booking_status || saved?.status || "confirmed",
-              customerName: saved?.customer_name || "",
-              customerPhone: saved?.customer_phone || "",
-              customerEmail: saved?.customer_email || "",
-              createdAt: saved?.created_at || ticket.booked_at,
-              cancelledAt: saved?.cancelled_at || null,
-              boardingTime: ticket.boarding_time || "",
-              droppingTime: ticket.dropping_time || "",
-            };
-
+            const booking = adminBookingToTicket(cachedRow, ticket);
             result.textContent = "Ticket Status: " + booking.status;
             openAdminTicket(booking, false);
           } catch (error) {
@@ -4725,30 +4739,7 @@
               const ticket = Array.isArray(ticketData)
                 ? ticketData[0]
                 : ticketData;
-              const booking = {
-                id: row.pnr,
-                busId: row.trip_id,
-                bus: row.bus_name || "Bus details unavailable",
-                busNumber: row.bus_number || "—",
-                from: row.source || row.boarding_name_snapshot || "",
-                to: row.destination || row.dropping_name_snapshot || "",
-                date: row.journey_date || "—",
-                seats: Array.isArray(row.seats) ? row.seats.map(Number) : [],
-                people: Array.isArray(row.passenger_details)
-                  ? row.passenger_details
-                  : [],
-                total: Number(row.total_fare ?? row.fare ?? 0),
-                paymentMethod: row.payment_method || "pay_later",
-                paymentStatus: row.payment_status || "pending",
-                status: row.status,
-                customerName: row.customer_name,
-                customerPhone: row.customer_phone,
-                customerEmail: row.customer_email,
-                createdAt: row.created_at,
-                departureTime: ticket?.boarding_time || "—",
-                boardingTime: ticket?.boarding_time || "—",
-                droppingTime: ticket?.dropping_time || "—",
-              };
+              const booking = adminBookingToTicket(row, ticket || {});
               const tr = document.createElement("tr");
               tr.dataset.search = [
                 booking.id,
@@ -6202,7 +6193,7 @@
             if (recentContainer) {
               try {
                 const recentRows = await req(
-                  "app_bookings?select=pnr,customer_name,boarding_name_snapshot,dropping_name_snapshot,created_at,fare,status&order=created_at.desc&limit=5",
+                  "app_bookings?select=pnr,trip_id,customer_name,customer_phone,customer_email,boarding_name_snapshot,dropping_name_snapshot,seats,fare,status,payment_method,payment_status,passenger_details,created_at,cancelled_at&order=created_at.desc&limit=5",
                 );
 
                 recentContainer.replaceChildren();
@@ -6263,12 +6254,33 @@
                     openBookings.type = "button";
                     openBookings.className = "row-action";
                     openBookings.textContent = "View";
-                    openBookings.onclick = () =>
-                      document
-                        .querySelector(
-                          '.admin-nav-btn[data-admin-target="bookings"]',
-                        )
-                        ?.click();
+                    openBookings.onclick = async () => {
+                      openBookings.disabled = true;
+                      openBookings.textContent = "Opening...";
+                      try {
+                        const found = await req("rpc/app_lookup_booking", {
+                          method: "POST",
+                          body: JSON.stringify({ p_pnr: booking.pnr }),
+                        });
+                        const ticket = Array.isArray(found) ? found[0] : found;
+                        if (!ticket?.booking_pnr) {
+                          throw new Error("Is PNR ki ticket details nahi mili.");
+                        }
+                        const cachedRow = (latestAdminReportRows || []).find(
+                          (item) => String(item.pnr || "").toUpperCase() === String(booking.pnr || "").toUpperCase(),
+                        );
+                        const ticketBooking = adminBookingToTicket(
+                          cachedRow || booking,
+                          ticket,
+                        );
+                        openAdminTicket(ticketBooking, false);
+                      } catch (error) {
+                        alert("Ticket open nahi ho paya: " + error.message);
+                      } finally {
+                        openBookings.disabled = false;
+                        openBookings.textContent = "View";
+                      }
+                    };
                     actionCell.appendChild(openBookings);
                     row.appendChild(actionCell);
                     tbody.appendChild(row);
