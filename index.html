@@ -2392,26 +2392,54 @@ select {
         if (window.currentApniBusTicket) shareTicketOnWhatsApp(window.currentApniBusTicket);
       };
       function openAdminTicket(booking, printAfter) {
-        renderTicket(booking);
-        // Admin view has a dedicated WhatsApp button in its action row.
-        // Hide the general ticket-panel button to prevent duplicate options.
-        const generalShareButton = $("shareTicketBtn");
-        if (generalShareButton) generalShareButton.hidden = true;
-        const ticket = $("ticket");
-        const actions = document.createElement("div");
-        actions.className = "ticket-admin-actions";
-        addWhatsAppShareButton(actions, booking, "SHARE ON WHATSAPP");
-        if (statusOf(booking) === "confirmed") {
-          addText("span", "Customer cancellation is handled through the verified current cancellation form.", actions);
-        } else {
-          const note = addText("span", "This ticket is already cancelled.", actions);
-          note.className = "cancelled";
-        }
-        ticket.appendChild(actions);
-        $("ticketPanel").hidden = false;
-        $("ticketPanel").scrollIntoView({ behavior: "smooth", block: "start" });
-        if (printAfter) requestAnimationFrame(() => window.print());
+  renderTicket(booking);
+
+  const generalShareButton = $("shareTicketBtn");
+  if (generalShareButton) generalShareButton.hidden = true;
+
+  const ticket = $("ticket");
+  const actions = document.createElement("div");
+  actions.className = "ticket-admin-actions";
+
+  addWhatsAppShareButton(actions, booking, "SHARE ON WHATSAPP");
+
+  if (statusOf(booking) === "confirmed") {
+    const cancelButton = addText("button", "CANCEL BOOKING", actions);
+    cancelButton.type = "button";
+    cancelButton.className = "danger";
+
+    cancelButton.onclick = async function () {
+      if (!confirm("PNR " + booking.id + " ki booking cancel karna chahte hain?")) return;
+
+      cancelButton.disabled = true;
+      cancelButton.textContent = "Cancelling...";
+
+      try {
+        const result = await cancelAdminBookingOnSupabase(booking.id);
+        booking.status = "cancelled";
+        booking.cancelledAt = result?.cancelled_at || new Date().toISOString();
+
+        alert("Booking successfully cancel ho gayi.\nPNR: " + booking.id);
+
+        openAdminTicket(booking, false);
+        renderAdmin();
+      } catch (error) {
+        alert("Cancellation fail: " + error.message);
+        cancelButton.disabled = false;
+        cancelButton.textContent = "CANCEL BOOKING";
       }
+    };
+  } else {
+    const note = addText("span", "This ticket is already cancelled.", actions);
+    note.className = "cancelled";
+  }
+
+  ticket.appendChild(actions);
+  $("ticketPanel").hidden = false;
+  $("ticketPanel").scrollIntoView({ behavior: "smooth", block: "start" });
+
+  if (printAfter) requestAnimationFrame(() => window.print());
+}
       const printButton = $("printBtn");
       if (printButton) {
         printButton.onclick = () => window.print();
@@ -2734,16 +2762,47 @@ select {
             addText("p", "Supabase mein abhi koi booking nahi hai.", bookingContainer);
             return;
           }
+          const searchWrap = document.createElement("div");
+          searchWrap.style.cssText = "margin:18px 0;padding:14px;background:#fff7f7;border:1px solid #fee2e2;border-radius:12px;";
+
+          const searchTitle = document.createElement("label");
+          searchTitle.textContent = "Search Bookings";
+          searchTitle.style.cssText = "display:block;font-weight:700;margin-bottom:8px;";
+          searchWrap.appendChild(searchTitle);
+
+          const bookingSearch = document.createElement("input");
+          bookingSearch.type = "search";
+          bookingSearch.placeholder = "Trip ID / PNR / Mobile / Bus Number / Route / Date / Customer";
+          bookingSearch.style.cssText = "width:100%;margin:0;";
+          searchWrap.appendChild(bookingSearch);
+
+          const searchInfo = document.createElement("small");
+          searchInfo.textContent = "PNR, Mobile Number, Trip ya Route se booking khojein.";
+          searchInfo.style.cssText = "display:block;margin-top:8px;color:#64748b;";
+          searchWrap.appendChild(searchInfo);
+
+          bookingContainer.appendChild(searchWrap);
+
           const tableWrap=document.createElement('div');tableWrap.className='data-table-wrap';
           const table=document.createElement('table');table.className='data-table';
           const thead=document.createElement('thead'),head=document.createElement('tr');
-          ["PNR","Customer","Mobile","Bus","Route","Journey Date","Seats","Passengers","Fare","Payment","Booking Status","Booked On","Action"].forEach(label=>{const th=document.createElement('th');th.textContent=label;head.appendChild(th);});
+          ["PNR","Customer","Mobile","Bus","Route","Journey Date","","Fare","Payment","Booking Status","Booked On","Action"].forEach(label=>{const th=document.createElement('th');th.textContent=label;head.appendChild(th);});
           thead.appendChild(head);table.appendChild(thead);const tbody=document.createElement('tbody');
           remoteBookings.forEach(function (row) {
             const booking={id:row.pnr,busId:row.trip_id,bus:row.bus_name||"Bus details unavailable",busNumber:row.bus_number||"—",from:row.source||row.boarding_name_snapshot||"",to:row.destination||row.dropping_name_snapshot||"",date:row.journey_date||"—",seats:Array.isArray(row.seats)?row.seats.map(Number):[],people:Array.isArray(row.passenger_details)?row.passenger_details:[],total:Number(row.total_fare??row.fare??0),paymentMethod:row.payment_method||"pay_later",paymentStatus:row.payment_status||"pending",status:row.status,customerName:row.customer_name,customerPhone:row.customer_phone,customerEmail:row.customer_email,createdAt:row.created_at};
             const tr=document.createElement('tr');
-            const values=[booking.id,booking.customerName||'—',booking.customerPhone||'—',booking.bus+' ('+booking.busNumber+')',booking.from+' → '+booking.to,booking.date,booking.seats.join(', ')||'—',booking.people.map(p=>p.name||'').filter(Boolean).join(', ')||'—',money(booking.total),paymentMethodLabel(row.payment_method)+' / '+paymentStatusLabel(row.payment_status),String(row.status||'unknown').toUpperCase(),row.created_at?new Date(row.created_at).toLocaleString('en-IN'):'—'];
-            values.forEach((value,i)=>{const td=document.createElement('td');td.textContent=String(value);if(i===10){const pill=document.createElement('span');pill.className='status-pill';pill.textContent=String(value);td.replaceChildren(pill);}tr.appendChild(td);});
+            tr.dataset.search = [
+              booking.id,
+              booking.busId,
+              booking.customerName,
+              booking.customerPhone,
+              booking.busNumber,
+              booking.from,
+              booking.to,
+              booking.date
+            ].join(" ").toLowerCase();
+            const values=[booking.id,booking.customerName||'—',booking.customerPhone||'—',booking.busNumber||'—',booking.from+' → '+booking.to,booking.date,'',money(booking.total),paymentMethodLabel(row.payment_method)+' / '+paymentStatusLabel(row.payment_status),String(row.status||'unknown').toUpperCase(),row.created_at?new Date(row.created_at).toLocaleString('en-IN'):'—'];
+            values.forEach((value,i)=>{const td=document.createElement('td');td.textContent=String(value);if(i===9){const pill=document.createElement('span');pill.className='status-pill';pill.textContent=String(value);td.replaceChildren(pill);}tr.appendChild(td);});
             const action=document.createElement('td');action.className='action-cell';
             const viewButton=document.createElement('button');viewButton.type='button';viewButton.className='row-action';viewButton.textContent='View Ticket';viewButton.onclick=()=>openAdminTicket(booking,false);action.appendChild(viewButton);
             const printButton=document.createElement('button');printButton.type='button';printButton.className='row-action';printButton.textContent='Print';printButton.onclick=()=>openAdminTicket(booking,true);action.appendChild(printButton);
@@ -2751,8 +2810,21 @@ select {
             const refundOpt=Array.from(paymentSelect.options).find(o=>o.value==='refunded');const canRefund=String(row.status).toLowerCase()==='cancelled'&&String(row.payment_status).toLowerCase()==='paid';if(refundOpt)refundOpt.disabled=!canRefund;if(paymentSelect.value==='refunded')paymentSelect.disabled=true;
             const updatePay=document.createElement('button');updatePay.type='button';updatePay.className='row-action';updatePay.textContent='Save Payment';updatePay.disabled=paymentSelect.disabled;updatePay.onclick=async()=>{if(paymentSelect.value==='refunded'&&!(String(row.status).toLowerCase()==='cancelled'&&String(row.payment_status).toLowerCase()==='paid')){alert('Refund sirf Cancelled aur Paid booking par hi kar sakte hain.');return;}updatePay.disabled=true;try{const updated=await adminBusRequest('/rest/v1/app_bookings?pnr=eq.'+encodeURIComponent(booking.id)+'&select=id,pnr,payment_status',{method:'PATCH',headers:{Prefer:'return=representation'},body:JSON.stringify({payment_status:paymentSelect.value})});if(!Array.isArray(updated)||updated.length!==1)throw new Error('Booking payment status update nahi hua.');alert('Payment status save ho gaya.');renderAdmin();}catch(e){alert('Payment update error: '+e.message);updatePay.disabled=false;}};
             action.appendChild(paymentSelect);action.appendChild(updatePay);
-            if(String(row.status).toLowerCase()==='confirmed'){const cancel=document.createElement('button');cancel.type='button';cancel.className='row-action danger';cancel.textContent='Cancel';cancel.onclick=async()=>{if(!confirm('PNR '+booking.id+' cancel karein?'))return;cancel.disabled=true;try{await cancelAdminBookingOnSupabase(booking.id);alert('Booking cancel ho gayi. PNR: '+booking.id);renderAdmin();}catch(e){alert('Cancellation fail: '+e.message);cancel.disabled=false;}};action.appendChild(cancel);}
             tr.appendChild(action);tbody.appendChild(tr);
+          });
+          bookingSearch.addEventListener("input", function () {
+            const query = bookingSearch.value.trim().toLowerCase();
+            let visible = 0;
+
+            tbody.querySelectorAll("tr").forEach(function (tr) {
+              const match = tr.dataset.search.includes(query);
+              tr.hidden = !match;
+              if (match) visible++;
+            });
+
+            searchInfo.textContent = query
+              ? visible + " matching booking(s) found."
+              : "PNR, Mobile, Trip ID, Bus Number, Route ya Journey Date se booking khojein.";
           });
           table.appendChild(tbody);tableWrap.appendChild(table);bookingContainer.appendChild(tableWrap);
         }).catch(function (error) {
