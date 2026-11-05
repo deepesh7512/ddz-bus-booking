@@ -515,20 +515,25 @@
         gap: 12px;
         margin: 14px 0 22px;
       }
-      .report-metric {
+      .report-metric,
+      .admin-stat-card {
         border: 1px solid #dbe3ee;
         border-radius: 10px;
         padding: 14px;
         background: #f8fafc;
       }
-      .report-metric strong {
+
+      .report-metric strong,
+      .admin-stat-card strong {
         display: block;
         font-size: 20px;
         color: #1e293b;
         margin-top: 5px;
         overflow-wrap: anywhere;
       }
-      .report-metric span {
+
+      .report-metric span,
+      .admin-stat-card span {
         color: #475569;
         font-size: 12px;
       }
@@ -1965,6 +1970,56 @@
         display: block;
       }
 
+      .backup-upload-box {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 18px;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        background: #f8fafc;
+      }
+
+      .backup-file-label {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px;
+        border: 1px dashed #b71c1c;
+        border-radius: 10px;
+        background: #fff;
+        cursor: pointer;
+      }
+
+      .backup-file-label:hover {
+        background: #fff5f5;
+        border-color: #e53935;
+      }
+
+      .backup-upload-icon {
+        font-size: 26px;
+      }
+
+      .backup-file-label strong,
+      .backup-file-label small {
+        display: block;
+      }
+
+      .backup-file-label strong {
+        color: #b71c1c;
+      }
+
+      .backup-file-label small {
+        margin-top: 4px;
+        color: #64748b;
+      }
+
+      .backup-file-name {
+        color: #475569;
+        font-size: 13px;
+        overflow-wrap: anywhere;
+      }
+
       </style>
   </head>
   <body>
@@ -2652,7 +2707,7 @@
             <div class="admin-section-view" data-admin-view="backup">
               <hr />
               <h3>Data Backup & Export</h3>
-              <p>Download your demo data for backup or reporting.</p>
+              <p>Download your booking data for backup or reporting.</p>
               <button id="exportBookingsBtn" type="button">
                 Export Bookings CSV
               </button>
@@ -2662,19 +2717,34 @@
               <hr />
               <h3>Restore Backup</h3>
               <p>
-                Select a previously downloaded Apni Bus Booking JSON backup.
+                Select a previously downloaded JSON backup.
               </p>
-              <label for="restoreBackupFile">Choose Backup File</label>
-              <input
-                type="file"
-                id="restoreBackupFile"
-                accept=".json,application/json"
-              />
-              <button id="restoreBackupBtn" type="button">
-                Restore Full Backup
-              </button>
-              <p id="restoreMessage" role="status" aria-live="polite"></p>
-            </div>
+              <div class="backup-upload-box">
+                <label for="restoreBackupFile" class="backup-file-label">
+                  <span class="backup-upload-icon">📁</span>
+                  <span>
+                    <strong>Choose Backup File</strong>
+                    <small>JSON backup file select karein</small>
+                  </span>
+                </label>
+
+                <input
+                  type="file"
+                  id="restoreBackupFile"
+                  accept=".json,application/json"
+                  hidden
+                />
+
+                <span id="backupFileName" class="backup-file-name">
+                  No file selected
+                </span>
+
+                <button id="restoreBackupBtn" type="button">
+                  Restore Full Backup
+                </button>
+
+                <p id="restoreMessage" role="status" aria-live="polite"></p>
+              </div>
           </div>
         </div>
       </section>
@@ -4594,10 +4664,10 @@
             refreshReportsButton.disabled = false;
           }
         });
-
-      // ===============================
-      // ADMIN: MANAGE BUSES & BOOKINGS
-      // ===============================
+        
+        // ===============================
+        // ADMIN: MANAGE BUSES & BOOKINGS
+        // ===============================
       function renderAdmin() {
         loadAdminNotifications();
         const busContainer = $("adminBuses");
@@ -4988,12 +5058,16 @@
         }
         return '"' + text.replace(/"/g, '""') + '"';
       }
+      
       // Export bookings as CSV
       $("exportBookingsBtn").onclick = function () {
-        if (!bookings.length) {
+        const exportRows = latestAdminReportRows || [];
+
+        if (!exportRows.length) {
           alert("Export karne ke liye koi booking nahi hai.");
           return;
         }
+
         const headers = [
           "PNR",
           "Status",
@@ -5009,36 +5083,53 @@
           "Booking Created At",
           "Cancelled At",
         ];
-        const rows = bookings.map(function (b) {
+
+        const rows = exportRows.map(function (b) {
           const people = b.people || [];
+
           return [
-            b.id,
-            statusOf(b).toUpperCase(),
-            b.bus,
-            b.from,
-            b.to,
-            b.date,
+            b.pnr || b.id || "",
+            String(b.status || "").toUpperCase(),
+            b.bus_number || b.bus || "",
+            b.from_city || b.from || "",
+            b.to_city || b.to || "",
+            b.journey_date || b.date || "",
             (b.seats || []).join(", "),
-            people.map((p) => p.name).join(", "),
-            people.map((p) => p.age).join(", "),
-            people.map((p) => p.phone).join(", "),
-            b.total,
-            b.createdAt || "",
-            b.cancelledAt || "",
+            people.map((p) => p.name || "").join(", "),
+            people.map((p) => p.age || "").join(", "),
+            people.map((p) => p.phone || "").join(", "),
+            b.total_fare ?? b.total ?? "",
+            b.created_at || b.createdAt || "",
+            b.cancelled_at || b.cancelledAt || "",
           ];
         });
+
         const csv =
           "\uFEFF" +
           [headers, ...rows]
             .map((row) => row.map(csvCell).join(","))
             .join("\r\n");
+
         downloadFile(
           "apni-bus-bookings-" + today() + ".csv",
           csv,
           "text/csv;charset=utf-8;",
         );
-        alert("Bookings CSV download shuru ho gaya.");
+
+        alert("Bookings CSV download started.");
       };
+
+      const restoreFileInput = $("restoreBackupFile");
+      const backupFileName = $("backupFileName");
+
+      if (restoreFileInput && backupFileName) {
+        restoreFileInput.addEventListener("change", function () {
+          backupFileName.textContent =
+            this.files.length > 0
+              ? this.files[0].name
+              : "No file selected";
+        });
+      }
 
       // current Supabase: Complete JSON Backup
       $("backupDataBtn").onclick = async function () {
@@ -5060,16 +5151,16 @@
         ];
 
         if (!getAdminAccessToken()) {
-          alert("current Backup ke liye pehle Admin Panel mein login karein.");
+          alert("Login to Admin panel for current Backup.");
           return;
         }
 
         if (
           !confirm(
-            "current Supabase ka complete data backup download hoga.\n\n" +
-              "Ismein customer aur passenger ki personal details bhi hongi.\n" +
-              "Backup file ko surakshit aur private rakhein.\n\n" +
-              "Kya aap backup shuru karna chahte hain?",
+            "Current complete data Backup will start downloading.\n\n" +
+            "Keep this file secure and private.\n" +
+            "This file can be used to restore your entire database.\n\n" +
+            "Do you want to download the backup?",
           )
         ) {
           return;
@@ -5138,7 +5229,7 @@
           );
 
           alert(
-            "current Supabase Backup download shuru ho gaya!\n\n" +
+            "Current Backup download started!\n\n" +
               "Total tables: " +
               backupTables.length +
               "\n" +
@@ -5146,24 +5237,21 @@
               totalRows,
           );
         } catch (error) {
-          console.error("current Backup failed:", error);
+          console.error("Current Backup failed:", error);
           alert(
-            "current Backup nahi ban saka.\n\n" +
+            "Current Backup nahi ban saka.\n\n" +
               error.message +
-              "\n\nKoi partial backup download nahi kiya gaya.",
+              "\n\nNo partial backup downloaded.",
           );
         } finally {
           button.disabled = false;
           button.textContent = originalText;
         }
       };
-      /* ===============================
-          STEP 8: RESTORE JSON BACKUP
-       ================================ */
 
       /* ===============================
-   STEP 8: current ADD-ONLY RESTORE
-================================ */
+        STEP 8: current ADD-ONLY RESTORE
+      ================================ */
 
       function validatecurrentBackup(data) {
         if (
