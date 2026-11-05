@@ -1756,74 +1756,30 @@
         display: none;
       }
 
+      /* =====================================
+        APNI BUS BOOKING - COMPACT PRINT TICKET
+      ===================================== */
       @media print {
-        body * {
-          visibility: hidden !important;
-        }
-
-        #ticketPanel,
-        #ticketPanel * {
-          display: none !important;
-          visibility: hidden !important;
-        }
-
-        #directPrintContainer,
-        #directPrintContainer * {
-          display: block;
-          visibility: visible !important;
-        }
-
-        #directPrintContainer {
-          position: absolute !important;
-          top: 0 !important;
-          left: 0 !important;
-          width: 100% !important;
-          margin: 0 !important;
-          padding: 0 !important;
-          background: white !important;
-        }
-
-        #directPrintContainer #ticket {
-          width: 100% !important;
-          border: 1px solid #cbd5e1 !important;
-          background: white !important;
-        }
-
-        #directPrintContainer .ticket-admin-actions {
-          display: none !important;
-        }
-
         @page {
           size: A4;
-          margin: 12mm;
-        }
-      }
-
-      /* FINAL PRINT SETTINGS - APNI BUS BOOKING */
-
-      @media print {
-
-        @page {
-          size: A4;
-          margin: 12mm;
+          margin: 8mm;
         }
 
         html,
         body {
           background: #fff !important;
           color: #111827 !important;
-          font-size: 12px;
+          font-family: Arial, sans-serif !important;
+          font-size: 11px !important;
         }
 
         body * {
           visibility: hidden !important;
         }
 
-        /* Ticket visible */
-        #ticketPanel,
-        #ticketPanel * {
-          display: none !important;
-          visibility: hidden !important;
+        #directPrintContainer,
+        #directPrintContainer * {
+          visibility: visible !important;
         }
 
         #directPrintContainer {
@@ -1834,66 +1790,156 @@
           width: 100% !important;
           margin: 0 !important;
           padding: 0 !important;
-          background: white !important;
+          background: #fff !important;
         }
 
-        #directPrintContainer,
-        #directPrintContainer * {
-          visibility: visible !important;
-        }
-
-        /* Hide ticket controls */
-        #ticketPanel > h2,
-        #ticketPanel > button,
-        .ticket-admin-actions,
-        button {
-          display: none !important;
-        }
-
-        /* Ticket design */
-        #ticket {
+        .compact-print-ticket {
           display: block !important;
           width: 100% !important;
+          max-width: 680px !important;
           margin: 0 auto !important;
+          padding: 14px !important;
+          box-sizing: border-box !important;
           border: 1px solid #cbd5e1 !important;
-          border-radius: 8px !important;
+          border-radius: 7px !important;
           background: #fff !important;
           color: #111827 !important;
+          font-size: 11px !important;
+          line-height: 1.4 !important;
           box-shadow: none !important;
         }
 
-        #ticket > h3:first-child {
-          background: #b91c1c !important;
-          color: #fff !important;
-          padding: 16px !important;
-          print-color-adjust: exact;
-          -webkit-print-color-adjust: exact;
+        .cpt-header {
+          display: flex !important;
+          justify-content: space-between !important;
+          align-items: center !important;
+          padding-bottom: 9px !important;
+          border-bottom: 2px solid #b91c1c !important;
+          font-size: 14px !important;
         }
 
-        #ticket .passenger {
-          break-inside: avoid;
-          page-break-inside: avoid;
+        .cpt-status {
+          font-size: 10px !important;
+          font-weight: bold !important;
         }
 
-        /* Extra direct print container */
-        #directPrintContainer:not(:empty),
-        #directPrintContainer:not(:empty) * {
-          visibility: visible !important;
+        .cpt-pnr-row {
+          display: flex !important;
+          justify-content: space-between !important;
+          align-items: center !important;
+          padding: 10px 0 !important;
+          border-bottom: 1px solid #e5e7eb !important;
         }
 
-        #directPrintContainer:not(:empty) {
+        .cpt-pnr-row small,
+        .cpt-route small {
           display: block !important;
-          position: absolute !important;
-          top: 0 !important;
-          left: 0 !important;
-          width: 100% !important;
-          margin: 0 !important;
-          padding: 0 !important;
-          background: #fff !important;
+          color: #64748b !important;
+          font-size: 9px !important;
         }
 
-        #directPrintContainer .ticket-admin-actions {
-          display: none !important;
+        .cpt-pnr {
+          display: block !important;
+          color: #b91c1c !important;
+          font-size: 19px !important;
+          letter-spacing: 1px !important;
+        }
+
+        .cpt-date {
+          display: block !important;
+          font-size: 12px !important;
+        }
+
+        .cpt-route {
+          display: grid !important;
+          grid-template-columns: 1fr 1fr 1.2fr !important;
+          gap: 12px !important;
+          align-items: start !important;
+          padding: 12px 4px !important;
+          border-bottom: 1px solid #e5e7eb !important;
+        }
+
+        .cpt-station,
+        .cpt-bus-details {
+          display: flex !important;
+          flex-direction: column !important;
+          gap: 4px !important;
+          min-width: 0 !important;
+        }
+
+        .cpt-route strong {
+          display: block !important;
+          font-size: 12px !important;
+          overflow-wrap: anywhere !important;
+        }
+
+        .cpt-route small {
+          color: #64748b !important;
+          font-size: 9px !important;
+          font-weight: bold !important;
+        }
+
+        .cpt-route span {
+          font-size: 10px !important;
+        }
+
+        .cpt-bus-details {
+          padding: 0 !important;
+          background: transparent !important;
+          border: none !important;
+        }
+
+        .cpt-bus-details {
+          display: flex !important;
+          flex-direction: column !important;
+          gap: 4px !important;
+          padding: 9px 4px !important;
+          background: #f8fafc !important;
+          border-bottom: 1px solid #e5e7eb !important;
+        }
+
+        .cpt-section-title {
+          display: block !important;
+          margin-top: 12px !important;
+          margin-bottom: 5px !important;
+          font-size: 11px !important;
+        }
+
+        .cpt-passenger-table {
+          width: 100% !important;
+          border-collapse: collapse !important;
+          font-size: 10px !important;
+        }
+
+        .cpt-passenger-table th,
+        .cpt-passenger-table td {
+          padding: 6px 8px !important;
+          border: 1px solid #dbe1e8 !important;
+          text-align: left !important;
+        }
+
+        .cpt-passenger-table th {
+          background: #f1f5f9 !important;
+          font-weight: bold !important;
+        }
+
+        .cpt-passenger-table tr {
+          break-inside: avoid !important;
+          page-break-inside: avoid !important;
+        }
+
+        .cpt-footer {
+          display: flex !important;
+          justify-content: space-between !important;
+          align-items: center !important;
+          gap: 10px !important;
+          margin-top: 12px !important;
+          padding-top: 9px !important;
+          border-top: 2px solid #b91c1c !important;
+        }
+
+        .cpt-footer strong {
+          font-size: 14px !important;
         }
       }
 
@@ -2232,7 +2278,7 @@
         <h2>Booking Ticket</h2>
         <div id="ticket"></div>
         <button id="ticketBackBtn" type="button">← Back</button>
-        <button onclick="window.print()">Print</button>
+        <button id="ticketPrintBtn" type="button">Print</button>
         <button id="newSearch">New Ticket</button>
       </section>
       <section id="pnrPanel">
@@ -2663,7 +2709,6 @@
               </form>
               <div id="currentTripFares"></div>
             </div>
-
             <div class="admin-section-view" data-admin-view="notifications">
               <hr />
               <h3>Notifications</h3>
@@ -2671,11 +2716,29 @@
                 New bookings, cancellations aur payment updates ki recent
                 activity.
               </p>
+
+              <div class="notification-toolbar">
+                <strong>
+                  Unread: <span id="unreadNotificationCount">0</span>
+                </strong>
+
+                <select id="notificationFilter">
+                  <option value="all">All Notifications</option>
+                  <option value="new_booking">New Bookings</option>
+                  <option value="booking_cancelled">Cancellations</option>
+                  <option value="payment_status_changed">Payment Updates</option>
+                </select>
+              </div>
+
               <div id="adminNotifications" aria-live="polite">
                 Notifications load ho rahi hain...
               </div>
+
               <button id="refreshNotificationsBtn" type="button">
                 REFRESH NOTIFICATIONS
+              </button>
+              <button id="markAllNotificationsReadBtn" type="button">
+                MARK ALL AS READ
               </button>
             </div>
 
@@ -3059,6 +3122,44 @@
           "click",
           loadAdminNotifications,
         );
+      const markAllNotificationsReadButton = $(
+        "markAllNotificationsReadBtn",
+      );
+
+      if (markAllNotificationsReadButton) {
+        markAllNotificationsReadButton.addEventListener("click", async () => {
+          if (!confirm("Kya aap sabhi unread notifications ko read karna chahte hain?")) {
+            return;
+          }
+
+          markAllNotificationsReadButton.disabled = true;
+          markAllNotificationsReadButton.textContent = "UPDATING...";
+
+          try {
+            await adminBusRequest(
+              "/rest/v1/admin_notifications?is_read=eq.false",
+              {
+                method: "PATCH",
+                headers: {
+                  Prefer: "return=minimal",
+                },
+                body: JSON.stringify({
+                  is_read: true,
+                }),
+              },
+            );
+
+            await loadAdminNotifications();
+            alert("Sabhi notifications read ho gayi hain.");
+          } catch (error) {
+            alert("Notifications update nahi hui: " + error.message);
+          } finally {
+            markAllNotificationsReadButton.disabled = false;
+            markAllNotificationsReadButton.textContent =
+              "MARK ALL AS READ";
+          }
+        });
+      }
       async function loadAdminBookingsFromSupabase() {
         // current bookings are stored in app_bookings, not the legacy bookings table.
         const rows = await adminBusRequest(
@@ -3957,6 +4058,150 @@
           ticket.appendChild(ticketActions);
       }
 
+      // =====================================
+      // COMMON COMPACT PRINT TICKET
+      // =====================================
+      function printBookingTicket(booking) {
+        if (!booking) {
+          alert("Ticket details nahi mili.");
+          return;
+        }
+
+        const oldContainer = $("directPrintContainer");
+        if (oldContainer) oldContainer.remove();
+
+        const container = document.createElement("div");
+        container.id = "directPrintContainer";
+
+        const ticket = document.createElement("div");
+        ticket.className = "compact-print-ticket";
+
+        function add(tag, value, parent, className) {
+          const el = document.createElement(tag);
+          el.textContent = value == null || value === "" ? "—" : String(value);
+          if (className) el.className = className;
+          parent.appendChild(el);
+          return el;
+        }
+
+        // Header
+        const header = document.createElement("div");
+        header.className = "cpt-header";
+        add("strong", "APNI BUS BOOKING", header);
+        add(
+          "span",
+          statusOf(booking) === "cancelled" ? "CANCELLED" : "CONFIRMED",
+          header,
+          "cpt-status"
+        );
+        ticket.appendChild(header);
+
+        // PNR and Journey Date
+        const pnrRow = document.createElement("div");
+        pnrRow.className = "cpt-pnr-row";
+
+        const pnrBox = document.createElement("div");
+        add("small", "PNR NUMBER", pnrBox);
+        add("strong", booking.id, pnrBox, "cpt-pnr");
+        pnrRow.appendChild(pnrBox);
+        const dateBox = document.createElement("div");
+        add("small", "JOURNEY DATE", dateBox);
+        add("strong", booking.date, dateBox, "cpt-date");
+        pnrRow.appendChild(dateBox);
+        ticket.appendChild(pnrRow);
+
+        // Stations and Bus Details - Single Row
+        const route = document.createElement("div");
+        route.className = "cpt-route";
+
+        const fromBox = document.createElement("div");
+        fromBox.className = "cpt-station";
+        add("small", "BOARDING STATION", fromBox);
+        add("strong", booking.from, fromBox);
+        add(
+          "span",
+          "Departure: " + (
+            booking.departureTime ||
+            booking.boardingTime ||
+            findBus(booking.busId)?.departure ||
+            "—"
+          ),
+          fromBox
+        );
+
+        const toBox = document.createElement("div");
+        toBox.className = "cpt-station";
+        add("small", "DROPPING STATION", toBox);
+        add("strong", booking.to, toBox);
+        add("span", "Arrival: " + (booking.droppingTime || "—"), toBox);
+
+        const busDetails = document.createElement("div");
+        busDetails.className = "cpt-bus-details";
+        add("small", "BUS DETAILS", busDetails);
+        add("strong", booking.bus || "—", busDetails);
+        add("span", "Bus No.: " + (booking.busNumber || "—"), busDetails);
+        add("span", "Boarding Before: " + (booking.boardingTime || "—"), busDetails);
+
+        route.append(fromBox, toBox, busDetails);
+        ticket.appendChild(route);
+        // Passenger Details
+        add("strong", "PASSENGERS", ticket, "cpt-section-title");
+
+        const table = document.createElement("table");
+        table.className = "cpt-passenger-table";
+
+        const thead = document.createElement("thead");
+        const heading = document.createElement("tr");
+
+        ["Passenger Name", "Age", "Seat"].forEach((value) => {
+          add("th", value, heading);
+        });
+
+        thead.appendChild(heading);
+        table.appendChild(thead);
+
+        const tbody = document.createElement("tbody");
+
+        (booking.people || []).forEach((person, index) => {
+          const row = document.createElement("tr");
+          add("td", person.name, row);
+          add("td", person.age, row);
+          add("td", booking.seats?.[index], row);
+          tbody.appendChild(row);
+        });
+
+        table.appendChild(tbody);
+        ticket.appendChild(table);
+
+        // Fare and Payment
+        const footer = document.createElement("div");
+        footer.className = "cpt-footer";
+
+        add(
+          "span",
+          "Payment: " + paymentStatusLabel(booking.paymentStatus),
+          footer
+        );
+
+        add("strong", "Total: " + money(booking.total), footer);
+        ticket.appendChild(footer);
+
+        container.appendChild(ticket);
+        document.body.appendChild(container);
+
+        const cleanup = () => {
+          container.remove();
+          window.removeEventListener("afterprint", cleanup);
+        };
+
+        window.addEventListener("afterprint", cleanup);
+
+        requestAnimationFrame(() => {
+          window.print();
+        });
+      }
+
+
       let ticketReturnState = null;
 
       function saveTicketReturnPosition() {
@@ -4070,35 +4315,11 @@
         }
 
         ticket.appendChild(actions);
-
         if (printAfter) {
-          $("ticketPanel").hidden = true;
-
-          const oldPrintContainer = $("directPrintContainer");
-          if (oldPrintContainer) oldPrintContainer.remove();
-
-          const printContainer = document.createElement("div");
-          printContainer.id = "directPrintContainer";
-
-          const printTicket = ticket.cloneNode(true);
-          printTicket.querySelector(".ticket-admin-actions")?.remove();
-
-          printContainer.appendChild(printTicket);
-          document.body.appendChild(printContainer);
-
-          const cleanupPrint = () => {
-            printContainer.remove();
-            window.removeEventListener("afterprint", cleanupPrint);
-          };
-
-          window.addEventListener("afterprint", cleanupPrint);
-
-          requestAnimationFrame(() => {
-            window.print();
-          });
-
+          printBookingTicket(booking);
           return;
         }
+
         $("ticketPanel").hidden = false;
         $("ticketPanel").scrollTop = 0;
         $("ticket").scrollTop = 0;
@@ -4146,7 +4367,15 @@
 
       const printButton = $("printBtn");
       if (printButton) {
-        printButton.onclick = () => window.print();
+        printButton.onclick = () => {
+          printBookingTicket(window.currentApniBusTicket);
+        };
+      }
+      const ticketPrintBtn = $("ticketPrintBtn");
+      if (ticketPrintBtn) {
+        ticketPrintBtn.onclick = () => {
+          printBookingTicket(window.currentApniBusTicket);
+        };
       }
 
       /* ===============================
@@ -4206,9 +4435,7 @@
           const printBtn = addText("button", "Print", result);
           printBtn.type = "button";
           printBtn.onclick = function () {
-            renderTicket(booking);
-            $("ticketPanel").hidden = false;
-            requestAnimationFrame(() => window.print());
+            printBookingTicket(booking);
           };
           addWhatsAppShareButton(result, booking, "Share To WhatsApp");
         } catch (error) {
@@ -4546,41 +4773,129 @@
 
       async function loadAdminNotifications() {
         const container = $("adminNotifications");
+        const unreadCount = $("unreadNotificationCount");
+        const filter = $("notificationFilter");
+
         if (!container) return;
+
         container.textContent = "Notifications load ho rahi hain...";
+
         try {
           const rows = await adminBusRequest(
-            "/rest/v1/admin_notifications?select=id,event_type,pnr,message,created_at&order=created_at.desc&limit=30",
+            "/rest/v1/admin_notifications?select=id,event_type,pnr,message,created_at,is_read&order=created_at.desc&limit=100",
           );
-          container.replaceChildren();
-          if (!Array.isArray(rows) || !rows.length) {
-            addText("p", "Abhi koi notification nahi hai.", container);
-            return;
+
+          const unreadRows = await adminBusRequest(
+            "/rest/v1/admin_notifications?select=id&is_read=eq.false",
+          );
+
+          if (unreadCount) {
+            unreadCount.textContent = Array.isArray(unreadRows)
+              ? unreadRows.length
+              : 0;
           }
-          rows.forEach((row) => {
-            const item = document.createElement("div");
-            item.className = "booking";
-            item.style.marginBottom = "10px";
-            addText(
-              "strong",
-              String(row.event_type || "UPDATE")
-                .replace(/_/g, " ")
-                .toUpperCase(),
-              item,
-            );
-            addText("p", row.message || "PNR: " + (row.pnr || "—"), item);
-            addText(
-              "small",
-              row.created_at ? new Date(row.created_at).toLocaleString() : "",
-              item,
-            );
-            container.appendChild(item);
-          });
+
+          const renderNotifications = () => {
+            container.replaceChildren();
+
+            const selectedFilter = filter ? filter.value : "all";
+
+            const filteredRows = rows.filter((row) => {
+              return (
+                selectedFilter === "all" ||
+                row.event_type === selectedFilter
+              );
+            });
+
+            if (!filteredRows.length) {
+              addText("p", "Is filter mein koi notification nahi hai.", container);
+              return;
+            }
+
+            filteredRows.forEach((row) => {
+              const item = document.createElement("div");
+              item.className = "booking";
+              item.style.marginBottom = "10px";
+
+              if (!row.is_read) {
+                item.style.borderLeft = "4px solid #2563eb";
+              }
+
+              addText(
+                "strong",
+                String(row.event_type || "UPDATE")
+                  .replace(/_/g, " ")
+                  .toUpperCase(),
+                item,
+              );
+
+              addText(
+                "p",
+                row.message || "PNR: " + (row.pnr || "—"),
+                item,
+              );
+
+              addText(
+                "small",
+                row.created_at
+                  ? new Date(row.created_at).toLocaleString()
+                  : "",
+                item,
+              );
+
+              if (row.is_read) {
+                addText("small", "✓ Read", item);
+              } else {
+                const readButton = addText(
+                  "button",
+                  "MARK AS READ",
+                  item,
+                );
+
+                readButton.type = "button";
+
+                readButton.onclick = async () => {
+                  readButton.disabled = true;
+                  readButton.textContent = "Updating...";
+
+                  try {
+                    await adminBusRequest(
+                      "/rest/v1/admin_notifications?id=eq." +
+                        encodeURIComponent(row.id),
+                      {
+                        method: "PATCH",
+                        headers: {
+                          Prefer: "return=minimal",
+                        },
+                        body: JSON.stringify({
+                          is_read: true,
+                        }),
+                      },
+                    );
+
+                    await loadAdminNotifications();
+                  } catch (error) {
+                    alert("Notification update nahi hui: " + error.message);
+                    readButton.disabled = false;
+                    readButton.textContent = "MARK AS READ";
+                  }
+                };
+              }
+
+              container.appendChild(item);
+            });
+          };
+
+          if (filter) {
+            filter.onchange = renderNotifications;
+          }
+
+          renderNotifications();
         } catch (error) {
           container.textContent =
             "Notifications load nahi hui: " +
             error.message +
-            ". Supabase notification SQL run karein.";
+            ". Supabase notification settings check karein.";
         }
       }
 
