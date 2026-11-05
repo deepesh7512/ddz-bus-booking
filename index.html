@@ -2073,7 +2073,7 @@
         <div id="ticket"></div>
         <button id="shareTicketBtn" type="button">Share To WhatsApp</button>
         <button id="ticketBackBtn" type="button">← Back</button>
-        <button onclick="window.print()">Print Ticket</button>
+        <button onclick="window.print()">Print</button>
         <button id="newSearch">New Ticket</button>
       </section>
       <section id="pnrPanel">
@@ -2087,20 +2087,6 @@
       </section>
       <section id="cancelPanel" hidden>
         <h2>Cancel Booking</h2>
-        <form id="cancelForm">
-          <label>PNR Number</label>
-          <input id="cancelPnr" required />
-          <label>Passenger Mobile Number</label>
-          <input
-            id="cancelPhone"
-            type="text"
-            inputmode="numeric"
-            maxlength="10"
-            pattern="[6-9][0-9]{9}"
-            required
-          />
-          <button type="submit">Cancel Ticket</button>
-        </form>
         <div id="cancelResult"></div>
       </section>
       <!-- Admin Login Panel -->
@@ -3270,7 +3256,6 @@
         ["searchPanel", "pnrPanel"].forEach((id) => {
           $(id).hidden = false;
         });
-        $("cancelPanel").hidden = true;
         [
           "results",
           "seatPanel",
@@ -3298,7 +3283,6 @@
           "passengerPanel",
           "ticketPanel",
           "pnrPanel",
-          "cancelPanel",
           "adminPanel",
           "adminLoginPanel",
           "authPanel",
@@ -3325,7 +3309,6 @@
           "passengerPanel",
           "ticketPanel",
           "pnrPanel",
-          "cancelPanel",
           "dashboardPanel",
           "authPanel",
         ].forEach((id) => {
@@ -3356,13 +3339,7 @@
       };
       $("date").value = today();
       updateJourneyDateUI();
-      // Mobile field: digits only, maximum 10.
-      function restrictMobile(input) {
-        input.addEventListener("input", function () {
-          this.value = this.value.replace(/[^0-9]/g, "").slice(0, 10);
-        });
-      }
-      restrictMobile($("cancelPhone"));
+
       $("searchForm").onsubmit = async function (e) {
         e.preventDefault();
         if (busesLoading) {
@@ -4005,7 +3982,7 @@
         const result = $("pnrResult");
         result.replaceChildren();
         if (!pnr) {
-          addText("p", "PNR number enter karein.", result);
+          addText("p", "Enter PNR number.", result);
           return;
         }
         try {
@@ -4014,7 +3991,7 @@
           if (!booking) {
             addText(
               "p",
-              "Is PNR se koi booking nahi mili. PNR number check karein.",
+              "PNR invalid. Please check.",
               result,
             );
             return;
@@ -4025,7 +4002,7 @@
           addText("p", "Bus: " + booking.bus, result);
           addText("p", "Route: " + booking.from + " → " + booking.to, result);
           addText("p", "Journey Date: " + booking.date, result);
-          addText("p", "Seats: " + booking.seats.join(", "), result);
+          addText("p", "Seat Number: " + booking.seats.join(", "), result);
           addText("p", "Total Fare: " + money(booking.total), result);
           addText(
             "p",
@@ -4050,7 +4027,7 @@
               result,
             ),
           );
-          const printBtn = addText("button", "Print Ticket", result);
+          const printBtn = addText("button", "Print", result);
           printBtn.type = "button";
           printBtn.onclick = function () {
             renderTicket(booking);
@@ -4062,68 +4039,13 @@
           console.error(error);
           addText(
             "p",
-            "Booking lookup nahi ho paya. Supabase lookup_bus_booking function aur permissions check karein. " +
+            "Some error occured. " +
               error.message,
             result,
           );
         }
       };
-      /* ===============================
-   BOOKING CANCELLATION
-================================ */
-      $("cancelForm").onsubmit = async function (e) {
-        e.preventDefault();
-        const pnr = $("cancelPnr").value.trim();
-        const phone = $("cancelPhone").value.trim();
-        const result = $("cancelResult");
-        result.replaceChildren();
-        if (!/^[6-9][0-9]{9}$/.test(phone)) {
-          addText("p", "Valid 10-digit mobile number enter karein.", result);
-          return;
-        }
-        if (
-          !confirm(
-            "Kya aap PNR " +
-              pnr +
-              " ki poori booking cancel karna chahte hain?",
-          )
-        )
-          return;
-        try {
-          const response = await supabaseRpc("cancel_bus_booking", {
-            p_pnr: pnr,
-            p_customer_phone: phone,
-          });
-          if (!response || response.success !== true) {
-            addText(
-              "p",
-              response?.message ||
-                "Booking cancel nahi hui. PNR aur mobile number check karein.",
-              result,
-            );
-            return;
-          }
-          addText(
-            "p",
-            "Booking successfully cancel ho gayi. PNR: " +
-              (response.pnr || pnr),
-            result,
-          ).className = "cancelled";
-          addText(
-            "p",
-            "Booked seats availability refresh karne ke liye route dobara search karein.",
-            result,
-          );
-        } catch (error) {
-          console.error(error);
-          addText(
-            "p",
-            "Cancellation nahi ho paya. Supabase cancel_bus_booking function aur permissions check karein. " +
-              error.message,
-            result,
-          );
-        }
-      };
+
       // ===============================
       // ADMIN: ADD BUS
       // ===============================
@@ -5515,7 +5437,6 @@
             "passengerPanel",
             "ticketPanel",
             "pnrPanel",
-            "cancelPanel",
             "adminPanel",
             "adminLoginPanel",
             "dashboardPanel",
@@ -5681,7 +5602,6 @@
             "passengerPanel",
             "ticketPanel",
             "pnrPanel",
-            "cancelPanel",
             "dashboardPanel",
             "authPanel",
           ].forEach((id) => {
@@ -7159,16 +7079,7 @@
             showStatusMessage(out, "PNR lookup nahi ho paya: " + err.message);
           }
         };
-        // Public PNR + phone cancellation is disabled. Cancellation is available only
-        // from authenticated customer account or verified Admin Panel.
-        if (q("cancelForm"))
-          q("cancelForm").onsubmit = (e) => {
-            e.preventDefault();
-            showStatusMessage(
-              q("cancelResult"),
-              "Cancellation ke liye My Account mein login karein.",
-            );
-          };
+        
         // Ticket renderer includes stop-specific boarding and dropping times.
         const originalRenderTicket = renderTicket;
         renderTicket = function (b) {
@@ -7184,10 +7095,6 @@
             ticket.appendChild(p);
           }
         };
-        // current admin bookings/reports use app_bookings + app_lookup_booking. current bus UI is hidden.
-        // NOTE: app_create_booking currently receives only the first passenger name/mobile; the UI's
-        // additional passenger ages/details are shown on the local ticket but are not guaranteed
-        // to be persisted until the database RPC/schema is extended safely.
       })();
     </script>
   </body>
