@@ -2066,7 +2066,64 @@
         overflow-wrap: anywhere;
       }
 
+      /* ADMIN NOTIFICATION BELL */
+      .admin-topbar {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        width: 100%;
+        margin: 0 0 12px;
+        position: relative;
+        box-sizing: border-box;
+      }
+
+.admin-notification-bell {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 46px;
+    height: 46px;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    background: #ffffff;
+    color: #333;
+    font-size: 23px;
+    cursor: pointer;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
+    transition: 0.2s ease;
+}
+
+      .admin-notification-bell:hover {
+        background: #fff1f2;
+        border-color: #fecaca;
+        transform: translateY(-2px);
+      }
+
+      #adminNotificationBadge {
+        position: absolute;
+        top: -7px;
+        right: -7px;
+        min-width: 20px;
+        height: 20px;
+        padding: 0 5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid #ffffff;
+        border-radius: 20px;
+        background: #dc2626;
+        color: #ffffff;
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 1;
+      }
+
+      #adminNotificationBadge[hidden] {
+        display: none;
+      }
+
       </style>
+      <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   </head>
   <body>
     <div id="appBusyBar" aria-hidden="true"></div>
@@ -2319,7 +2376,6 @@
         <p>Operators, Buses, Routes, Stoppages, Trips & Fares Management.</p>
 
         <div id="currentAdminMessage" role="status" aria-live="polite"></div>
-
         <div class="admin-layout">
           <aside class="admin-sidebar">
             <div class="admin-sidebar-title">
@@ -2414,8 +2470,21 @@
               💾 Backup & Restore
             </button>
           </aside>
-
+          
           <div class="admin-content">
+            <div class="admin-topbar">
+              <button
+                type="button"
+                id="adminNotificationBell"
+                class="admin-notification-bell"
+                aria-label="Open notifications"
+                title="Notifications"
+              >
+                🔔
+                <span id="adminNotificationBadge" hidden>0</span>
+              </button>
+            </div>
+            
             <div class="admin-section-view active" data-admin-view="overview">
               <h3>Dashboard Overview</h3>
               <p>Welcome to Apni Bus Booking Admin Dashboard.</p>
@@ -3122,6 +3191,22 @@
           "click",
           loadAdminNotifications,
         );
+
+      const adminNotificationBell = $("adminNotificationBell");
+
+      if (adminNotificationBell) {
+        adminNotificationBell.addEventListener("click", () => {
+          const notificationTab = document.querySelector(
+            '.admin-nav-btn[data-admin-target="notifications"]',
+          );
+
+          if (notificationTab) {
+            notificationTab.click();
+            loadAdminNotifications();
+          }
+        });
+      }
+
       const markAllNotificationsReadButton = $(
         "markAllNotificationsReadBtn",
       );
@@ -4789,10 +4874,21 @@
             "/rest/v1/admin_notifications?select=id&is_read=eq.false",
           );
 
+          const unreadTotal = Array.isArray(unreadRows)
+            ? unreadRows.length
+            : 0;
+
           if (unreadCount) {
-            unreadCount.textContent = Array.isArray(unreadRows)
-              ? unreadRows.length
-              : 0;
+            unreadCount.textContent = unreadTotal;
+          }
+
+          const notificationBadge = $("adminNotificationBadge");
+
+          if (notificationBadge) {
+            notificationBadge.textContent =
+              unreadTotal > 99 ? "99+" : unreadTotal;
+
+            notificationBadge.hidden = unreadTotal === 0;
           }
 
           const renderNotifications = () => {
