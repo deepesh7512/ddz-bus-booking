@@ -3465,30 +3465,8 @@
         });
       };
 
-      (function restoreActiveTab() {
-        let activeTab = "bookTab";
-
-        try {
-          activeTab =
-            localStorage.getItem("apniBus_activeTab") || "bookTab";
-        } catch (_) {}
-
-        if (
-          activeTab === "customerTab" ||
-          activeTab === "dashboard" ||
-          activeTab === "accountTab"
-        ) {
-          showDashboard();
-        } else if (
-          activeTab === "adminTab" ||
-          activeTab === "adminPanel" ||
-          activeTab === "admin"
-        ) {
-          showAdmin();
-        } else {
-          showCustomer();
-        }
-      })();
+      // Active tab restoration is intentionally deferred until customer/admin
+      // authentication listeners have been registered below.
 
       $("date").value = today();
       updateJourneyDateUI();
@@ -5661,6 +5639,33 @@
             showMessage("Session expire ho gaya. Dobara login karein.");
           }
         })();
+      })();
+      // Restore the saved tab only after the customer auth click handler exists.
+      // This avoids the first refresh opening My Account and a later refresh
+      // falling back to the booking tab due to initialization order.
+      (function restoreActiveTabAfterAuthInit() {
+        let activeTab = "bookTab";
+        try {
+          activeTab = localStorage.getItem("apniBus_activeTab") || "bookTab";
+        } catch (_) {}
+
+        if (
+          activeTab === "customerTab" ||
+          activeTab === "dashboard" ||
+          activeTab === "accountTab"
+        ) {
+          const tab = document.getElementById("customerTab");
+          if (tab) tab.click();
+        } else if (
+          activeTab === "adminTab" ||
+          activeTab === "adminPanel" ||
+          activeTab === "admin"
+        ) {
+          // Admin tab is restored by initAdminAuth after its handlers exist.
+        } else {
+          const tab = document.getElementById("bookTab");
+          if (tab) tab.click();
+        }
       })();
       /* ADMIN LOGIN / LOGOUT — SUPABASE AUTH */
       (function initAdminAuth() {
