@@ -389,9 +389,15 @@
       .ticket-admin-actions {
         display: flex;
         justify-content: center;
+        align-items: center;
         gap: 10px;
-        flex-wrap: wrap;
         margin: 18px auto 0;
+        width: 100%;
+      }
+
+      .ticket-admin-actions .danger {
+        min-width: 180px;
+        max-width: 100%;
       }
 
       /* Modern Ticket Action Buttons */
@@ -484,8 +490,22 @@
           padding: 13px;
         }
 
+        .ticket-admin-actions {
+          flex-direction: column;
+          align-items: center;
+          padding: 0 16px;
+          box-sizing: border-box;
+        }
+
         .ticket-admin-actions button {
-          flex: 1 1 100%;
+          width: 100%;
+          max-width: 320px;
+          box-sizing: border-box;
+        }
+
+        .ticket-admin-actions .danger {
+          width: 100%;
+          max-width: 320px;
         }
       }
       
@@ -2071,10 +2091,6 @@
       <section id="ticketPanel" hidden>
         <h2>Booking Ticket</h2>
         <div id="ticket"></div>
-        <button id="shareTicketBtn" type="button" class="whatsapp-share-btn" title="Share Ticket on WhatsApp">
-          <span class="whatsapp-icon"></span>
-          <span>Share</span>
-        </button>
         <button id="ticketBackBtn" type="button">← Back</button>
         <button onclick="window.print()">Print</button>
         <button id="newSearch">New Ticket</button>
@@ -3741,14 +3757,12 @@
             ticket,
           );
         }
-        addText("p", "DEMO RECEIPT — NOT A REAL TRANSPORT TICKET", ticket);
+        addText("p", "CONFIRMATION RECEIPT — VALID TRANSPORT TICKET", ticket);
+        const ticketActions = document.createElement("div");
+          ticketActions.className = "ticket-admin-actions";
+          addWhatsAppShareButton(ticketActions, b, "Share Ticket");
+          ticket.appendChild(ticketActions);
       }
-      const shareTicketBtn = $("shareTicketBtn");
-      if (shareTicketBtn)
-        shareTicketBtn.onclick = function () {
-          if (window.currentApniBusTicket)
-            shareTicketOnWhatsApp(window.currentApniBusTicket);
-        };
 
       let ticketReturnState = null;
 
@@ -3818,8 +3832,6 @@
         const actions = document.createElement("div");
         actions.className = "ticket-admin-actions";
 
-        addWhatsAppShareButton(actions, booking, "Share To WhatsApp");
-
         if (statusOf(booking) === "confirmed") {
           const cancelButton = addText("button", "CANCEL BOOKING", actions);
           cancelButton.type = "button";
@@ -3828,7 +3840,7 @@
           cancelButton.onclick = async function () {
             if (
               !confirm(
-                "PNR " + booking.id + " ki booking cancel karna chahte hain?",
+                "Are you really want to cancel booking against PNR " + booking.id + " ?",
               )
             )
               return;
@@ -3842,7 +3854,7 @@
               booking.cancelledAt =
                 result?.cancelled_at || new Date().toISOString();
 
-              alert("Booking successfully cancel ho gayi.\nPNR: " + booking.id);
+              alert("Booking successfully cancelled.\nPNR: " + booking.id);
 
               openAdminTicket(booking, false);
               renderAdmin();
@@ -4240,10 +4252,26 @@
               view.className = "row-action";
               view.textContent = "View Ticket";
               view.onclick = () => {
-                $("lookupPnr").value = item.booking_pnr;
+                const booking = {
+                  id: item.booking_pnr,
+                  status: item.booking_status || row.status,
+                  bus: item.bus_name,
+                  busNumber: item.bus_number,
+                  from: item.boarding_name,
+                  to: item.dropping_name,
+                  date: item.journey_date,
+                  seats: item.seats || [],
+                  total: item.total_fare,
+                  people: item.passenger_details || row.passenger_details || [],
+                  createdAt: item.created_at || row.created_at,
+                  paymentMethod: item.payment_method,
+                  paymentStatus: item.payment_status,
+                  departureTime: item.departure_time,
+                  cancelledAt: item.cancelled_at
+                };
                 $("dashboardPanel").hidden = true;
-                $("pnrPanel").hidden = false;
-                $("pnrForm").requestSubmit();
+                renderTicket(booking);
+                $("ticketPanel").hidden = false;
               };
               action.appendChild(view);
               if (status === "confirmed") {
