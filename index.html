@@ -1830,6 +1830,15 @@
         }
       }
 
+      /* Lock background while ticket is open */
+      body:has(#ticketPanel:not([hidden])) {
+        overflow: hidden !important;
+      }
+
+      #ticketPanel:not([hidden]) {
+        z-index: 10000;
+      }
+
       /* Ticket View Overlay */
       #ticketPanel:not([hidden]) {
         position: fixed;
@@ -1879,6 +1888,19 @@
 
       .whatsapp-share-btn:hover {
         background: #d1f3df;
+      }
+
+      /* Ticket backdrop */
+      #ticketBackdrop {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        background: rgba(15, 23, 42, 0.45);
+      }
+
+      body:has(#ticketPanel:not([hidden])) #ticketBackdrop {
+        display: block;
       }
 
       </style>
@@ -2088,6 +2110,7 @@
           <button type="submit">Book Ticket</button>
         </form>
       </section>
+      <div id="ticketBackdrop"></div>
       <section id="ticketPanel" hidden>
         <h2>Booking Ticket</h2>
         <div id="ticket"></div>
@@ -3436,6 +3459,7 @@
             btn.className = "seat";
             if (booked.includes(i)) {
               btn.disabled = true;
+              btn.classList.add("booked");
               btn.title = "Already booked";
             } else {
               btn.onclick = () => {
@@ -3472,58 +3496,6 @@
           " | Total: " +
           money(seats.length * (bus ? bus.fare : 0));
       }
-      $("continueBtn").onclick = function () {
-        if (!bus || !seats.length) {
-          alert("Pehle seat select karein.");
-          return;
-        }
-        $("passengers").replaceChildren();
-        [...seats]
-          .sort((a, b) => a - b)
-          .forEach((seat, index) => {
-            const box = document.createElement("div");
-            box.className = "passenger";
-            addText("h3", "Passenger " + (index + 1) + " — Seat " + seat, box);
-            const name = document.createElement("input");
-            name.name = "name";
-            name.placeholder = "Passenger Name";
-            name.maxLength = 80;
-            name.required = true;
-            box.appendChild(name);
-            const age = document.createElement("input");
-            age.name = "age";
-            age.type = "number";
-            age.placeholder = "Age";
-            age.min = 1;
-            age.max = 120;
-            age.required = true;
-            box.appendChild(age);
-            const phone = document.createElement("input");
-            phone.name = "phone";
-            phone.type = "text";
-            phone.inputMode = "numeric";
-            phone.placeholder = "10-digit mobile number";
-            phone.maxLength = 10;
-            phone.minLength = 10;
-            phone.pattern = "[6-9][0-9]{9}";
-            phone.required = true;
-            restrictMobile(phone);
-            box.appendChild(phone);
-            $("passengers").appendChild(box);
-          });
-        $("bookingSummary").textContent =
-          bus.name +
-          " | " +
-          from +
-          " → " +
-          to +
-          " | " +
-          journeyDate +
-          " | Total " +
-          money(seats.length * bus.fare);
-        $("passengerPanel").hidden = false;
-        $("passengerPanel").scrollIntoView({ behavior: "smooth" });
-      };
       $("passengerForm").onsubmit = async function (e) {
         e.preventDefault();
         if (!bus || !seats.length) return;
@@ -3712,6 +3684,8 @@
               findBus(b.busId)?.departure ||
               "—",
           ],
+          ["Boarding Time", b.boardingTime || "—"],
+          ["Dropping Time", b.droppingTime || "—"],
           ["Seats", (b.seats || []).join(", ")],
           ["Total Fare", money(b.total)],
           ["Payment Method", paymentMethodLabel(b.paymentMethod)],
@@ -3819,6 +3793,16 @@
           $("ticketPanel").hidden = true;
         }
       };
+
+      $("ticketBackdrop").addEventListener("click", function () {
+        $("ticketBackBtn").click();
+      });
+
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape" && !$("ticketPanel").hidden) {
+          $("ticketBackBtn").click();
+        }
+      });
 
       function openAdminTicket(booking, printAfter) {
         if (!printAfter) {
@@ -4263,7 +4247,9 @@
                   createdAt: item.created_at || row.created_at,
                   paymentMethod: item.payment_method,
                   paymentStatus: item.payment_status,
-                  departureTime: item.departure_time,
+                  departureTime: item.boarding_time,
+                  boardingTime: item.boarding_time,
+                  droppingTime: item.dropping_time,
                   cancelledAt: item.cancelled_at
                 };
                 saveTicketReturnPosition();
@@ -4661,7 +4647,18 @@
             thead.appendChild(head);
             table.appendChild(thead);
             const tbody = document.createElement("tbody");
-            remoteBookings.forEach(function (row) {
+            remoteBookings.forEach(async function (row) {
+              const ticketData = await adminBusRequest(
+                "/rest/v1/rpc/app_lookup_booking",
+                {
+                  method: "POST",
+                  body: JSON.stringify({ p_pnr: row.pnr }),
+                },
+              );
+
+              const ticket = Array.isArray(ticketData)
+                ? ticketData[0]
+                : ticketData;
               const booking = {
                 id: row.pnr,
                 busId: row.trip_id,
@@ -4682,6 +4679,9 @@
                 customerPhone: row.customer_phone,
                 customerEmail: row.customer_email,
                 createdAt: row.created_at,
+                departureTime: ticket?.boarding_time || "—",
+                boardingTime: ticket?.boarding_time || "—",
+                droppingTime: ticket?.dropping_time || "—",
               };
               const tr = document.createElement("tr");
               tr.dataset.search = [
@@ -6604,7 +6604,12 @@
         let currentBoarding = null,
           currentDropping = null,
           currentFare = 0;
-        const q = (id) => document.getElementById(id);
+        const q = $;
+        function restrictMobile(input) {
+          input.addEventListener("input", function () {
+            this.value = this.value.replace(/\D/g, "").slice(0, 10);
+          });
+        }
         async function rest(path) {
           const r = await fetch(API + path, { headers });
           const t = await r.text();
@@ -6864,20 +6869,28 @@
           b.value = item.boarding.id;
           d.value = item.dropping.id;
           try {
-            const segs = await rest(
-              `/app_booking_segments?select=trip_id,seat_no,segment_order,booking_id&trip_id=eq.${esc(item.trip.id)}`,
+            const response = await fetch(
+              API + "/rpc/app_get_booked_segments",
+              {
+                method: "POST",
+                headers,
+                body: JSON.stringify({
+                  p_trip_id: item.trip.id,
+                }),
+              },
             );
-            const ids = [...new Set(segs.map((x) => x.booking_id))];
-            let active = [];
-            if (ids.length) {
-              const bookingsRows = await rest(
-                `/app_bookings?select=id,status&id=in.(${ids.map(esc).join(",")})&status=eq.confirmed`,
-              );
-              active = bookingsRows.map((x) => x.id);
+
+            const result = await response.json();
+
+            if (!response.ok) {
+              throw new Error(result.message || "Seat availability error");
             }
-            currentBookedSegments = segs.filter((x) =>
-              active.includes(x.booking_id),
-            );
+
+            currentBookedSegments = result.map((x) => ({
+              seat_no: Number(x.seat_no),
+              segment_order: Number(x.segment_order),
+            }));
+
             await refreshFareAndSeats();
           } catch (err) {
             showStatusMessage(
@@ -7102,22 +7115,6 @@
             });
           } catch (err) {
             showStatusMessage(out, "PNR lookup nahi ho paya: " + err.message);
-          }
-        };
-        
-        // Ticket renderer includes stop-specific boarding and dropping times.
-        const originalRenderTicket = renderTicket;
-        renderTicket = function (b) {
-          originalRenderTicket(b);
-          const ticket = q("ticket");
-          if (b.boardingTime || b.droppingTime) {
-            const p = document.createElement("p");
-            p.textContent =
-              "Boarding: " +
-              (b.boardingTime || "—") +
-              " | Dropping: " +
-              (b.droppingTime || "—");
-            ticket.appendChild(p);
           }
         };
       })();
