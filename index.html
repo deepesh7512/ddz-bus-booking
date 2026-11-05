@@ -1353,16 +1353,63 @@ select {
       <h3>Dashboard Overview</h3>
       <p>Welcome to Apni Bus Booking Admin Dashboard.</p>
       <p>अपना Management Section देखने के लिए बाईं ओर Menu चुनें।</p>
-      <div style="margin:18px 0;padding:18px;border:1px solid #fee2e2;border-radius:14px;background:#fffafa;">
-        <h3 style="margin-top:0;">🎫 Search Ticket by PNR</h3>
-        <form id="adminOverviewPnrForm" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-          <input id="adminOverviewPnr" type="text" required
-            placeholder="Enter PNR Number"
-            style="flex:1;min-width:200px;margin:0;" />
-          <button type="submit" id="adminOverviewPnrBtn">View Ticket</button>
+
+      <div id="adminOverviewPnrCard" style="
+        margin:22px 0;
+        padding:22px;
+        border:1px solid #e8eaf0;
+        border-radius:18px;
+        background:linear-gradient(135deg,#ffffff,#fff4f4);
+        box-shadow:0 5px 18px rgba(0,0,0,.05);
+      ">
+        <div style="display:flex;align-items:center;gap:13px;margin-bottom:18px;">
+          <div style="
+            width:48px;height:48px;border-radius:14px;
+            background:#fee2e2;display:flex;
+            align-items:center;justify-content:center;font-size:24px;
+          ">🎫</div>
+          <div>
+            <h3 style="margin:0 0 5px;font-size:18px;color:#252525;">
+              Find Booking / Ticket
+            </h3>
+            <p style="margin:0;font-size:13px;color:#777;">
+              Search complete ticket details using PNR number.
+            </p>
+          </div>
+        </div>
+
+        <form id="adminOverviewPnrForm" style="
+          display:flex;gap:10px;flex-wrap:wrap;align-items:center;
+        ">
+          <input
+            id="adminOverviewPnr"
+            type="text"
+            required
+            autocomplete="off"
+            placeholder="Enter Booking PNR Number"
+            style="
+              flex:1;min-width:200px;height:46px;
+              padding:0 16px;margin:0;
+              border:1px solid #dfe3eb;border-radius:12px;
+              background:#fff;font-size:14px;
+            "
+          />
+          <button type="submit" id="adminOverviewPnrBtn"
+            style="
+              height:46px;padding:0 22px;border:0;
+              border-radius:12px;background:#b71c1c;
+              color:#fff;font-weight:600;cursor:pointer;
+            ">
+            🔍 Search Ticket
+          </button>
         </form>
-        <div id="adminOverviewPnrResult" style="margin-top:10px;" aria-live="polite"></div>
+
+        <div id="adminOverviewPnrResult"
+          style="margin-top:12px;font-size:13px;color:#666;"
+          aria-live="polite">
+        </div>
       </div>
+
       <div class="admin-stats-grid">
 
   <div class="admin-stat-card">
@@ -2451,48 +2498,88 @@ select {
   if (printAfter) requestAnimationFrame(() => window.print());
 }
 
-const adminOverviewPnrForm = $("adminOverviewPnrForm");
+        const adminOverviewPnrForm = $("adminOverviewPnrForm");
 
-if (adminOverviewPnrForm) {
-  adminOverviewPnrForm.addEventListener("submit", async function(e) {
-    e.preventDefault();
+        if (adminOverviewPnrForm) {
+          adminOverviewPnrForm.addEventListener("submit", async function(e) {
+            e.preventDefault();
 
-    const pnr = $("adminOverviewPnr").value.trim();
-    const result = $("adminOverviewPnrResult");
-    const button = $("adminOverviewPnrBtn");
+            const pnr = $("adminOverviewPnr").value.trim();
+            const result = $("adminOverviewPnrResult");
+            const button = $("adminOverviewPnrBtn");
 
-    result.textContent = "Ticket details search ho rahi hain...";
-    button.disabled = true;
+            result.textContent = "Ticket details search ho rahi hain...";
+            button.disabled = true;
 
-    try {
-      const row = await supabaseRpc("lookup_bus_booking", {
-        p_pnr: pnr
-      });
+            try {
+              const found = await adminBusRequest(
+                "/rest/v1/rpc/app_lookup_booking",
+                {
+                  method: "POST",
+                  body: JSON.stringify({ p_pnr: pnr })
+                }
+              );
 
-      const booking = bookingFromRemote(row);
+              const ticket = Array.isArray(found) ? found[0] : found;
 
-      if (!booking) {
-        result.textContent = "Is PNR se koi booking nahi mili.";
-        return;
-      }
+              if (!ticket || !ticket.booking_pnr) {
+                result.textContent = "Is PNR se koi booking nahi mili.";
+                return;
+              }
 
-      result.textContent = "Ticket mil gayi: " + booking.id;
-      openAdminTicket(booking, false);
+              const rows = await adminBusRequest(
+                "/rest/v1/app_bookings?select=pnr,trip_id,customer_name,customer_phone,customer_email,boarding_name_snapshot,dropping_name_snapshot,seats,fare,status,payment_method,payment_status,passenger_details,created_at,cancelled_at&pnr=eq." +
+                encodeURIComponent(pnr) + "&limit=1"
+              );
 
-    } catch (error) {
-      result.textContent = "Ticket search error: " + error.message;
-    } finally {
-      button.disabled = false;
-    }
-  });
-}
-      const printButton = $("printBtn");
-      if (printButton) {
-        printButton.onclick = () => window.print();
-      }
+              const saved = Array.isArray(rows) ? rows[0] : null;
+
+              const booking = {
+                id: ticket.booking_pnr,
+                bus: ticket.bus_name || "Bus",
+                busNumber: ticket.bus_number || "—",
+                busId: saved?.trip_id || null,
+                from: ticket.boarding_name || saved?.boarding_name_snapshot || "",
+                to: ticket.dropping_name || saved?.dropping_name_snapshot || "",
+                date: ticket.journey_date || "—",
+                seats: Array.isArray(ticket.seats)
+                  ? ticket.seats.map(Number)
+                  : Array.isArray(saved?.seats) ? saved.seats.map(Number) : [],
+                people: Array.isArray(saved?.passenger_details)
+                  ? saved.passenger_details : [],
+                total: Number(ticket.total_fare ?? saved?.fare ?? 0),
+                paymentMethod: saved?.payment_method || "pay_later",
+                paymentStatus: saved?.payment_status || "pending",
+                status: ticket.booking_status || saved?.status || "confirmed",
+                customerName: saved?.customer_name || "",
+                customerPhone: saved?.customer_phone || "",
+                customerEmail: saved?.customer_email || "",
+                createdAt: saved?.created_at || ticket.booked_at,
+                cancelledAt: saved?.cancelled_at || null,
+                boardingTime: ticket.boarding_time || "",
+                droppingTime: ticket.dropping_time || ""
+              };
+
+              result.textContent = "Ticket Status: " + booking.status;
+              openAdminTicket(booking, false);
+
+            } catch (error) {
+              result.textContent = "Ticket search error: " + error.message;
+            } finally {
+              button.disabled = false;
+            }
+          });
+        }
+
+        const printButton = $("printBtn");
+        if (printButton) {
+          printButton.onclick = () => window.print();
+        }
+
+
       /* ===============================
-   PNR SEARCH + PRINT TICKET
-================================ */
+        PNR SEARCH + PRINT TICKET
+      ================================ */
       $("pnrForm").onsubmit = async function (e) {
         e.preventDefault();
         const pnr = $("lookupPnr").value.trim();
@@ -2809,17 +2896,45 @@ if (adminOverviewPnrForm) {
             return;
           }
 
-
-
           const searchWrap = document.createElement("div");
-          searchWrap.style.cssText = "display:flex;justify-content:flex-end;align-items:center;margin:8px 0 12px;padding:0;background:transparent;border:0;";
+
+          searchWrap.style.cssText = `
+            display:flex;
+            flex-direction:column;
+            align-items:flex-end;
+            width:100%;
+            margin:10px 0 16px;
+            padding:0;
+            background:transparent;
+            border:0;
+          `;
 
           const bookingSearch = document.createElement("input");
           bookingSearch.type = "search";
-          bookingSearch.placeholder = "Search PNR / Mobile / Trip...";
-          bookingSearch.style.cssText = "width:280px;max-width:100%;margin:0;padding:10px 13px;";
+          bookingSearch.placeholder = "Search Ticket / PNR";
+          bookingSearch.style.cssText = `
+            width:290px;
+            max-width:100%;
+            height:42px;
+            margin:0;
+            padding:9px 16px;
+            border:1px solid #dbe2ea;
+            border-radius:25px;
+            background:#fff;
+            box-shadow:0 2px 8px rgba(15,23,42,.05);
+            outline:none;
+          `;
+
+          const searchInfo = document.createElement("small");
+          searchInfo.textContent = "PNR, Mobile Number, Trip ya Route se search karein.";
+          searchInfo.style.cssText = `
+            margin-top:5px;
+            color:#64748b;
+            text-align:right;
+          `;
 
           searchWrap.appendChild(bookingSearch);
+          searchWrap.appendChild(searchInfo);
           bookingContainer.appendChild(searchWrap);
 
           const tableWrap=document.createElement('div');tableWrap.className='data-table-wrap';
