@@ -5506,7 +5506,8 @@
           authPanel.hidden = false;
           setMode(false);
           refreshAuthStatus();
-          authPanel.scrollIntoView({ behavior: "smooth" });
+          // Do not force-scroll the page when the My Account tab is opened.
+          // Keep the user's current scroll position while displaying the login form.
         }
         async function completeLogin(data) {
           saveSession(data);
