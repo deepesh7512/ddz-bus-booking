@@ -3741,10 +3741,22 @@
         }
 
         ticket.appendChild(actions);
-        $("ticketPanel").hidden = false;
-        $("ticketPanel").scrollIntoView({ behavior: "smooth", block: "start" });
 
-        if (printAfter) requestAnimationFrame(() => window.print());
+        if (printAfter) {
+          $("ticketPanel").hidden = true;
+
+          requestAnimationFrame(() => {
+            window.print();
+          });
+
+          return;
+        }
+
+        $("ticketPanel").hidden = false;
+        $("ticketPanel").scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
       }
 
       const adminOverviewPnrForm = $("adminOverviewPnrForm");
