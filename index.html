@@ -3896,12 +3896,9 @@
 
           return;
         }
-
         $("ticketPanel").hidden = false;
-        $("ticketPanel").scrollIntoView({
-          behavior: "smooth",
-          block: "start"
-        });
+        $("ticketPanel").scrollTop = 0;
+        $("ticket").scrollTop = 0;
       }
 
       const adminOverviewPnrForm = $("adminOverviewPnrForm");
@@ -4269,9 +4266,10 @@
                   departureTime: item.departure_time,
                   cancelledAt: item.cancelled_at
                 };
-                $("dashboardPanel").hidden = true;
+                saveTicketReturnPosition();
                 renderTicket(booking);
                 $("ticketPanel").hidden = false;
+                $("ticketPanel").scrollTop = 0;
               };
               action.appendChild(view);
               if (status === "confirmed") {
