@@ -3367,20 +3367,7 @@
         $("adminPanel").hidden = false;
         renderAdmin();
       }
-
-      function saveActiveTab(tab) {
-        localStorage.setItem("apniBus_activeTab", tab);
-      }
-
-      $("customerTab").onclick = function () {
-        saveActiveTab("customer");
-        showCustomer();
-      };
-
-      $("adminTab").onclick = function () {
-        saveActiveTab("admin");
-        showAdmin();
-      };
+      $("customerTab").onclick = showCustomer;
       $("dashboardSearchBtn").onclick = function () {
         showCustomer();
         window.scrollTo({
@@ -3388,13 +3375,6 @@
           behavior: "smooth",
         });
       };
-
-      const savedTab = localStorage.getItem("apniBus_activeTab");
-
-      if (savedTab !== "account" && savedTab !== "admin") {
-        showCustomer();
-      }
-
       $("date").value = today();
       updateJourneyDateUI();
 
@@ -5364,9 +5344,8 @@
       // ===============================
       // INITIALIZE APP
       // ===============================
-      
       renderAdmin();
-
+      showCustomer();
       /* CUSTOMER AUTH — SUPABASE AUTH */
       (function initCustomerSupabaseAuth() {
         const SESSION_KEY = "apniBus_customer_auth_session";
@@ -5503,7 +5482,6 @@
           showDashboard();
         }
         accountTab.addEventListener("click", async function () {
-          saveActiveTab("account");
           try {
             const current = await refreshSessionIfNeeded();
             if (current?.access_token) {
@@ -5616,32 +5594,14 @@
         (async function restore() {
           try {
             const current = await refreshSessionIfNeeded();
-
             if (current?.access_token) {
               saveSession(current);
-            }
-
-            refreshAuthStatus();
-
-            const savedTab = localStorage.getItem("apniBus_activeTab");
-
-            if (savedTab === "account") {
-              if (current?.access_token) {
-                showDashboard();
-              } else {
-                openAuth();
-              }
-            }
+              refreshAuthStatus();
+            } else refreshAuthStatus();
           } catch (err) {
             localStorage.removeItem(SESSION_KEY);
             refreshAuthStatus();
-
-            const savedTab = localStorage.getItem("apniBus_activeTab");
-
-            if (savedTab === "account") {
-              openAuth();
-              showMessage("Session expire ho gaya. Dobara login karein.");
-            }
+            showMessage("Session expire ho gaya. Dobara login karein.");
           }
         })();
       })();
@@ -5789,14 +5749,8 @@
           message.textContent = "Admin logout ho gaya.";
         });
         adminPanel.prepend(logoutButton);
-        const savedTab = localStorage.getItem("apniBus_activeTab");
-
-        if (savedTab === "admin") {
-          openAdminPanel();
-        } else {
-          adminPanel.hidden = true;
-          adminLoginPanel.hidden = true;
-        }
+        adminPanel.hidden = true;
+        adminLoginPanel.hidden = true;
       })();
     </script>
 
@@ -6954,13 +6908,13 @@
         q("continueBtn").onclick = function () {
           if (!readDemoAuthSession()) {
             alert(
-              "Login or register yourself for booking.",
+              "Ticket book karne ke liye pehle My Account mein login ya registration karein.",
             );
             openDemoAuth();
             return;
           }
           if (!currentTrip || !seats.length) {
-            alert("Select seat first.");
+            alert("Pehle seat select karein.");
             return;
           }
           const bs = currentStops.find(
@@ -6976,7 +6930,7 @@
                 x.boarding_stop_id === bs.id && x.dropping_stop_id === ds.id,
             )
           ) {
-            alert("Choose valid boarding & dropping stops.");
+            alert("Valid boarding aur dropping stop chunein.");
             return;
           }
           currentBoarding = bs.id;
