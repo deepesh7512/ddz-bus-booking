@@ -6295,9 +6295,11 @@ if (recentContainer) {
       recentContainer.textContent =
         "Abhi koi booking available nahi hai.";
     } else {
+      const tableWrap = document.createElement("div");
+      tableWrap.className = "data-table-wrap";
+
       const table = document.createElement("table");
-      table.className = "professional-table";
-      table.style.width = "100%";
+      table.className = "data-table";
 
       const columns = [
         { label: "PNR", key: "pnr" },
@@ -6438,8 +6440,12 @@ if (recentContainer) {
           sortButton.style.cursor = "pointer";
           sortButton.style.border = "0";
           sortButton.style.background = "transparent";
-          sortButton.style.fontWeight = "700";
+          sortButton.style.font = "inherit";
+          sortButton.style.fontWeight = "inherit";
           sortButton.style.color = "inherit";
+          sortButton.style.padding = "0";
+          sortButton.style.width = "100%";
+          sortButton.style.textAlign = "inherit";
 
           sortButton.onclick = () => {
             if (sortKey === column.key) {
@@ -6473,7 +6479,8 @@ if (recentContainer) {
       table.appendChild(thead);
       table.appendChild(tbody);
 
-      recentContainer.appendChild(table);
+      tableWrap.appendChild(table);
+      recentContainer.appendChild(tableWrap);
       renderRecentRows();
     }
   } catch (error) {
@@ -6831,6 +6838,17 @@ if (recentContainer) {
               if (!$a("adminPanel").hidden && getAdminAccessToken()) loadAll();
             }, 100);
           });
+
+        window.addEventListener("load", () => {
+          setTimeout(() => {
+            if (
+              !$a("adminPanel").hidden &&
+              getAdminAccessToken()
+            ) {
+              loadAll();
+            }
+          }, 300);
+        });
         const originalRenderAdmin = window.renderAdmin;
         document.addEventListener("DOMContentLoaded", () => {});
 
