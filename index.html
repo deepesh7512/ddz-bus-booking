@@ -3290,7 +3290,13 @@
       function findBus(id) {
         return buses.find((b) => String(b.id) === String(id));
       }
+      function saveActiveTab(tabName) {
+        try {
+          sessionStorage.setItem("apniBus_active_tab", tabName);
+        } catch (_) {}
+      }
       function showCustomer() {
+        saveActiveTab("customer");
         ["searchPanel", "pnrPanel"].forEach((id) => {
           $(id).hidden = false;
         });
@@ -3309,6 +3315,7 @@
         });
       }
       function showDashboard() {
+        saveActiveTab("dashboard");
         if (!readDemoAuthSession()) {
           showCustomer();
           openDemoAuth();
@@ -3333,6 +3340,7 @@
         $("dashboardPanel").scrollIntoView({ behavior: "smooth" });
       }
       function showAdmin() {
+        saveActiveTab("admin");
         let adminLoggedIn = false;
         try {
           adminLoggedIn =
@@ -3375,6 +3383,22 @@
           behavior: "smooth",
         });
       };
+      (function restoreActiveTab() {
+        let activeTab = "customer";
+
+        try {
+          activeTab =
+            sessionStorage.getItem("apniBus_active_tab") || "customer";
+        } catch (_) {}
+
+        if (activeTab === "dashboard") {
+          showDashboard();
+        } else if (activeTab === "admin") {
+          showAdmin();
+        } else {
+          showCustomer();
+        }
+      })();
       $("date").value = today();
       updateJourneyDateUI();
 
@@ -4141,7 +4165,7 @@
         try {
           const url =
             SUPABASE_URL.replace(/\/$/, "") +
-            "/rest/v1/app_bookings?select=pnr,status,created_at,passenger_details&customer_user_id=eq." +
+            "/rest/v1/app_bookings?select=pnr,status,payment_status,created_at,passenger_details&customer_user_id=eq." +
             encodeURIComponent(session.userId) +
             "&order=created_at.desc";
           const response = await fetch(url, { headers: customerAuthHeaders() });
@@ -4246,7 +4270,7 @@
                   people: item.passenger_details || row.passenger_details || [],
                   createdAt: item.created_at || row.created_at,
                   paymentMethod: item.payment_method,
-                  paymentStatus: item.payment_status,
+                  paymentStatus: row.payment_status || "pending",
                   departureTime: item.boarding_time,
                   boardingTime: item.boarding_time,
                   droppingTime: item.dropping_time,
