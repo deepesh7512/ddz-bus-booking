@@ -2581,130 +2581,183 @@ select {
       if (shareTicketBtn) shareTicketBtn.onclick = function () {
         if (window.currentApniBusTicket) shareTicketOnWhatsApp(window.currentApniBusTicket);
       };
-      function openAdminTicket(booking, printAfter) {
-  renderTicket(booking);
 
-  const generalShareButton = $("shareTicketBtn");
-  if (generalShareButton) generalShareButton.hidden = true;
+      let ticketReturnState = null;
 
-  const ticket = $("ticket");
-  const actions = document.createElement("div");
-  actions.className = "ticket-admin-actions";
+      function saveTicketReturnPosition() {
+        if (ticketReturnState) return;
 
-  addWhatsAppShareButton(actions, booking, "SHARE ON WHATSAPP");
+        const activeAdminView = document.querySelector(".admin-nav-btn.active");
 
-  if (statusOf(booking) === "confirmed") {
-    const cancelButton = addText("button", "CANCEL BOOKING", actions);
-    cancelButton.type = "button";
-    cancelButton.className = "danger";
+        ticketReturnState = {
+          scrollY: window.scrollY,
+          adminView: activeAdminView?.dataset.adminTarget || "overview"
+        };
 
-    cancelButton.onclick = async function () {
-      if (!confirm("PNR " + booking.id + " ki booking cancel karna chahte hain?")) return;
-
-      cancelButton.disabled = true;
-      cancelButton.textContent = "Cancelling...";
-
-      try {
-        const result = await cancelAdminBookingOnSupabase(booking.id);
-        booking.status = "cancelled";
-        booking.cancelledAt = result?.cancelled_at || new Date().toISOString();
-
-        alert("Booking successfully cancel ho gayi.\nPNR: " + booking.id);
-
-        openAdminTicket(booking, false);
-        renderAdmin();
-      } catch (error) {
-        alert("Cancellation fail: " + error.message);
-        cancelButton.disabled = false;
-        cancelButton.textContent = "CANCEL BOOKING";
+        history.pushState({ apniBusTicket: true }, "");
       }
-    };
-  } else {
-    const note = addText("span", "This ticket is already cancelled.", actions);
-    note.className = "cancelled";
-  }
 
-  ticket.appendChild(actions);
-  $("ticketPanel").hidden = false;
-  $("ticketPanel").scrollIntoView({ behavior: "smooth", block: "start" });
-
-  if (printAfter) requestAnimationFrame(() => window.print());
-}
-
-        const adminOverviewPnrForm = $("adminOverviewPnrForm");
-
-        if (adminOverviewPnrForm) {
-          adminOverviewPnrForm.addEventListener("submit", async function(e) {
-            e.preventDefault();
-
-            const pnr = $("adminOverviewPnr").value.trim();
-            const result = $("adminOverviewPnrResult");
-            const button = $("adminOverviewPnrBtn");
-
-            result.textContent = "Ticket details search ho rahi hain...";
-            button.disabled = true;
-
-            try {
-              const found = await adminBusRequest(
-                "/rest/v1/rpc/app_lookup_booking",
-                {
-                  method: "POST",
-                  body: JSON.stringify({ p_pnr: pnr })
-                }
-              );
-
-              const ticket = Array.isArray(found) ? found[0] : found;
-
-              if (!ticket || !ticket.booking_pnr) {
-                result.textContent = "Is PNR se koi booking nahi mili.";
-                return;
-              }
-
-              const rows = await adminBusRequest(
-                "/rest/v1/app_bookings?select=pnr,trip_id,customer_name,customer_phone,customer_email,boarding_name_snapshot,dropping_name_snapshot,seats,fare,status,payment_method,payment_status,passenger_details,created_at,cancelled_at&pnr=eq." +
-                encodeURIComponent(pnr) + "&limit=1"
-              );
-
-              const saved = Array.isArray(rows) ? rows[0] : null;
-
-              const booking = {
-                id: ticket.booking_pnr,
-                bus: ticket.bus_name || "Bus",
-                busNumber: ticket.bus_number || "—",
-                busId: saved?.trip_id || null,
-                from: ticket.boarding_name || saved?.boarding_name_snapshot || "",
-                to: ticket.dropping_name || saved?.dropping_name_snapshot || "",
-                date: ticket.journey_date || "—",
-                seats: Array.isArray(ticket.seats)
-                  ? ticket.seats.map(Number)
-                  : Array.isArray(saved?.seats) ? saved.seats.map(Number) : [],
-                people: Array.isArray(saved?.passenger_details)
-                  ? saved.passenger_details : [],
-                total: Number(ticket.total_fare ?? saved?.fare ?? 0),
-                paymentMethod: saved?.payment_method || "pay_later",
-                paymentStatus: saved?.payment_status || "pending",
-                status: ticket.booking_status || saved?.status || "confirmed",
-                customerName: saved?.customer_name || "",
-                customerPhone: saved?.customer_phone || "",
-                customerEmail: saved?.customer_email || "",
-                createdAt: saved?.created_at || ticket.booked_at,
-                cancelledAt: saved?.cancelled_at || null,
-                boardingTime: ticket.boarding_time || "",
-                droppingTime: ticket.dropping_time || ""
-              };
-
-              result.textContent = "Ticket Status: " + booking.status;
-              openAdminTicket(booking, false);
-
-            } catch (error) {
-              result.textContent = "Ticket search error: " + error.message;
-            } finally {
-              button.disabled = false;
-            }
-          });
+      function restoreTicketReturnPosition() {
+        if (!ticketReturnState) {
+          $("ticketPanel").hidden = true;
+          return;
         }
 
-        const printButton = $("printBtn");
+        const savedPosition = ticketReturnState;
+        ticketReturnState = null;
+
+        $("ticketPanel").hidden = true;
+
+        if (!$("adminPanel").hidden && savedPosition.adminView) {
+          document.querySelector(
+            '.admin-nav-btn[data-admin-target="' + savedPosition.adminView + '"]'
+          )?.click();
+        }
+
+        window.scrollTo({
+          top: savedPosition.scrollY,
+          behavior: "instant"
+        });
+      }
+
+      window.addEventListener("popstate", function () {
+        if (ticketReturnState) {
+          restoreTicketReturnPosition();
+        }
+      });
+
+      $("ticketBackBtn").onclick = function () {
+        if (ticketReturnState) {
+          history.back();
+        } else {
+          $("ticketPanel").hidden = true;
+        }
+      };
+
+      function openAdminTicket(booking, printAfter) {
+        if (!printAfter) {
+          saveTicketReturnPosition();
+        }
+        renderTicket(booking);
+        const generalShareButton = $("shareTicketBtn");
+        if (generalShareButton) generalShareButton.hidden = true;
+
+        const ticket = $("ticket");
+        const actions = document.createElement("div");
+        actions.className = "ticket-admin-actions";
+
+        addWhatsAppShareButton(actions, booking, "SHARE ON WHATSAPP");
+        
+        if (statusOf(booking) === "confirmed") {
+          const cancelButton = addText("button", "CANCEL BOOKING", actions);
+          cancelButton.type = "button";
+          cancelButton.className = "danger";
+
+          cancelButton.onclick = async function () {
+            if (!confirm("PNR " + booking.id + " ki booking cancel karna chahte hain?")) return;
+
+            cancelButton.disabled = true;
+            cancelButton.textContent = "Cancelling...";
+
+            try {
+              const result = await cancelAdminBookingOnSupabase(booking.id);
+              booking.status = "cancelled";
+              booking.cancelledAt = result?.cancelled_at || new Date().toISOString();
+
+              alert("Booking successfully cancel ho gayi.\nPNR: " + booking.id);
+
+              openAdminTicket(booking, false);
+              renderAdmin();
+            } catch (error) {
+              alert("Cancellation fail: " + error.message);
+              cancelButton.disabled = false;
+              cancelButton.textContent = "CANCEL BOOKING";
+            }
+          };
+        } else {
+          const note = addText("span", "This ticket is already cancelled.", actions);
+          note.className = "cancelled";
+        }
+        
+        ticket.appendChild(actions);
+        $("ticketPanel").hidden = false;
+        $("ticketPanel").scrollIntoView({ behavior: "smooth", block: "start" });
+        
+        if (printAfter) requestAnimationFrame(() => window.print());
+      }
+      
+      const adminOverviewPnrForm = $("adminOverviewPnrForm");
+      
+      if (adminOverviewPnrForm) {
+        adminOverviewPnrForm.addEventListener("submit", async function(e) {
+          e.preventDefault();
+          
+          const pnr = $("adminOverviewPnr").value.trim();
+          const result = $("adminOverviewPnrResult");
+          const button = $("adminOverviewPnrBtn");
+
+          result.textContent = "Ticket details search ho rahi hain...";
+          button.disabled = true;
+          
+          try {
+            const found = await adminBusRequest(
+              "/rest/v1/rpc/app_lookup_booking",
+              {
+                method: "POST",
+                body: JSON.stringify({ p_pnr: pnr })
+              }
+            );
+            
+            const ticket = Array.isArray(found) ? found[0] : found;
+            if (!ticket || !ticket.booking_pnr) {
+              result.textContent = "Is PNR se koi booking nahi mili.";
+              return;
+            }
+            
+            const rows = await adminBusRequest(
+              "/rest/v1/app_bookings?select=pnr,trip_id,customer_name,customer_phone,customer_email,boarding_name_snapshot,dropping_name_snapshot,seats,fare,status,payment_method,payment_status,passenger_details,created_at,cancelled_at&pnr=eq." +
+              encodeURIComponent(pnr) + "&limit=1"
+            );
+            
+            const saved = Array.isArray(rows) ? rows[0] : null;
+            
+            const booking = {
+              id: ticket.booking_pnr,
+              bus: ticket.bus_name || "Bus",
+              busNumber: ticket.bus_number || "—",
+              busId: saved?.trip_id || null,
+              from: ticket.boarding_name || saved?.boarding_name_snapshot || "",
+              to: ticket.dropping_name || saved?.dropping_name_snapshot || "",
+              date: ticket.journey_date || "—",
+              seats: Array.isArray(ticket.seats)
+              ? ticket.seats.map(Number)
+              : Array.isArray(saved?.seats) ? saved.seats.map(Number) : [],
+              people: Array.isArray(saved?.passenger_details)
+              ? saved.passenger_details : [],
+              total: Number(ticket.total_fare ?? saved?.fare ?? 0),
+              paymentMethod: saved?.payment_method || "pay_later",
+              paymentStatus: saved?.payment_status || "pending",
+              status: ticket.booking_status || saved?.status || "confirmed",
+              customerName: saved?.customer_name || "",
+              customerPhone: saved?.customer_phone || "",
+              customerEmail: saved?.customer_email || "",
+              createdAt: saved?.created_at || ticket.booked_at,
+              cancelledAt: saved?.cancelled_at || null,
+              boardingTime: ticket.boarding_time || "",
+              droppingTime: ticket.dropping_time || ""
+            };
+            
+            result.textContent = "Ticket Status: " + booking.status;
+            openAdminTicket(booking, false);
+          } catch (error) {
+            result.textContent = "Ticket search error: " + error.message;
+          } finally {
+            button.disabled = false;
+          }
+        });
+      }
+      
+      const printButton = $("printBtn");
         if (printButton) {
           printButton.onclick = () => window.print();
         }
