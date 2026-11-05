@@ -4348,6 +4348,11 @@
               });
               const action = document.createElement("td");
               action.className = "action-cell";
+              action.style.display = "flex";
+              action.style.flexDirection = "column";
+              action.style.alignItems = "stretch";
+              action.style.gap = "6px";
+              action.style.minWidth = "110px";
               const view = document.createElement("button");
               view.type = "button";
               view.className = "row-action";
@@ -4765,7 +4770,6 @@
               "Bus",
               "Route",
               "Journey Date",
-              "",
               "Fare",
               "Payment",
               "Booking Status",
@@ -4812,7 +4816,6 @@
                 booking.busNumber || "—",
                 booking.from + " → " + booking.to,
                 booking.date,
-                "",
                 money(booking.total),
                 paymentMethodLabel(row.payment_method) +
                   " / " +
@@ -6274,113 +6277,218 @@
               setOverviewStat("overviewTodayBookings", "—");
               setOverviewStat("overviewTodayRevenue", "—");
             }
-            // LOAD RECENT 5 BOOKINGS
-            const recentContainer = $a("overviewRecentBookings");
 
-            if (recentContainer) {
-              try {
-                const recentRows = await req(
-                  "app_bookings?select=pnr,trip_id,customer_name,customer_phone,customer_email,boarding_name_snapshot,dropping_name_snapshot,seats,fare,status,payment_method,payment_status,passenger_details,created_at,cancelled_at&order=created_at.desc&limit=5",
-                );
 
-                recentContainer.replaceChildren();
 
-                if (!recentRows.length) {
-                  recentContainer.textContent =
-                    "Abhi koi booking available nahi hai.";
-                } else {
-                  const table = document.createElement("table");
-                  const thead = document.createElement("thead");
-                  const headerRow = document.createElement("tr");
+// LOAD RECENT 5 BOOKINGS - PROFESSIONAL SORTABLE TABLE
+const recentContainer = $a("overviewRecentBookings");
 
-                  [
-                    "PNR",
-                    "Customer",
-                    "Route",
-                    "Booking Date",
-                    "Fare",
-                    "Status",
-                    "Action",
-                  ].forEach((label) => {
-                    const th = document.createElement("th");
-                    th.textContent = label;
-                    headerRow.appendChild(th);
-                  });
+if (recentContainer) {
+  try {
+    const recentRows = await req(
+      "app_bookings?select=pnr,trip_id,customer_name,customer_phone,customer_email,boarding_name_snapshot,dropping_name_snapshot,seats,fare,status,payment_method,payment_status,passenger_details,created_at,cancelled_at&order=created_at.desc&limit=5",
+    );
 
-                  thead.appendChild(headerRow);
-                  table.appendChild(thead);
+    recentContainer.replaceChildren();
 
-                  const tbody = document.createElement("tbody");
+    if (!recentRows.length) {
+      recentContainer.textContent =
+        "Abhi koi booking available nahi hai.";
+    } else {
+      const table = document.createElement("table");
+      table.className = "professional-table";
+      table.style.width = "100%";
 
-                  recentRows.forEach((booking) => {
-                    const row = document.createElement("tr");
+      const columns = [
+        { label: "PNR", key: "pnr" },
+        { label: "Customer", key: "customer_name" },
+        { label: "Route", key: "route" },
+        { label: "Booking Date", key: "created_at" },
+        { label: "Fare", key: "fare" },
+        { label: "Status", key: "status" },
+        { label: "Action", key: null },
+      ];
 
-                    const values = [
-                      booking.pnr || "—",
-                      booking.customer_name || "—",
-                      (booking.boarding_name_snapshot || "?") +
-                        " → " +
-                        (booking.dropping_name_snapshot || "?"),
-                      booking.created_at
-                        ? new Date(booking.created_at).toLocaleString("en-IN", {
-                            timeZone: "Asia/Kolkata",
-                          })
-                        : "—",
-                      "₹" + Number(booking.fare || 0).toLocaleString("en-IN"),
-                      booking.status || "—",
-                    ];
+      let sortKey = "created_at";
+      let sortDirection = "desc";
 
-                    values.forEach((value) => {
-                      const td = document.createElement("td");
-                      td.textContent = String(value);
-                      row.appendChild(td);
-                    });
-                    const actionCell = document.createElement("td");
-                    actionCell.className = "action-cell";
-                    const openBookings = document.createElement("button");
-                    openBookings.type = "button";
-                    openBookings.className = "row-action";
-                    openBookings.textContent = "View";
-                    openBookings.onclick = async () => {
-                      openBookings.disabled = true;
-                      openBookings.textContent = "Opening...";
-                      try {
-                        const found = await req("rpc/app_lookup_booking", {
-                          method: "POST",
-                          body: JSON.stringify({ p_pnr: booking.pnr }),
-                        });
-                        const ticket = Array.isArray(found) ? found[0] : found;
-                        if (!ticket?.booking_pnr) {
-                          throw new Error("Is PNR ki ticket details nahi mili.");
-                        }
-                        const cachedRow = (latestAdminReportRows || []).find(
-                          (item) => String(item.pnr || "").toUpperCase() === String(booking.pnr || "").toUpperCase(),
-                        );
-                        const ticketBooking = adminBookingToTicket(
-                          cachedRow || booking,
-                          ticket,
-                        );
-                        openAdminTicket(ticketBooking, false);
-                      } catch (error) {
-                        alert("Ticket open nahi ho paya: " + error.message);
-                      } finally {
-                        openBookings.disabled = false;
-                        openBookings.textContent = "View";
-                      }
-                    };
-                    actionCell.appendChild(openBookings);
-                    row.appendChild(actionCell);
-                    tbody.appendChild(row);
-                  });
+      const thead = document.createElement("thead");
+      const tbody = document.createElement("tbody");
+      const headerRow = document.createElement("tr");
 
-                  table.appendChild(tbody);
-                  recentContainer.appendChild(table);
-                }
-              } catch (error) {
-                recentContainer.textContent =
-                  "Recent bookings load error: " + error.message;
+      function getSortValue(booking, key) {
+        if (key === "route") {
+          return (
+            (booking.boarding_name_snapshot || "") +
+            " " +
+            (booking.dropping_name_snapshot || "")
+          ).toLowerCase();
+        }
+
+        if (key === "created_at") {
+          return new Date(booking.created_at || 0).getTime();
+        }
+
+        if (key === "fare") {
+          return Number(booking.fare || 0);
+        }
+
+        return String(booking[key] || "").toLowerCase();
+      }
+
+      function renderRecentRows() {
+        tbody.replaceChildren();
+
+        const sortedRows = [...recentRows].sort((a, b) => {
+          const first = getSortValue(a, sortKey);
+          const second = getSortValue(b, sortKey);
+
+          if (first < second) return sortDirection === "asc" ? -1 : 1;
+          if (first > second) return sortDirection === "asc" ? 1 : -1;
+          return 0;
+        });
+
+        sortedRows.forEach((booking, index) => {
+          const row = document.createElement("tr");
+          row.className = index % 2 === 0 ? "table-row-even" : "table-row-odd";
+
+          const values = [
+            booking.pnr || "—",
+            booking.customer_name || "—",
+            (booking.boarding_name_snapshot || "?") +
+              " → " +
+              (booking.dropping_name_snapshot || "?"),
+            booking.created_at
+              ? new Date(booking.created_at).toLocaleString("en-IN", {
+                  timeZone: "Asia/Kolkata",
+                })
+              : "—",
+            "₹" + Number(booking.fare || 0).toLocaleString("en-IN"),
+            booking.status || "—",
+          ];
+
+          values.forEach((value) => {
+            const td = document.createElement("td");
+            td.textContent = String(value);
+            row.appendChild(td);
+          });
+
+          const actionCell = document.createElement("td");
+          actionCell.className = "action-cell";
+
+          const openBookings = document.createElement("button");
+          openBookings.type = "button";
+          openBookings.className = "row-action";
+          openBookings.textContent = "View";
+
+          openBookings.onclick = async () => {
+            openBookings.disabled = true;
+            openBookings.textContent = "Opening...";
+
+            try {
+              const found = await req("rpc/app_lookup_booking", {
+                method: "POST",
+                body: JSON.stringify({ p_pnr: booking.pnr }),
+              });
+
+              const ticket = Array.isArray(found) ? found[0] : found;
+
+              if (!ticket?.booking_pnr) {
+                throw new Error("Is PNR ki ticket details nahi mili.");
               }
+
+              const cachedRow = (latestAdminReportRows || []).find(
+                (item) =>
+                  String(item.pnr || "").toUpperCase() ===
+                  String(booking.pnr || "").toUpperCase(),
+              );
+
+              const ticketBooking = adminBookingToTicket(
+                cachedRow || booking,
+                ticket,
+              );
+
+              openAdminTicket(ticketBooking, false);
+            } catch (error) {
+              alert("Ticket open nahi ho paya: " + error.message);
+            } finally {
+              openBookings.disabled = false;
+              openBookings.textContent = "View";
             }
+          };
+
+          actionCell.appendChild(openBookings);
+          row.appendChild(actionCell);
+          tbody.appendChild(row);
+        });
+      }
+
+      columns.forEach((column) => {
+        const th = document.createElement("th");
+
+        if (column.key) {
+          const sortButton = document.createElement("button");
+          sortButton.type = "button";
+          sortButton.textContent =
+            column.label +
+            (sortKey === column.key
+              ? sortDirection === "asc" ? " ▲" : " ▼"
+              : " ↕");
+
+          sortButton.style.cursor = "pointer";
+          sortButton.style.border = "0";
+          sortButton.style.background = "transparent";
+          sortButton.style.fontWeight = "700";
+          sortButton.style.color = "inherit";
+
+          sortButton.onclick = () => {
+            if (sortKey === column.key) {
+              sortDirection = sortDirection === "asc" ? "desc" : "asc";
+            } else {
+              sortKey = column.key;
+              sortDirection = column.key === "created_at" ? "desc" : "asc";
+            }
+
+            headerRow.querySelectorAll("button").forEach((button) => {
+              button.textContent = button.textContent
+                .replace(/[▲▼↕]/g, "")
+                .trim() + " ↕";
+            });
+
+            sortButton.textContent =
+              column.label + (sortDirection === "asc" ? " ▲" : " ▼");
+
+            renderRecentRows();
+          };
+
+          th.appendChild(sortButton);
+        } else {
+          th.textContent = column.label;
+        }
+
+        headerRow.appendChild(th);
+      });
+
+      thead.appendChild(headerRow);
+      table.appendChild(thead);
+      table.appendChild(tbody);
+
+      recentContainer.appendChild(table);
+      renderRecentRows();
+    }
+  } catch (error) {
+    recentContainer.textContent =
+      "Recent bookings load error: " + error.message;
+  }
+}
+
+
+
+
+
+
+
+
             fill("currentBusOperator", operators, "id", (x) => x.operator_name);
             fill(
               "currentRouteBus",
