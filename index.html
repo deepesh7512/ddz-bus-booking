@@ -2444,7 +2444,8 @@
       /* Results, seat selection, and passenger booking flow. */
       #results,
       #seatPanel,
-      #passengerPanel {
+      #passengerPanel,
+      #reviewPanel {
         width: 100%;
         max-width: 1220px;
         margin: 22px auto 36px;
@@ -2457,7 +2458,8 @@
       }
       #results > h2,
       #seatPanel > h2,
-      #passengerPanel > h2 {
+      #passengerPanel > h2,
+      #reviewPanel > h2 {
         margin: 0 0 20px;
         color: #182234;
         font-size: clamp(23px, 3vw, 30px);
@@ -2466,7 +2468,8 @@
       }
       #results > h2::before,
       #seatPanel > h2::before,
-      #passengerPanel > h2::before {
+      #passengerPanel > h2::before,
+      #reviewPanel > h2::before {
         content: "";
         display: inline-block;
         width: 4px;
@@ -2547,6 +2550,9 @@
         background: linear-gradient(180deg, #fff 0%, #fbfcfe 100%);
       }
       #busInfo {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+        gap: 9px 15px;
         margin: 0 0 14px;
         padding: 15px 17px;
         border: 1px solid #f0d5d7;
@@ -2556,6 +2562,9 @@
         font-size: 14px;
         line-height: 1.55;
       }
+      .bus-identity-fact { display: grid; gap: 2px; min-width: 0; }
+      .bus-identity-label { color: #8a555a; font-size: 10px; font-weight: 750; letter-spacing: .04em; text-transform: uppercase; }
+      .bus-identity-value { color: #4a1d22; font-size: 13px; font-weight: 700; overflow-wrap: anywhere; }
       #currentStopControls {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2667,28 +2676,171 @@
       #passengers .passenger {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 8px 12px;
+        gap: 13px 12px;
         min-width: 0;
         margin: 0;
-        padding: 17px;
-        border: 1px solid #e3e9f0;
-        border-radius: 15px;
-        background: #fff;
-        box-shadow: 0 5px 16px rgba(15, 23, 42, 0.045);
+        padding: 20px;
+        border: 1px solid #e2e8f0;
+        border-radius: 17px;
+        background: linear-gradient(160deg, #ffffff 0%, #fbfcff 100%);
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.055);
       }
       #passengers .passenger h3 {
         grid-column: 1 / -1;
-        margin: 0 0 4px;
-        padding: 0 0 10px;
-        border-bottom: 1px solid #edf1f5;
-        color: #344256;
-        font-size: 15px;
+        margin: 0 0 2px;
+        padding: 0 0 13px;
+        border-bottom: 1px solid #e9edf3;
+        color: #263449;
+        font-size: 16px;
+        font-weight: 750;
       }
-      #passengers .passenger input {
+      #passengers .passenger .passenger-field {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
         min-width: 0;
+      }
+      #passengers .passenger .passenger-field-name {
+        grid-column: 1 / -1;
+      }
+      #passengers .passenger .passenger-field label {
+        color: #46546a;
+        font-size: 13px;
+        font-weight: 650;
+      }
+      #passengers .passenger .passenger-field input {
+        width: 100%;
         min-height: 46px;
         margin: 0;
+        padding: 0 13px;
+        border: 1px solid #d7dee8;
         border-radius: 11px;
+        background: #fff;
+        color: #172033;
+        transition: border-color .18s ease, box-shadow .18s ease;
+      }
+      #passengers .passenger .passenger-field input:focus {
+        border-color: #3b82f6;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, .13);
+      }
+      .passenger-panel-intro {
+        margin: -7px 0 20px;
+        color: #64748b;
+        font-size: 14px;
+        line-height: 1.6;
+      }
+      #passengers .passenger .passenger-disability-label {
+        grid-column: 1 / -1;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 3px 0 0;
+        padding: 12px 13px;
+        border: 1px solid #e6ebf2;
+        border-radius: 12px;
+        background: #f8fafc;
+        color: #344256;
+        font-size: 14px;
+        line-height: 1.4;
+        cursor: pointer;
+      }
+      #passengers .passenger .passenger-disability-label input[type="checkbox"] {
+        flex: 0 0 18px;
+        width: 18px;
+        min-height: 18px;
+        height: 18px;
+        margin: 0;
+        accent-color: #2563eb;
+      }
+      #reviewRouteSummary {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px 22px;
+        margin: 0 0 13px;
+        padding: 9px 13px;
+        border: 1px solid #e8edf3;
+        border-radius: 11px;
+        background: #f8fafc;
+      }
+      .review-route-item { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; }
+      .review-route-label { color: #64748b; font-size: 11px; font-weight: 700; }
+      .review-route-value { color: #334155; font-size: 12px; font-weight: 650; }
+      #reviewDetails {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0 22px;
+        margin: 0 0 17px;
+        padding: 0 15px;
+        border: 1px solid #e5eaf1;
+        border-radius: 13px;
+        background: #fff;
+      }
+      .review-detail {
+        min-width: 0;
+        display: grid;
+        grid-template-columns: minmax(88px, .75fr) minmax(0, 1.25fr);
+        align-items: baseline;
+        gap: 8px;
+        padding: 10px 0;
+        border-bottom: 1px solid #edf1f5;
+      }
+      .review-detail-label {
+        display: block;
+        color: #64748b;
+        font-size: 11px;
+        font-weight: 700;
+      }
+      .review-detail-value {
+        display: block;
+        color: #1e293b;
+        font-size: 13px;
+        font-weight: 650;
+        line-height: 1.4;
+        overflow-wrap: anywhere;
+      }
+      #reviewPanel > form {
+        display: grid;
+        gap: 12px;
+      }
+      #reviewPanel > form > label { color: #475569; font-weight: 650; }
+      #reviewPanel > form > select { max-width: 520px; }
+      #reviewPanel .review-payment-note { margin: 0; color: #64748b; line-height: 1.55; }
+      .booking-step-back {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 38px;
+        height: 38px;
+        min-height: 38px;
+        margin: 0 0 9px;
+        padding: 0 !important;
+        border: 1px solid #dce3eb;
+        border-radius: 50% !important;
+        background: #f1f5f9;
+        color: #334155;
+        font-size: 22px !important;
+        line-height: 1;
+        box-shadow: 0 2px 7px rgba(15, 23, 42, .08);
+      }
+      .booking-step-back:hover {
+        background: #e7edf4;
+        border-color: #cbd5e1;
+        transform: translateY(-1px);
+      }
+      #passengerForm > button[type="submit"] {
+        width: min(100%, 520px);
+        min-height: 50px;
+        margin: 14px 0 0;
+        border-radius: 14px !important;
+      }
+      @media (max-width: 720px) {
+        #reviewDetails { grid-template-columns: minmax(0, 1fr); }
+        #passengers { grid-template-columns: minmax(0, 1fr); }
+      }
+      @media (max-width: 440px) {
+        #passengers .passenger { grid-template-columns: minmax(0, 1fr); }
+        #passengers .passenger h3 { grid-column: auto; }
       }
       #bookingSummary {
         margin: 18px 0;
@@ -2730,7 +2882,8 @@
       @media (max-width: 720px) {
         #results,
         #seatPanel,
-        #passengerPanel {
+        #passengerPanel,
+        #reviewPanel {
           margin: 16px auto 24px;
           padding: 18px;
           border-radius: 18px;
@@ -2777,6 +2930,32 @@
         color: #66758a;
         font-size: 11px;
         font-weight: 650;
+      }
+      #busList > .bus-result-card > .bus-card-facts {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px 14px;
+        grid-column: 1 / -1;
+        margin: 0 0 4px;
+        padding: 11px 13px;
+        border: 1px solid #e8edf3;
+        border-radius: 12px;
+        background: #f8fafc;
+      }
+      .bus-card-fact { display: grid; gap: 2px; min-width: 0; }
+      .bus-card-fact-label {
+        color: #64748b;
+        font-size: 10px;
+        font-weight: 750;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+      }
+      .bus-card-fact-value {
+        color: #253247;
+        font-size: 12px;
+        font-weight: 650;
+        line-height: 1.35;
+        overflow-wrap: anywhere;
       }
       #busList > .bus-result-card > .bus-card-route {
         grid-column: 1 / -1;
@@ -3820,10 +3999,12 @@
         <button id="dashboardSearchBtn" type="button">New Ticket</button>
       </section>
       <section id="results" hidden>
+        <button id="resultsBackBtn" class="booking-step-back" type="button" aria-label="Back to search" title="Back to search">←</button>
         <h2>Available Buses</h2>
         <div id="busList"></div>
       </section>
       <section id="seatPanel" hidden>
+        <button id="seatBackBtn" class="booking-step-back" type="button" aria-label="Back to buses" title="Back to buses">←</button>
         <h2>Select Seats</h2>
         <p id="busInfo"></p>
         <div class="seat-legend">
@@ -3836,23 +4017,28 @@
         <button id="continueBtn">Continue</button>
       </section>
       <section id="passengerPanel" hidden>
+        <button id="passengerBackBtn" class="booking-step-back" type="button" aria-label="Back to seat selection" title="Back to seat selection">←</button>
         <h2>Passenger Details</h2>
+        <p class="passenger-panel-intro">Enter the details for each selected seat. The first passenger’s mobile number will be used as the booking contact.</p>
         <form id="passengerForm">
           <div id="passengers"></div>
-          <p id="bookingSummary" class="summary"></p>
+          <button type="submit">Continue to Trip Details</button>
+        </form>
+      </section>
+      <section id="reviewPanel" hidden>
+        <button id="reviewBackBtn" class="booking-step-back" type="button" aria-label="Back to passenger details" title="Back to passenger details">←</button>
+        <h2>Trip Details &amp; Payment</h2>
+        <div id="reviewRouteSummary"></div>
+        <div id="reviewDetails"></div>
+        <form id="reviewForm">
           <label for="paymentMethod">Select Payment Method</label>
           <select id="paymentMethod" required>
             <option value="cash">Cash (Pay to Bus Operator)</option>
             <option value="upi">UPI (Pay to Bus Operator)</option>
-            <option value="pay_later" selected>
-              Pay Later (At Journey Time)
-            </option>
+            <option value="pay_later" selected>Pay Later (At Journey Time)</option>
           </select>
-          <p class="muted">
-            Payment will not be collected on the website. The selected method will be shared with the bus
-            operator.
-          </p>
-          <button type="submit">Book Ticket</button>
+          <p class="review-payment-note">Payment will not be collected on the website. The selected method will be shared with the bus operator.</p>
+          <button id="confirmBookingBtn" type="submit">Book Ticket</button>
         </form>
       </section>
       <div id="ticketBackdrop"></div>
@@ -4523,6 +4709,7 @@
           "results",
           "seatPanel",
           "passengerPanel",
+          "reviewPanel",
           "ticketPanel",
           "pnrPanel",
           "dashboardPanel",
@@ -4939,7 +5126,9 @@
           id: row.pnr,
           busId: row.bus_id,
           bus: row.bus_name || "Bus",
+          busType: row.bus_type || "—",
           busNumber: row.bus_number || "—",
+          operatorName: row.operator_name || "—",
           from: row.source || "",
           to: row.destination || "",
           date: row.journey_date,
@@ -4948,6 +5137,7 @@
             name: String(person.name || ""),
             age: Number(person.age || 0),
             phone: String(person.phone || ""),
+            is_disabled: person.is_disabled === true,
           })),
           total: Number(row.total_fare || 0),
           paymentMethod: row.payment_method || "pay_later",
@@ -4973,6 +5163,7 @@
           name: String(person?.name || person?.passenger_name || "—"),
           age: person?.age ?? person?.passenger_age ?? "—",
           phone: String(person?.phone || person?.mobile || person?.passenger_phone || "—"),
+          is_disabled: person?.is_disabled === true,
         }));
         if (!people.length) {
           people.push({
@@ -4986,7 +5177,9 @@
           id: row?.pnr || row?.booking_pnr || ticket?.booking_pnr || ticket?.pnr || "",
           busId: row?.trip_id || row?.bus_id || null,
           bus: row?.bus_name || ticket?.bus_name || ticket?.bus_type || "Bus details unavailable",
+          busType: row?.bus_type || ticket?.bus_type || "—",
           busNumber: row?.bus_number || ticket?.bus_number || ticket?.registration_number || "—",
+          operatorName: row?.operator_name || ticket?.operator_name || "—",
           from: row?.source || ticket?.boarding_name || row?.boarding_name_snapshot || "",
           to: row?.destination || ticket?.dropping_name || row?.dropping_name_snapshot || "",
           date: row?.journey_date || ticket?.journey_date || "—",
@@ -5294,6 +5487,7 @@
           "results",
           "seatPanel",
           "passengerPanel",
+          "reviewPanel",
           "ticketPanel",
           "dashboardPanel",
           "adminPanel",
@@ -5316,6 +5510,7 @@
           "results",
           "seatPanel",
           "passengerPanel",
+          "reviewPanel",
           "ticketPanel",
           "pnrPanel",
           "adminPanel",
@@ -5343,6 +5538,7 @@
           "results",
           "seatPanel",
           "passengerPanel",
+          "reviewPanel",
           "ticketPanel",
           "pnrPanel",
           "dashboardPanel",
@@ -5417,7 +5613,7 @@
             title.className = "bus-card-title";
             const service = addText(
               "p",
-              b.type + " | " + b.departure + " - " + b.arrival,
+              "Bus Type: " + b.type + "; Departure: " + b.departure + "; Arrival: " + b.arrival,
               card,
             );
             service.className = "bus-card-meta";
@@ -5457,7 +5653,7 @@
         bus = selectedBus;
         seats = [];
         $("busInfo").textContent =
-          bus.name + " | " + money(bus.fare) + " per seat";
+          "Bus: " + bus.name + "; Fare: " + money(bus.fare) + " per seat";
         const list = $("seatList");
         list.replaceChildren();
         $("seatPanel").hidden = false;
@@ -5597,6 +5793,7 @@
         }
       };
       $("newSearch").onclick = function () {
+        delete $("ticketPanel").dataset.newBookingConfirmation;
         showCustomer();
         window.scrollTo({ top: 0, behavior: "smooth" });
       };
@@ -5693,7 +5890,9 @@
         detailsGrid.className = "ticket-details-grid";
         [
           ["PNR", b.id],
-          ["Bus", b.bus],
+          ["Bus Operator", b.operatorName || "—"],
+          ["Bus Name", b.bus],
+          ["Bus Type", b.busType || "—"],
           ["Bus Number", b.busNumber || "—"],
           ["Route", b.from + " → " + b.to],
           ["Journey Date", b.date],
@@ -5742,6 +5941,10 @@
           addText("strong", p.age || "—", passengerMeta);
           addText("p", "Mobile", passengerMeta);
           addText("strong", p.phone || "—", passengerMeta);
+          if (p.is_disabled === true) {
+            addText("p", "PwD status", passengerMeta);
+            addText("strong", "Yes", passengerMeta);
+          }
           box.appendChild(passengerMeta);
           ticket.appendChild(box);
         });
@@ -5959,7 +6162,12 @@
       });
 
       $("ticketBackBtn").onclick = function () {
-        if (ticketReturnState) {
+        if ($("ticketPanel").dataset.newBookingConfirmation === "true") {
+          delete $("ticketPanel").dataset.newBookingConfirmation;
+          $("ticketPanel").hidden = true;
+          showCustomer();
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        } else if (ticketReturnState) {
           history.back();
         } else {
           $("ticketPanel").hidden = true;
@@ -7705,6 +7913,7 @@
             "results",
             "seatPanel",
             "passengerPanel",
+            "reviewPanel",
             "ticketPanel",
             "pnrPanel",
             "adminPanel",
@@ -7899,6 +8108,7 @@
             "results",
             "seatPanel",
             "passengerPanel",
+            "reviewPanel",
             "ticketPanel",
             "pnrPanel",
             "dashboardPanel",
@@ -9047,7 +9257,9 @@ if (recentContainer) {
           currentTrip = null,
           currentStops = [],
           currentFares = [],
-          currentBookedSegments = [];
+          currentBookedSegments = [],
+          reviewPeople = [],
+          passengerSeatKey = "";
         let currentBoarding = null,
           currentDropping = null,
           currentFare = 0;
@@ -9093,6 +9305,15 @@ if (recentContainer) {
         }
         const esc = (v) => encodeURIComponent(String(v));
         const stopTime = (stop, field) => stop?.[field] || "—";
+        function addInfoFact(parent, labelText, valueText, className) {
+          const fact = document.createElement("div");
+          fact.className = className;
+          const label = addText("span", labelText, fact);
+          label.className = className + "-label";
+          const value = addText("strong", valueText || "—", fact);
+          value.className = className + "-value";
+          parent.appendChild(fact);
+        }
         function showStatusMessage(parent, message, cls) {
           parent.replaceChildren();
           const p = document.createElement("p");
@@ -9121,7 +9342,8 @@ if (recentContainer) {
           d.addEventListener("change", refreshFareAndSeats);
           return box;
         }
-        async function refreshFareAndSeats() {
+        async function refreshFareAndSeats(seatsToRestore = []) {
+          if (!Array.isArray(seatsToRestore)) seatsToRestore = [];
           if (!currentTrip) return;
           currentBoarding = q("currentBoarding").value;
           currentDropping = q("currentDropping").value;
@@ -9159,7 +9381,11 @@ if (recentContainer) {
             if (occupied.has(i)) {
               btn.disabled = true;
               btn.title = "Already booked for an overlapping route segment";
-            } else
+            } else {
+              if (seatsToRestore.includes(i)) {
+                seats.push(i);
+                btn.classList.add("selected");
+              }
               btn.onclick = () => {
                 if (seats.includes(i)) {
                   seats = seats.filter((x) => x !== i);
@@ -9170,6 +9396,7 @@ if (recentContainer) {
                 }
                 updateTotal();
               };
+            }
             list.appendChild(btn);
             if (i % 4 === 2) {
               const aisle = document.createElement("span");
@@ -9183,6 +9410,14 @@ if (recentContainer) {
         // Replace current search with trip/date/route search.
         q("searchForm").onsubmit = async function (e) {
           e.preventDefault();
+          passengerSeatKey = "";
+          reviewPeople = [];
+          seats = [];
+          currentTrip = null;
+          currentBoarding = null;
+          currentDropping = null;
+          q("passengers").replaceChildren();
+          q("results").hidden = true;
           const f = q("from").value.trim(),
             t = q("to").value.trim(),
             date = q("date").value;
@@ -9204,14 +9439,15 @@ if (recentContainer) {
           const list = q("busList");
           list.replaceChildren();
           try {
-            const trips = await rest(
-              `/app_trips?select=id,route_id,bus_id,journey_date,status&journey_date=eq.${esc(date)}&status=eq.scheduled&order=created_at.asc`,
-            );
+            const [trips, searchOperators] = await Promise.all([
+              rest(`/app_trips?select=id,route_id,bus_id,journey_date,status&journey_date=eq.${esc(date)}&status=eq.scheduled&order=created_at.asc`),
+              rest("/app_operators?select=id,operator_name,active&active=eq.true&order=operator_name").catch(() => []),
+            ]);
             const cards = [];
             for (const trip of trips) {
               const [busRows, stops, fares] = await Promise.all([
                 rest(
-                  `/app_buses?select=id,bus_name,bus_number,bus_type,total_seats,active&id=eq.${esc(trip.bus_id)}&active=eq.true`,
+                  `/app_buses?select=id,operator_id,bus_name,bus_number,bus_type,total_seats,active&id=eq.${esc(trip.bus_id)}&active=eq.true`,
                 ),
                 rest(
                   `/app_trip_stops?select=id,stop_order,stop_name,arrival_time,departure_time&trip_id=eq.${esc(trip.id)}&order=stop_order.asc`,
@@ -9235,9 +9471,10 @@ if (recentContainer) {
                   x.dropping_stop_id === stops[di].id,
               );
               if (!fare) continue;
+              const operatorName = searchOperators.find((operator) => String(operator.id) === String(b.operator_id))?.operator_name || "Operator details unavailable";
               cards.push({
                 trip,
-                bus: b,
+                bus: { ...b, operator_name: operatorName },
                 stops,
                 fares,
                 fare: Number(fare.fare),
@@ -9254,14 +9491,15 @@ if (recentContainer) {
             for (const item of cards) {
               const card = document.createElement("div");
               card.className = "bus bus-result-card";
-              const title = addText("h3", item.bus.bus_name, card);
+              const title = addText("h3", "Bus Name: " + item.bus.bus_name, card);
               title.className = "bus-card-title";
-              const service = addText(
-                "p",
-                `${item.bus.bus_type || "Bus"} | ${item.bus.bus_number || ""}`,
-                card,
-              );
-              service.className = "bus-card-meta";
+              const facts = document.createElement("div");
+              facts.className = "bus-card-facts";
+              addInfoFact(facts, "Bus Operator", item.bus.operator_name, "bus-card-fact");
+              addInfoFact(facts, "Bus Number", item.bus.bus_number || "Not provided", "bus-card-fact");
+              addInfoFact(facts, "Bus Type", item.bus.bus_type || "Bus", "bus-card-fact");
+              addInfoFact(facts, "Capacity", `${item.bus.total_seats || "—"} seats`, "bus-card-fact");
+              card.appendChild(facts);
               const route = addText(
                 "p",
                 `${f} (${stopTime(item.boarding, "departure_time")}) → ${t} (${stopTime(item.dropping, "arrival_time")})`,
@@ -9283,12 +9521,21 @@ if (recentContainer) {
             showStatusMessage(list, "Could not load trips: " + err.message);
           }
           q("results").hidden = false;
+          q("searchPanel").hidden = true;
+          q("pnrPanel").hidden = true;
           q("seatPanel").hidden = true;
           q("passengerPanel").hidden = true;
+          q("reviewPanel").hidden = true;
           q("ticketPanel").hidden = true;
           q("results").scrollIntoView({ behavior: "smooth" });
         };
         async function openTrip(item, card) {
+          const restoreSeats =
+            currentTrip?.trip?.id === item.trip.id &&
+            currentBoarding === item.boarding.id &&
+            currentDropping === item.dropping.id
+              ? [...seats]
+              : [];
           currentTrip = item;
           bus = {
             id: item.bus.id,
@@ -9299,11 +9546,14 @@ if (recentContainer) {
             departure: item.boarding.departure_time,
             arrival: item.dropping.arrival_time,
           };
-          seats = [];
           currentStops = item.stops;
           currentFares = item.fares;
-          q("busInfo").textContent =
-            `${item.bus.bus_name} | ${item.bus.bus_number} | ${journeyDate}`;
+          q("busInfo").replaceChildren();
+          addInfoFact(q("busInfo"), "Bus Operator", item.bus.operator_name, "bus-identity-fact");
+          addInfoFact(q("busInfo"), "Bus Name", item.bus.bus_name, "bus-identity-fact");
+          addInfoFact(q("busInfo"), "Bus Number", item.bus.bus_number || "Not provided", "bus-identity-fact");
+          addInfoFact(q("busInfo"), "Bus Type", item.bus.bus_type || "Bus", "bus-identity-fact");
+          addInfoFact(q("busInfo"), "Journey Date", new Date(`${journeyDate}T00:00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }), "bus-identity-fact");
           const controls = ensureStopControls();
           const b = q("currentBoarding"),
             d = q("currentDropping");
@@ -9350,7 +9600,7 @@ if (recentContainer) {
               segment_order: Number(x.segment_order),
             }));
 
-            await refreshFareAndSeats();
+            await refreshFareAndSeats(restoreSeats);
           } catch (err) {
             showStatusMessage(
               q("seatList"),
@@ -9359,16 +9609,37 @@ if (recentContainer) {
             return;
           }
           q("seatPanel").hidden = false;
+          q("results").hidden = true;
           q("passengerPanel").hidden = true;
+          q("reviewPanel").hidden = true;
           q("ticketPanel").hidden = true;
-          if (card) card.insertAdjacentElement("afterend", q("seatPanel"));
+          q("results").insertAdjacentElement("afterend", q("seatPanel"));
           q("seatPanel").scrollIntoView({ behavior: "smooth" });
         }
+        q("resultsBackBtn").onclick = function () {
+          q("results").hidden = true;
+          q("searchPanel").hidden = false;
+          q("pnrPanel").hidden = false;
+          q("searchPanel").scrollIntoView({ behavior: "smooth" });
+        };
+        q("seatBackBtn").onclick = function () {
+          q("seatPanel").hidden = true;
+          q("results").hidden = false;
+          q("results").scrollIntoView({ behavior: "smooth" });
+        };
+        q("passengerBackBtn").onclick = function () {
+          q("passengerPanel").hidden = true;
+          q("seatPanel").hidden = false;
+          q("seatPanel").scrollIntoView({ behavior: "smooth" });
+        };
+        q("reviewBackBtn").onclick = function () {
+          q("reviewPanel").hidden = true;
+          q("passengerPanel").hidden = false;
+          q("passengerPanel").scrollIntoView({ behavior: "smooth" });
+        };
         q("continueBtn").onclick = function () {
           if (!readDemoAuthSession()) {
-            alert(
-              "Please log in or register in My Account before booking a ticket.",
-            );
+            alert("Please log in or register in My Account before booking a ticket.");
             openDemoAuth();
             return;
           }
@@ -9376,63 +9647,90 @@ if (recentContainer) {
             alert("Select a seat first.");
             return;
           }
-          const bs = currentStops.find(
-              (x) => x.id === q("currentBoarding").value,
-            ),
-            ds = currentStops.find((x) => x.id === q("currentDropping").value);
-          if (
-            !bs ||
-            !ds ||
-            bs.stop_order >= ds.stop_order ||
-            !currentFares.some(
-              (x) =>
-                x.boarding_stop_id === bs.id && x.dropping_stop_id === ds.id,
-            )
-          ) {
+          const bs = currentStops.find((x) => x.id === q("currentBoarding").value);
+          const ds = currentStops.find((x) => x.id === q("currentDropping").value);
+          if (!bs || !ds || bs.stop_order >= ds.stop_order || !currentFares.some((x) => x.boarding_stop_id === bs.id && x.dropping_stop_id === ds.id)) {
             alert("Choose valid boarding and drop-off stops.");
             return;
           }
           currentBoarding = bs.id;
           currentDropping = ds.id;
-          currentFare = Number(
-            currentFares.find(
-              (x) =>
-                x.boarding_stop_id === bs.id && x.dropping_stop_id === ds.id,
-            ).fare,
-          );
-          q("passengers").replaceChildren();
-          [...seats]
-            .sort((a, b) => a - b)
-            .forEach((seat, i) => {
+          currentFare = Number(currentFares.find((x) => x.boarding_stop_id === bs.id && x.dropping_stop_id === ds.id).fare);
+          const nextPassengerSeatKey = [...seats].sort((a, b) => a - b).join(",");
+          if (passengerSeatKey !== nextPassengerSeatKey) {
+            const previousPassengerData = new Map([...q("passengers").children].map((card) => {
+              const seatNo = Number(card.querySelector("h3")?.textContent.match(/Seat (\d+)/)?.[1]);
+              return [seatNo, {
+                name: card.querySelector('[name="name"]')?.value || "",
+                age: card.querySelector('[name="age"]')?.value || "",
+                phone: card.querySelector('[name="phone"]')?.value || "",
+                is_disabled: card.querySelector('[name="is_disabled"]')?.checked === true,
+              }];
+            }));
+            q("passengers").replaceChildren();
+            [...seats].sort((a, b) => a - b).forEach((seat, i) => {
               const box = document.createElement("div");
-              box.className = "passenger";
+              box.className = "passenger passenger-form-card";
               addText("h3", `Passenger ${i + 1} — Seat ${seat}`, box);
-              const n = document.createElement("input");
-              n.name = "name";
-              n.placeholder = "Passenger Name";
-              n.required = true;
-              box.appendChild(n);
+              const appendField = (labelText, input, name) => {
+                const field = document.createElement("div");
+                field.className = "passenger-field" + (name === "name" ? " passenger-field-name" : "");
+                const label = document.createElement("label");
+                input.id = `passenger-${i + 1}-${name}`;
+                label.htmlFor = input.id;
+                label.textContent = labelText;
+                field.append(label, input);
+                box.appendChild(field);
+              };
+              const name = document.createElement("input");
+              name.name = "name";
+              name.type = "text";
+              name.placeholder = "Enter full name";
+              name.autocomplete = "name";
+              name.maxLength = 100;
+              name.required = true;
+              appendField("Full Name", name, "name");
               const age = document.createElement("input");
               age.name = "age";
               age.type = "number";
               age.min = 1;
               age.max = 120;
-              age.placeholder = "Age";
+              age.step = 1;
+              age.placeholder = "Enter age";
               age.required = true;
-              box.appendChild(age);
-              const ph = document.createElement("input");
-              ph.name = "phone";
-              ph.placeholder = "10-digit mobile number";
-              ph.inputMode = "numeric";
-              ph.maxLength = 10;
-              ph.pattern = "[6-9][0-9]{9}";
-              ph.required = true;
-              restrictMobile(ph);
-              box.appendChild(ph);
+              appendField("Age", age, "age");
+              const phone = document.createElement("input");
+              phone.name = "phone";
+              phone.type = "tel";
+              phone.placeholder = "10-digit mobile number";
+              phone.autocomplete = "tel-national";
+              phone.inputMode = "numeric";
+              phone.maxLength = 10;
+              phone.pattern = "[6-9][0-9]{9}";
+              phone.required = true;
+              restrictMobile(phone);
+              appendField("Mobile Number", phone, "phone");
+              const disabilityLabel = document.createElement("label");
+              disabilityLabel.className = "passenger-disability-label";
+              const disability = document.createElement("input");
+              disability.type = "checkbox";
+              disability.name = "is_disabled";
+              disabilityLabel.append(disability, document.createTextNode("is Disabled / PwD"));
+              box.appendChild(disabilityLabel);
+              const previous = previousPassengerData.get(seat);
+              if (previous) {
+                name.value = previous.name;
+                age.value = previous.age;
+                phone.value = previous.phone;
+                disability.checked = previous.is_disabled;
+              }
               q("passengers").appendChild(box);
             });
-          q("bookingSummary").textContent =
-            `${bus.name} | ${currentStops.find((x) => x.id === currentBoarding).stop_name} → ${currentStops.find((x) => x.id === currentDropping).stop_name} | ${journeyDate} | Seats ${seats.join(", ")} | Total ${money(currentFare * seats.length)}`;
+            passengerSeatKey = nextPassengerSeatKey;
+          }
+          q("results").hidden = true;
+          q("seatPanel").hidden = true;
+          q("reviewPanel").hidden = true;
           q("passengerPanel").hidden = false;
           q("passengerPanel").scrollIntoView({ behavior: "smooth" });
         };
@@ -9448,64 +9746,101 @@ if (recentContainer) {
             name: box.querySelector('[name="name"]').value.trim(),
             age: Number(box.querySelector('[name="age"]').value),
             phone: box.querySelector('[name="phone"]').value.trim(),
+            is_disabled: box.querySelector('[name="is_disabled"]')?.checked === true,
           }));
-          if (
-            people.some(
-              (p) =>
-                !p.name ||
-                !Number.isInteger(p.age) ||
-                p.age < 1 ||
-                p.age > 120 ||
-                !/^[6-9][0-9]{9}$/.test(p.phone),
-            )
-          ) {
+          if (people.some((p) => !p.name || !Number.isInteger(p.age) || p.age < 1 || p.age > 120 || !/^[6-9][0-9]{9}$/.test(p.phone))) {
             alert("Check the passenger details.");
             return;
           }
-          const submit = q("passengerForm").querySelector(
-            'button[type="submit"]',
-          );
+          reviewPeople = people;
+          const boarding = currentStops.find((x) => x.id === currentBoarding);
+          const dropping = currentStops.find((x) => x.id === currentDropping);
+          const routeSummary = q("reviewRouteSummary");
+          routeSummary.replaceChildren();
+          const addRouteItem = (labelText, valueText) => {
+            const item = document.createElement("span");
+            item.className = "review-route-item";
+            const label = addText("span", labelText, item);
+            label.className = "review-route-label";
+            const value = addText("span", valueText, item);
+            value.className = "review-route-value";
+            routeSummary.appendChild(item);
+          };
+          addRouteItem("Journey Date", new Date(`${journeyDate}T00:00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }));
+          addRouteItem("Route", `${boarding.stop_name} (${stopTime(boarding, "departure_time")}) → ${dropping.stop_name} (${stopTime(dropping, "arrival_time")})`);
+          const details = q("reviewDetails");
+          details.replaceChildren();
+          const addReviewDetail = (label, value) => {
+            const card = document.createElement("div");
+            card.className = "review-detail";
+            const title = addText("span", label, card);
+            title.className = "review-detail-label";
+            const content = addText("span", value, card);
+            content.className = "review-detail-value";
+            details.appendChild(card);
+          };
+          addReviewDetail("Bus Operator", currentTrip.bus.operator_name || "Operator details unavailable");
+          addReviewDetail("Bus Name", currentTrip.bus.bus_name || "—");
+          addReviewDetail("Bus Number", currentTrip.bus.bus_number || "Not provided");
+          addReviewDetail("Bus Type", currentTrip.bus.bus_type || "Bus");
+          addReviewDetail("Seats", [...seats].sort((a, b) => a - b).join(", "));
+          addReviewDetail("Passengers", people.map((person, i) => `${i + 1}. ${person.name} (Age ${person.age}${person.is_disabled ? ", PwD" : ""})`).join("; "));
+          addReviewDetail("Total Fare", money(currentFare * seats.length));
+          q("passengerPanel").hidden = true;
+          q("reviewPanel").hidden = false;
+          q("reviewPanel").scrollIntoView({ behavior: "smooth" });
+        };
+        q("reviewForm").onsubmit = async function (e) {
+          e.preventDefault();
+          if (!readDemoAuthSession()) {
+            alert("Customer login is required to book.");
+            openDemoAuth();
+            return;
+          }
+          if (!currentTrip || !seats.length || !reviewPeople.length) return;
+          const submit = q("confirmBookingBtn");
+          const originalText = submit.textContent;
           submit.disabled = true;
+          submit.textContent = "Booking in progress…";
           try {
             const sortedSeats = [...seats].sort((a, b) => a - b);
+            const selectedPaymentMethod = q("paymentMethod").value || "pay_later";
             const data = await rpc("app_create_booking", {
               p_trip_id: currentTrip.trip.id,
               p_boarding_stop_id: currentBoarding,
               p_dropping_stop_id: currentDropping,
               p_seats: sortedSeats,
-              p_customer_name: people[0].name,
-              p_customer_phone: people[0].phone,
-              p_passenger_details: people.map((p, i) => ({
+              p_customer_name: reviewPeople[0].name,
+              p_customer_phone: reviewPeople[0].phone,
+              p_passenger_details: reviewPeople.map((p, i) => ({
                 seat_no: sortedSeats[i],
                 name: p.name,
                 age: p.age,
                 phone: p.phone,
+                is_disabled: p.is_disabled,
               })),
-              p_payment_method: q("paymentMethod").value || "pay_later",
+              p_payment_method: selectedPaymentMethod,
               p_customer_email: readDemoAuthSession()?.email || null,
             });
             const row = Array.isArray(data) ? data[0] : data;
-            if (!row?.booking_pnr)
-              throw new Error("The booking response did not include a PNR.");
-            const selectedBoarding = currentStops.find(
-                (x) => x.id === currentBoarding,
-              ),
-              selectedDropping = currentStops.find(
-                (x) => x.id === currentDropping,
-              );
+            if (!row?.booking_pnr) throw new Error("The booking response did not include a PNR.");
+            const selectedBoarding = currentStops.find((x) => x.id === currentBoarding);
+            const selectedDropping = currentStops.find((x) => x.id === currentDropping);
             const booking = {
               id: row.booking_pnr,
               bus: currentTrip.bus.bus_name,
+              busType: currentTrip.bus.bus_type || "—",
               busNumber: currentTrip.bus.bus_number || "—",
+              operatorName: currentTrip.bus.operator_name || "—",
               busId: currentTrip.bus.id,
               tripId: currentTrip.trip.id,
               from: selectedBoarding.stop_name,
               to: selectedDropping.stop_name,
               date: journeyDate,
-              seats: [...seats].sort((a, b) => a - b),
-              people,
+              seats: sortedSeats,
+              people: reviewPeople,
               total: Number(row.total_fare),
-              paymentMethod: q("paymentMethod").value || "pay_later",
+              paymentMethod: selectedPaymentMethod,
               paymentStatus: "pending",
               status: "confirmed",
               createdAt: new Date().toISOString(),
@@ -9514,25 +9849,21 @@ if (recentContainer) {
               droppingTime: selectedDropping.arrival_time || "—",
             };
             renderTicket(booking);
+            q("ticketPanel").dataset.newBookingConfirmation = "true";
+            q("results").hidden = true;
             q("seatPanel").hidden = true;
             q("passengerPanel").hidden = true;
+            q("reviewPanel").hidden = true;
             q("ticketPanel").hidden = false;
             q("ticketPanel").scrollIntoView({ behavior: "smooth" });
             alert("Booking successful! PNR: " + booking.id);
             seats = [];
+            reviewPeople = [];
           } catch (err) {
-            alert(
-              "Booking failed: " +
-                err.message +
-                ". Refresh seat availability and try again.",
-            );
-            try {
-              await openTrip(
-                currentTrips.find((x) => x.trip.id === currentTrip.trip.id),
-              );
-            } catch (_) {}
+            alert("Booking failed: " + err.message + ". Please review the trip and try again.");
           } finally {
             submit.disabled = false;
+            submit.textContent = originalText;
           }
         };
         // Limited-information PNR lookup as defined by the current RPC.
