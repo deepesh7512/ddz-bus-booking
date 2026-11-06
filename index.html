@@ -818,6 +818,17 @@
       #adminLoginPanel button {
         margin: 6px 6px 6px 0;
       }
+      #authNewTicketBtn {
+        display: block;
+        width: 100%;
+        min-height: 46px;
+        margin: 14px 0 0 !important;
+        border: 1px solid #e6b9bc;
+        border-radius: 14px;
+        background: linear-gradient(135deg, #fff7f7, #fff);
+        color: #8f1d25;
+        font-weight: 700;
+      }
       #authMessage,
       #adminLoginMessage {
         padding: 12px;
@@ -1166,7 +1177,280 @@
         background: #fff7f7;
       }
       #pnrPanel {
-        border-left: 4px solid #d84a4a;
+        width: 100%;
+        max-width: 1220px;
+        margin: 20px auto 30px;
+        padding: clamp(18px, 3vw, 28px);
+        border: 1px solid #e1e7ef;
+        border-top: 4px solid #a5262d;
+        border-radius: 20px;
+        background: #fff;
+        box-shadow: 0 14px 38px rgba(15, 23, 42, 0.065);
+      }
+      .pnr-panel-heading {
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        margin-bottom: 18px;
+      }
+      .pnr-heading-icon {
+        display: grid;
+        place-items: center;
+        flex: 0 0 46px;
+        width: 46px;
+        height: 46px;
+        border: 1px solid #f1d9db;
+        border-radius: 14px;
+        background: #fff6f6;
+        color: #a5262d;
+        font-size: 25px;
+      }
+      .pnr-panel-heading h2 {
+        margin: 0;
+        color: #182234;
+        font-size: clamp(20px, 2.5vw, 25px);
+        letter-spacing: -.03em;
+      }
+      .pnr-panel-heading p {
+        margin: 4px 0 0;
+        color: #64748b;
+        font-size: 13px;
+        line-height: 1.45;
+      }
+      #pnrForm {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: end;
+        gap: 12px;
+        max-width: 780px;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        box-shadow: none;
+      }
+      #pnrForm label {
+        grid-column: 1 / -1;
+        margin: 0 0 -5px;
+        color: #46546a;
+        font-size: 13px;
+        font-weight: 700;
+      }
+      #pnrForm input {
+        min-width: 0;
+        min-height: 49px;
+        margin: 0;
+        padding: 0 14px;
+        border: 1px solid #d7dee8;
+        border-radius: 12px;
+        background: #fff;
+        font-size: 15px;
+      }
+      #pnrForm input:focus {
+        border-color: #b4232d;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(180, 35, 45, .12);
+      }
+      #pnrForm button {
+        min-width: 150px;
+        min-height: 49px;
+        margin: 0;
+        border-radius: 12px !important;
+        background: linear-gradient(135deg, #8b1c25, #b72b35);
+        box-shadow: 0 6px 15px rgba(139, 28, 37, .17);
+      }
+      #pnrForm button:disabled { opacity: .7; cursor: wait; }
+      #pnrResult:not(:empty) { margin-top: 18px; }
+      .pnr-result-card {
+        padding: 18px;
+        border: 1px solid #e4eaf1;
+        border-radius: 15px;
+        background: linear-gradient(180deg, #fff, #fbfcfe);
+      }
+      .pnr-result-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+      .pnr-result-heading h3 { margin: 0; color: #253247; font-size: 16px; }
+      .pnr-status-badge {
+        padding: 5px 10px;
+        border: 1px solid #bbf7d0;
+        border-radius: 999px;
+        background: #f0fdf4;
+        color: #166534;
+        font-size: 11px;
+        font-weight: 750;
+      }
+      .pnr-status-badge.cancelled {
+        border-color: #fecaca;
+        background: #fef2f2;
+        color: #b91c1c;
+      }
+      .pnr-result-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0 20px;
+      }
+      .pnr-result-item {
+        display: grid;
+        grid-template-columns: minmax(90px, .8fr) minmax(0, 1.2fr);
+        gap: 10px;
+        align-items: baseline;
+        padding: 10px 0;
+        border-bottom: 1px solid #edf1f5;
+      }
+      .pnr-result-label { color: #64748b; font-size: 12px; font-weight: 650; }
+      .pnr-result-value { color: #1e293b; font-size: 13px; font-weight: 650; overflow-wrap: anywhere; }
+      .pnr-empty-state {
+        margin: 0;
+        padding: 13px 15px;
+        border: 1px solid #e5eaf1;
+        border-radius: 12px;
+        background: #f8fafc;
+        color: #475569;
+        font-size: 14px;
+      }
+      @media (max-width: 640px) {
+        #pnrPanel { margin: 16px auto 24px; padding: 18px; border-radius: 17px; }
+        #pnrForm { grid-template-columns: minmax(0, 1fr); }
+        #pnrForm label { grid-column: auto; }
+        #pnrForm button { width: 100%; }
+        .pnr-result-grid { grid-template-columns: minmax(0, 1fr); }
+        .pnr-result-card { padding: 14px; }
+      }
+      #pnrPanel {
+        display: grid;
+        grid-template-columns: minmax(250px, .85fr) minmax(0, 1.15fr);
+        align-items: center;
+        gap: 18px 30px;
+        border-top-width: 1px;
+        border-left: 4px solid #a5262d;
+        background:
+          radial-gradient(circle at 0 0, rgba(180, 35, 45, .055), transparent 38%),
+          #fff;
+      }
+      .pnr-panel-heading { margin: 0; }
+      .pnr-heading-icon {
+        flex-basis: 52px;
+        width: 52px;
+        height: 52px;
+        border-radius: 16px;
+        background: linear-gradient(145deg, #fff1f2, #fff8f8);
+        box-shadow: inset 0 1px 0 #fff, 0 5px 14px rgba(165, 38, 45, .08);
+      }
+      .pnr-panel-heading h2 { font-size: clamp(20px, 2.2vw, 24px); }
+      #pnrForm {
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 9px 10px;
+        max-width: none;
+        padding: 14px;
+        border: 1px solid #e7ebf1;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, .82);
+        box-shadow: 0 5px 18px rgba(15, 23, 42, .045);
+      }
+      #pnrForm label { grid-column: 1 / -1; margin: 0; }
+      .pnr-input-wrap { position: relative; min-width: 0; }
+      .pnr-input-icon {
+        position: absolute;
+        top: 50%;
+        left: 13px;
+        color: #94a3b8;
+        font-size: 21px;
+        line-height: 1;
+        transform: translateY(-53%);
+        pointer-events: none;
+      }
+      #pnrForm .pnr-input-wrap input {
+        width: 100%;
+        min-height: 48px;
+        margin: 0;
+        padding: 0 12px 0 42px;
+        border-radius: 11px;
+        background: #fff;
+      }
+      #pnrForm button {
+        min-width: 142px;
+        min-height: 48px;
+        padding: 10px 16px !important;
+        border-radius: 11px !important;
+      }
+      #pnrResult:not(:empty) { grid-column: 1 / -1; margin-top: 0; }
+      .pnr-result-card {
+        padding: clamp(16px, 2.5vw, 24px);
+        border-color: #e1e7ef;
+        border-radius: 18px;
+        background: linear-gradient(145deg, #fff 0%, #fbfcfe 100%);
+        box-shadow: 0 9px 25px rgba(15, 23, 42, .055);
+      }
+      .pnr-result-heading { margin-bottom: 14px; }
+      .pnr-result-heading h3 { font-size: 18px; letter-spacing: -.02em; }
+      .pnr-result-reference {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px 20px;
+        margin-bottom: 12px;
+        padding: 12px 15px;
+        border: 1px solid #f0d5d7;
+        border-radius: 14px;
+        background: linear-gradient(110deg, #fff6f6, #fffafa);
+      }
+      .pnr-reference-block { display: grid; gap: 3px; min-width: 0; }
+      .pnr-reference-label { color: #8b6670; font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+      .pnr-reference-value { color: #84212b; font-size: 19px; font-weight: 800; letter-spacing: .06em; overflow-wrap: anywhere; }
+      .pnr-date-block { text-align: right; }
+      .pnr-date-block .pnr-reference-value { color: #263449; font-size: 14px; letter-spacing: 0; }
+      .pnr-route-card {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 34px minmax(0, 1fr);
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 13px;
+        padding: 16px;
+        border: 1px solid #e5eaf1;
+        border-radius: 14px;
+        background: #f8fafc;
+      }
+      .pnr-route-stop { display: grid; gap: 5px; min-width: 0; }
+      .pnr-route-stop:last-child { text-align: right; }
+      .pnr-route-label { color: #64748b; font-size: 10px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; }
+      .pnr-route-name { color: #1e293b; font-size: 16px; font-weight: 750; line-height: 1.3; overflow-wrap: anywhere; }
+      .pnr-route-time { color: #64748b; font-size: 12px; font-weight: 600; }
+      .pnr-route-arrow { display: grid; place-items: center; width: 32px; height: 32px; border: 1px solid #e2e8f0; border-radius: 50%; background: #fff; color: #a5262d; font-size: 18px; }
+      .pnr-result-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0 16px;
+      }
+      .pnr-result-item {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 4px;
+        padding: 10px 0;
+      }
+      .pnr-result-value { font-size: 13px; }
+      .pnr-empty-state { grid-column: 1 / -1; }
+      @media (max-width: 780px) {
+        #pnrPanel { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+        .pnr-panel-heading { margin: 0; }
+        .pnr-result-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      }
+      @media (max-width: 640px) {
+        #pnrPanel { border-left-width: 1px; border-top-width: 4px; }
+        #pnrForm { grid-template-columns: minmax(0, 1fr); }
+        #pnrForm button { width: 100%; }
+        .pnr-result-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .pnr-result-reference { padding: 11px 12px; }
+        .pnr-route-card { grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr); gap: 7px; padding: 13px 10px; }
+        .pnr-route-name { font-size: 14px; }
+        .pnr-route-arrow { width: 28px; height: 28px; }
+      }
+      @media (max-width: 380px) {
+        .pnr-result-grid { grid-template-columns: minmax(0, 1fr); }
+        .pnr-result-item { grid-template-columns: minmax(86px, .75fr) minmax(0, 1.25fr); }
+        .pnr-reference-value { font-size: 16px; }
       }
       hr {
         border: 0;
@@ -2090,6 +2374,29 @@
           border-bottom: 1px solid #e5e7eb !important;
         }
 
+        .cpt-cancellation {
+          display: flex !important;
+          align-items: baseline !important;
+          justify-content: space-between !important;
+          gap: 8px !important;
+          margin: 8px 0 !important;
+          padding: 8px 10px !important;
+          border: 1px solid #fecaca !important;
+          border-radius: 6px !important;
+          background: #fef2f2 !important;
+          color: #991b1b !important;
+        }
+
+        .cpt-cancellation small {
+          font-size: 9px !important;
+          font-weight: bold !important;
+        }
+
+        .cpt-cancellation strong {
+          font-size: 10px !important;
+          text-align: right !important;
+        }
+
         .cpt-station,
         .cpt-bus-details {
           display: flex !important;
@@ -2392,7 +2699,7 @@
       .customer-header-actions {
         display: flex;
         align-items: center;
-        justify-content: flex-start;
+        justify-content: flex-end;
         width: 100%;
         margin: 0 0 12px;
       }
@@ -3583,14 +3890,27 @@
         font-weight: 700;
       }
       .auth-form-side {
+        position: relative;
+        overflow: hidden;
         align-self: center;
         justify-self: center;
         width: min(100%, 480px);
         padding: clamp(26px, 3vw, 42px);
-        border: 1px solid #e3e8ef;
+        border: 1px solid rgba(219, 226, 236, .9);
         border-radius: 24px;
-        background: #fff;
-        box-shadow: 0 18px 55px rgba(24, 35, 54, 0.09);
+        background: linear-gradient(155deg, rgba(255,255,255,.99), rgba(250,252,255,.97));
+        box-shadow: 0 22px 65px rgba(24, 35, 54, 0.13), 0 3px 12px rgba(127,29,29,.035);
+        animation: authCardEnter .55s cubic-bezier(.2,.75,.25,1) both;
+      }
+      .auth-form-side::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #991b1b, #ef4444 52%, #f7b267);
+        pointer-events: none;
       }
       .auth-form-side h2 {
         margin: 0 0 9px;
@@ -3611,11 +3931,53 @@
         background: transparent;
         box-shadow: none;
       }
-      .auth-form-side label { color: #344256; }
-      .auth-form-side input {
+      .auth-form-side form:not([hidden]) {
+        animation: authFormEnter .38s cubic-bezier(.2,.75,.25,1) both;
+      }
+      .auth-form-side label {
+        color: #344256;
+        font-size: 12px;
+        font-weight: 750;
+        letter-spacing: .025em;
+      }
+      #authPanel .auth-form-side input,
+      #adminLoginPanel .auth-form-side input {
         min-height: 48px;
         border-radius: 12px;
         background: #fbfcfe;
+        border: 1px solid #dce3ed;
+        transition: border-color .2s ease, box-shadow .2s ease, background .2s ease, transform .2s ease;
+      }
+      #authPanel .auth-form-side input:focus,
+      #adminLoginPanel .auth-form-side input:focus {
+        outline: none;
+        border-color: #c24145;
+        background: #fff;
+        box-shadow: 0 0 0 4px rgba(185, 28, 28, .10);
+        transform: translateY(-1px);
+      }
+      #authPanel .auth-form-side form button[type="submit"],
+      #adminLoginPanel .auth-form-side form button[type="submit"] {
+        width: 100%;
+        min-height: 48px;
+        margin: 10px 0 0;
+        border: 0;
+        border-radius: 13px;
+        background: linear-gradient(120deg, #991b1b, #c62828 62%, #dc4545);
+        color: #fff;
+        font-weight: 750;
+        box-shadow: 0 8px 18px rgba(153, 27, 27, .2);
+        transition: transform .2s ease, box-shadow .2s ease, filter .2s ease;
+      }
+      #authPanel .auth-form-side form button[type="submit"]:hover,
+      #adminLoginPanel .auth-form-side form button[type="submit"]:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 22px rgba(153, 27, 27, .25);
+        filter: saturate(1.08);
+      }
+      #authPanel .auth-form-side form button[type="submit"]:active,
+      #adminLoginPanel .auth-form-side form button[type="submit"]:active {
+        transform: translateY(0) scale(.99);
       }
       .auth-form-side #authMessage,
       .auth-form-side #adminLoginMessage {
@@ -3631,6 +3993,14 @@
       @keyframes authCardFloat {
         0%, 100% { transform: translateY(0); }
         50% { transform: translateY(-8px); }
+      }
+      @keyframes authCardEnter {
+        from { opacity: 0; transform: translateY(16px) scale(.985); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+      }
+      @keyframes authFormEnter {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
       }
       @media (max-width: 900px) {
         #authPanel:not([hidden]),
@@ -3689,7 +4059,13 @@
       }
       @media (prefers-reduced-motion: reduce) {
         .auth-moving-bus,
-        .auth-float-card { animation: none; }
+        .auth-float-card,
+        .auth-form-side,
+        .auth-form-side form:not([hidden]) { animation: none; }
+        #authPanel .auth-form-side input,
+        #adminLoginPanel .auth-form-side input,
+        #authPanel .auth-form-side form button[type="submit"],
+        #adminLoginPanel .auth-form-side form button[type="submit"] { transition: none; }
       }
 
       /* Purposeful logout controls for customer and admin sessions. */
@@ -3768,6 +4144,522 @@
         filter: none;
       }
 
+      /* Admin overview presentation; recent-bookings table rules stay untouched. */
+      .admin-overview {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+      .admin-section-view.admin-overview:not(.active) { display: none; }
+      .admin-section-view.admin-overview.active { display: flex; }
+      .admin-overview-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        padding: 22px 24px;
+        border: 1px solid #f1d9da;
+        border-radius: 18px;
+        background: radial-gradient(circle at 92% 12%, rgba(255,255,255,.55), transparent 28%), linear-gradient(125deg, #fff4f4, #fff 70%);
+        box-shadow: 0 9px 24px rgba(127, 29, 29, .07);
+      }
+      .admin-overview-heading h3 {
+        margin: 5px 0 5px !important;
+        padding: 0;
+        border: 0;
+        color: #7f1d1d;
+        font-size: clamp(23px, 3vw, 30px);
+        letter-spacing: -.035em;
+      }
+      .admin-overview-heading p {
+        margin: 0;
+        color: #64748b;
+        font-size: 14px;
+      }
+      .admin-overview-eyebrow {
+        color: #b45353;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: .15em;
+      }
+      .admin-overview-section-title h3 {
+        margin: 0 !important;
+        padding: 0;
+        border: 0;
+        color: #253044;
+        font-size: 20px;
+        letter-spacing: -.02em;
+      }
+      .admin-overview-live {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        flex: 0 0 auto;
+        padding: 9px 12px;
+        border: 1px solid #f0d3d4;
+        border-radius: 999px;
+        background: rgba(255,255,255,.78);
+        color: #7f1d1d;
+        font-size: 12px;
+        font-weight: 700;
+      }
+      .admin-overview-live i {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #16a36a;
+        box-shadow: 0 0 0 4px rgba(22,163,106,.12);
+      }
+      .admin-panel-header-card {
+        margin-bottom: 18px;
+        padding: 20px 24px;
+        border: 1px solid #f1d9da;
+        border-radius: 18px;
+        background: radial-gradient(circle at 92% 12%, rgba(255,255,255,.55), transparent 28%), linear-gradient(125deg, #fff4f4, #fff 70%);
+        box-shadow: 0 9px 24px rgba(127, 29, 29, .07);
+      }
+      .admin-panel-header-card .admin-header-actions {
+        justify-content: flex-end;
+        gap: 10px;
+        margin: 0 0 12px;
+      }
+      .admin-panel-header-card #adminLogoutBtn {
+        width: 46px;
+        min-width: 46px;
+        height: 46px;
+        min-height: 46px;
+        margin: 0;
+        padding: 0 !important;
+        border-radius: 14px !important;
+      }
+      .admin-panel-header-card #adminLogoutBtn::before { content: none; }
+      .admin-panel-header-card #adminLogoutBtn svg {
+        width: 22px;
+        height: 22px;
+        display: block;
+      }
+      .customer-header-actions #dashboardLogoutBtn {
+        width: 46px;
+        min-width: 46px;
+        height: 46px;
+        min-height: 46px;
+        margin: 0;
+        padding: 0 !important;
+        border-radius: 14px !important;
+      }
+      .customer-header-actions #dashboardLogoutBtn::before { content: none; }
+      .customer-header-actions #dashboardLogoutBtn svg {
+        width: 22px;
+        height: 22px;
+        display: block;
+      }
+      .admin-panel-heading-content h2 {
+        margin: 5px 0;
+        color: #7f1d1d;
+        font-size: clamp(23px, 3vw, 30px);
+        letter-spacing: -.035em;
+      }
+      .admin-panel-heading-content > p {
+        margin: 0;
+        color: #64748b;
+        font-size: 14px;
+      }
+      #currentAdminMessage {
+        min-height: 18px;
+        margin-top: 10px;
+        color: #64748b;
+        font-size: 12px;
+      }
+      #currentAdminMessage:not(:empty) {
+        display: inline-flex;
+        align-items: center;
+        padding: 5px 9px;
+        border: 1px solid #d7eee3;
+        border-radius: 999px;
+        background: #f0faf5;
+        color: #14734a;
+      }
+      #adminOverviewPnrCard {
+        margin: 0 !important;
+        padding: 20px 22px !important;
+        border-color: #e9e6e4 !important;
+        background: linear-gradient(115deg, #fff 15%, #fff6f3 100%) !important;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, .055) !important;
+      }
+      #adminOverviewPnrForm {
+        max-width: none;
+        padding: 0;
+        margin: 0;
+        border: 0;
+        background: transparent;
+      }
+      .admin-overview .admin-stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 205px), 1fr));
+        gap: 12px;
+        margin: 0;
+      }
+      .admin-overview .admin-stat-card {
+        min-height: 112px;
+        padding: 17px 18px;
+        border-left: 1px solid #e2e8f0;
+        border-top: 3px solid #b91c1c;
+        border-radius: 15px;
+        background: linear-gradient(145deg, #fff, #fff9f8);
+      }
+      .admin-overview .admin-stat-card:nth-child(2n) { border-top-color: #2563eb; }
+      .admin-overview .admin-stat-card:nth-child(3n) { border-top-color: #0f9b78; }
+      .admin-overview .admin-stat-card span { font-size: 11px; letter-spacing: .045em; text-transform: uppercase; }
+      .admin-overview .admin-stat-card strong { margin-top: 13px; }
+      .admin-overview .admin-recent-bookings,
+      .admin-overview .admin-quick-actions {
+        margin: 0;
+        padding: 19px 20px;
+        border-color: #e7eaf0;
+        border-radius: 16px;
+        box-shadow: 0 7px 22px rgba(15, 23, 42, .05);
+      }
+      .admin-overview .admin-recent-bookings h3,
+      .admin-overview .admin-quick-actions h3 {
+        margin: 0 0 5px !important;
+        padding: 0;
+        border: 0;
+        color: #7f1d1d;
+        font-size: 18px;
+      }
+      .admin-overview .admin-recent-bookings > p,
+      .admin-overview .admin-quick-actions > p {
+        margin: 0 0 14px;
+        color: #718096;
+        font-size: 13px;
+      }
+      .admin-overview .quick-actions-grid { margin-top: 12px; }
+      .admin-overview .quick-action-btn {
+        min-height: 54px;
+        border-color: #f0dada;
+        border-radius: 13px;
+        background: linear-gradient(135deg, #fffafa, #fff);
+        text-align: left;
+      }
+      .data-table-load-more {
+        display: block;
+        min-width: 190px;
+        margin: 14px auto 2px;
+        padding: 11px 18px;
+        border: 1px solid #e6b9bc;
+        border-radius: 999px;
+        background: #fff7f7;
+        color: #8f1d25;
+        font-weight: 700;
+      }
+      .data-table-load-more:hover { background: #feecec; }
+      .notification-icon-button {
+        display: inline-grid;
+        place-items: center;
+        width: 44px;
+        height: 44px;
+        padding: 0;
+        border: 1px solid #e6b9bc;
+        border-radius: 13px;
+        background: #fff7f7;
+        color: #8f1d25;
+        box-shadow: 0 3px 9px rgba(127, 29, 29, .08);
+        transition: transform .18s ease, background .18s ease, box-shadow .18s ease;
+      }
+      .notification-icon-button svg {
+        width: 20px;
+        height: 20px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .notification-icon-button:hover {
+        transform: translateY(-1px);
+        background: #feecec;
+        box-shadow: 0 5px 12px rgba(127, 29, 29, .12);
+      }
+      .notification-icon-button:disabled { cursor: wait; opacity: .65; }
+      .notification-heading-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 5px;
+      }
+      .notification-heading-row h3 { margin: 0; }
+      .notification-actions { display: flex; align-items: center; gap: 8px; }
+      .notification-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 12px;
+        padding: 5px 12px;
+        border: 1px solid #e8edf3;
+        border-radius: 14px;
+        background: linear-gradient(135deg, #fff, #f8fafc);
+      }
+      .notification-toolbar > strong {
+        color: #475569;
+        font-size: 13px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .notification-toolbar > strong span {
+        display: inline-grid;
+        place-items: center;
+        min-width: 23px;
+        height: 23px;
+        margin-left: 4px;
+        padding: 0 6px;
+        border-radius: 999px;
+        background: #fee2e2;
+        color: #991b1b;
+        font-size: 12px;
+      }
+      .notification-toolbar .notification-filter-select {
+        width: auto;
+        min-width: 166px;
+        max-width: 205px;
+        height: 34px;
+        min-height: 34px;
+        margin: 0 !important;
+        padding: 5px 32px 5px 11px;
+        border: 1px solid #dbe3ec;
+        border-radius: 11px;
+        appearance: none;
+        background-color: #fff;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364758b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        color: #334155;
+        font-size: 12px;
+        font-weight: 650;
+        box-shadow: 0 2px 6px rgba(15, 23, 42, .04);
+      }
+      .notification-toolbar .notification-filter-select:focus {
+        border-color: #c45b60;
+        outline: 3px solid rgba(196, 91, 96, .13);
+      }
+      #adminNotifications .booking {
+        position: relative;
+        margin: 0 0 7px !important;
+        padding: 11px 14px !important;
+        padding-right: 48px !important;
+        border-radius: 12px;
+      }
+      #adminNotifications .booking > p { margin: 4px 0; }
+      #adminNotifications .booking > small { display: inline-block; margin-top: 3px; }
+      #adminNotifications .notification-read-icon {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        display: grid;
+        place-items: center;
+        width: 32px;
+        height: 32px;
+        min-width: 32px;
+        min-height: 32px !important;
+        margin: 0;
+        padding: 0 !important;
+        border: 1px solid #dff1e5;
+        border-radius: 50% !important;
+        background: #f3fbf5;
+        color: #21834a;
+      }
+      #adminNotifications .notification-read-icon svg {
+        width: 20px;
+        height: 20px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      #adminNotifications .notification-read-icon:hover { background: #e6f6eb; }
+      #adminNotifications .notification-read-icon:disabled { cursor: wait; opacity: .6; }
+      @media (max-width: 600px) {
+        .admin-overview { gap: 13px; }
+        .admin-overview-heading { align-items: flex-start; padding: 18px; }
+        .admin-overview-live { margin-top: 2px; font-size: 10px; }
+        .admin-panel-header-card { padding: 17px; }
+        .admin-overview .admin-stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+        .admin-overview .admin-stat-card { min-height: 90px; padding: 12px; }
+        #adminOverviewPnrCard { padding: 16px !important; }
+        .admin-overview .admin-recent-bookings,
+        .admin-overview .admin-quick-actions { padding: 15px 13px; }
+        .notification-toolbar { gap: 8px; padding: 4px 9px; }
+        .notification-toolbar .notification-filter-select { min-width: 0; max-width: 185px; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .admin-overview .admin-stat-card,
+        .admin-overview .quick-action-btn { transition: none; }
+      }
+
+      /* Clean, responsive website header */
+      header.site-header {
+        position: relative;
+        isolation: isolate;
+        overflow: hidden;
+        width: 100%;
+        padding: 15px clamp(16px, 3vw, 42px);
+        border-bottom: 1px solid #e8edf3;
+        background: rgba(255, 255, 255, .96);
+        box-shadow: 0 8px 24px rgba(15, 23, 42, .055);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+      }
+      header.site-header::before,
+      header.site-header::after {
+        content: "";
+        position: absolute;
+        z-index: 0;
+        display: block;
+        pointer-events: none;
+      }
+      header.site-header::before {
+        top: -82px;
+        right: 8%;
+        width: 270px;
+        height: 210px;
+        border: 1px solid rgba(198, 40, 40, .10);
+        border-radius: 50%;
+        background: radial-gradient(ellipse at center, rgba(239, 68, 68, .075), rgba(239, 68, 68, 0) 68%);
+        animation: siteHeaderOrbFloat 9s ease-in-out infinite;
+      }
+      header.site-header::after {
+        right: 24%;
+        bottom: -64px;
+        width: 185px;
+        height: 130px;
+        border-radius: 50%;
+        background: radial-gradient(ellipse at center, rgba(251, 191, 36, .09), rgba(251, 191, 36, 0) 72%);
+        animation: siteHeaderGlowDrift 11s ease-in-out infinite;
+      }
+      @keyframes siteHeaderOrbFloat {
+        0%, 100% { transform: translate3d(0, 0, 0) rotate(-8deg); }
+        50% { transform: translate3d(-14px, 8px, 0) rotate(4deg); }
+      }
+      @keyframes siteHeaderGlowDrift {
+        0%, 100% { transform: translate3d(0, 0, 0) scale(.96); opacity: .7; }
+        50% { transform: translate3d(12px, -7px, 0) scale(1.06); opacity: 1; }
+      }
+      .site-header-inner {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        width: min(100%, 1480px);
+        margin: 0 auto;
+      }
+      .site-brand {
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        min-width: 0;
+      }
+      .site-brand-mark {
+        display: grid;
+        place-items: center;
+        flex: 0 0 52px;
+        width: 52px;
+        height: 52px;
+        border: 1px solid rgba(255,255,255,.2);
+        border-radius: 16px;
+        background: linear-gradient(145deg, #7f1d1d, #c62828 72%, #e34d4d);
+        box-shadow: 0 7px 16px rgba(153, 27, 27, .2);
+        font-size: 27px;
+      }
+      .site-brand-copy { min-width: 0; }
+      header.site-header .site-brand h1 {
+        margin: 0;
+        color: #172234;
+        font-size: clamp(20px, 2.4vw, 27px);
+        font-weight: 850;
+        letter-spacing: -.045em;
+        line-height: 1.15;
+        text-shadow: none;
+      }
+      header.site-header .site-brand p {
+        margin: 4px 0 0;
+        color: #718096;
+        font-size: 12px;
+        font-weight: 550;
+        letter-spacing: .015em;
+      }
+      header.site-header nav {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        flex: 0 0 auto;
+        gap: 9px;
+        width: auto;
+      }
+      header.site-header nav button {
+        flex: 0 0 auto;
+        min-height: 44px;
+        padding: 10px 17px;
+        border: 1px solid #e2e8f0;
+        border-radius: 13px;
+        background: #f8fafc;
+        color: #344256;
+        font-size: 13px;
+        font-weight: 750;
+        white-space: nowrap;
+        box-shadow: 0 2px 5px rgba(15, 23, 42, .035);
+        transition: transform .2s ease, color .2s ease, background .2s ease, border-color .2s ease, box-shadow .2s ease;
+      }
+      header.site-header nav button:hover {
+        transform: translateY(-2px);
+        border-color: #e9b5b8;
+        background: #fff4f4;
+        color: #8f1d25;
+        box-shadow: 0 6px 14px rgba(127, 29, 29, .09);
+      }
+      header.site-header nav button[aria-current="page"] {
+        border-color: #9f2428;
+        background: linear-gradient(120deg, #8f1d25, #bd3036);
+        color: #fff;
+        box-shadow: 0 6px 15px rgba(153, 27, 27, .2);
+      }
+      header.site-header nav button[aria-current="page"]:hover {
+        background: linear-gradient(120deg, #7f1d1d, #a5262d);
+        color: #fff;
+      }
+      @media (max-width: 760px) {
+        header.site-header { padding: 13px 15px; }
+        .site-header-inner { flex-direction: column; align-items: stretch; gap: 12px; }
+        .site-brand-mark { flex-basis: 46px; width: 46px; height: 46px; border-radius: 14px; font-size: 24px; }
+        header.site-header nav {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 7px;
+          width: 100%;
+        }
+        header.site-header nav button {
+          grid-column: auto;
+          width: 100%;
+          min-width: 0;
+          min-height: 42px;
+          padding: 9px 6px;
+          font-size: 12px;
+        }
+      }
+      @media (max-width: 380px) {
+        header.site-header { padding-right: 11px; padding-left: 11px; }
+        .site-header-inner { gap: 10px; }
+        header.site-header nav { gap: 5px; }
+        header.site-header nav button { grid-column: auto; font-size: 11px; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        header.site-header::before,
+        header.site-header::after { animation: none; }
+        header.site-header nav button { transition: none; }
+      }
+
       </style>
       <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   </head>
@@ -3786,14 +4678,21 @@
       </div>
     </div>
 
-    <header>
-      <h1>🚌 Apni Bus Booking</h1>
-      <p>Book your journey easily</p>
-      <nav>
-        <button id="bookTab" type="button">New Ticket</button>
-        <button id="customerTab" type="button">My Account</button>
-        <button id="adminTab" type="button">Admin Panel</button>
-      </nav>
+    <header class="site-header">
+      <div class="site-header-inner">
+        <div class="site-brand">
+          <span class="site-brand-mark" aria-hidden="true">🚌</span>
+          <div class="site-brand-copy">
+            <h1>Apni Bus Booking</h1>
+            <p>Book your journey easily</p>
+          </div>
+        </div>
+        <nav aria-label="Main navigation">
+          <button id="bookTab" type="button">New Ticket</button>
+          <button id="customerTab" type="button">My Account</button>
+          <button id="adminTab" type="button">Admin Panel</button>
+        </nav>
+      </div>
     </header>
     <main>
       <section id="searchPanel">
@@ -3984,11 +4883,14 @@
         <p id="authSwitchText">New customer?</p>
         <button type="button" id="authSwitchBtn">Create Account</button>
         <button type="button" id="logoutBtn" hidden>Logout</button>
+        <button type="button" id="authNewTicketBtn">New Ticket</button>
         </div>
       </section>
       <section id="dashboardPanel" hidden>
         <div class="customer-header-actions">
-          <button id="dashboardLogoutBtn" type="button">Logout</button>
+          <button id="dashboardLogoutBtn" type="button" aria-label="Logout" title="Logout">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M10.09 15.59 11.5 17l5-5-5-5-1.41 1.41L12.67 11H3v2h9.67zM19 3H5c-1.1 0-2 .9-2 2v4h2V5h14v14H5v-4H3v4c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/></svg>
+          </button>
         </div>
         <h2>Customer Dashboard</h2>
         <p>
@@ -4050,10 +4952,19 @@
         <button id="newSearch">New Ticket</button>
       </section>
       <section id="pnrPanel">
-        <h2>Find Booking / PNR</h2>
+        <div class="pnr-panel-heading">
+          <span class="pnr-heading-icon" aria-hidden="true">⌕</span>
+          <div>
+            <h2>Find Booking / PNR</h2>
+            <p>Enter your booking reference to view your journey details.</p>
+          </div>
+        </div>
         <form id="pnrForm">
-          <label>Enter PNR</label>
-          <input id="lookupPnr" required placeholder="Enter your PNR" />
+          <label for="lookupPnr">Booking PNR</label>
+          <div class="pnr-input-wrap">
+            <span class="pnr-input-icon" aria-hidden="true">⌕</span>
+            <input id="lookupPnr" required placeholder="Enter your booking PNR" autocomplete="off" spellcheck="false" />
+          </div>
           <button type="submit">Find Booking</button>
         </form>
         <div id="pnrResult"></div>
@@ -4104,10 +5015,15 @@
         </div>
       </section>
       <section id="adminPanel" hidden>
-        <h2>Admin Panel & Dashboard</h2>
-        <p>Operators, Buses, Routes, Stoppages, Trips & Fares Management.</p>
-
-        <div id="currentAdminMessage" role="status" aria-live="polite"></div>
+        <div class="admin-panel-header-card">
+          <div class="admin-header-actions"></div>
+          <div class="admin-panel-heading-content">
+            <span class="admin-overview-eyebrow">APNI BUS BOOKING</span>
+            <h2>Admin Panel &amp; Dashboard</h2>
+            <p>Operators, Buses, Routes, Stoppages, Trips &amp; Fares Management.</p>
+            <div id="currentAdminMessage" role="status" aria-live="polite"></div>
+          </div>
+        </div>
         <div class="admin-layout">
           <aside class="admin-sidebar">
             <div class="admin-sidebar-title">
@@ -4197,6 +5113,13 @@
             <button
               type="button"
               class="admin-nav-btn"
+              data-admin-target="booking-delete"
+            >
+              🗑️ Booking Delete
+            </button>
+            <button
+              type="button"
+              class="admin-nav-btn"
               data-admin-target="backup"
             >
               💾 Backup & Restore
@@ -4217,11 +5140,51 @@
               </button>
             </div>
             
-            <div class="admin-section-view active" data-admin-view="overview">
-              <h3>Dashboard Overview</h3>
-              <p>Welcome to Apni Bus Booking Admin Dashboard.</p>
-              <p>Choose a menu item on the left to view its management section.</p>
+            <div class="admin-section-view admin-overview active" data-admin-view="overview">
+              <div class="admin-overview-heading">
+                <div>
+                  <h3>Dashboard Overview</h3>
+                  <p>Manage your booking operations and track today's activity.</p>
+                </div>
+                <span class="admin-overview-live"><i></i> Admin Overview</span>
+              </div>
 
+              <div class="admin-stats-grid">
+                <div class="admin-stat-card">
+                  <span>Total Operators</span>
+                  <strong id="overviewOperators">0</strong>
+                </div>
+
+                <div class="admin-stat-card">
+                  <span>Total Buses</span>
+                  <strong id="overviewBuses">0</strong>
+                </div>
+
+                <div class="admin-stat-card">
+                  <span>Total Routes</span>
+                  <strong id="overviewRoutes">0</strong>
+                </div>
+
+                <div class="admin-stat-card">
+                  <span>Total Trips</span>
+                  <strong id="overviewTrips">0</strong>
+                </div>
+
+                <div class="admin-stat-card">
+                  <span>Total Bookings</span>
+                  <strong id="overviewBookings">0</strong>
+                </div>
+
+                <div class="admin-stat-card">
+                  <span>Today's Bookings</span>
+                  <strong id="overviewTodayBookings">0</strong>
+                </div>
+
+                <div class="admin-stat-card">
+                  <span>Today's Revenue</span>
+                  <strong id="overviewTodayRevenue">₹0</strong>
+                </div>
+              </div>
               <div
                 id="adminOverviewPnrCard"
                 style="
@@ -4318,50 +5281,14 @@
                   aria-live="polite"
                 ></div>
               </div>
-
-              <div class="admin-stats-grid">
-                <div class="admin-stat-card">
-                  <span>Total Operators</span>
-                  <strong id="overviewOperators">0</strong>
-                </div>
-
-                <div class="admin-stat-card">
-                  <span>Total Buses</span>
-                  <strong id="overviewBuses">0</strong>
-                </div>
-
-                <div class="admin-stat-card">
-                  <span>Total Routes</span>
-                  <strong id="overviewRoutes">0</strong>
-                </div>
-
-                <div class="admin-stat-card">
-                  <span>Total Trips</span>
-                  <strong id="overviewTrips">0</strong>
-                </div>
-
-                <div class="admin-stat-card">
-                  <span>Total Bookings</span>
-                  <strong id="overviewBookings">0</strong>
-                </div>
-
-                <div class="admin-stat-card">
-                  <span>Today's Bookings</span>
-                  <strong id="overviewTodayBookings">0</strong>
-                </div>
-
-                <div class="admin-stat-card">
-                  <span>Today's Revenue</span>
-                  <strong id="overviewTodayRevenue">₹0</strong>
-                </div>
-              </div>
               <div class="admin-recent-bookings">
                 <h3>Recent Bookings</h3>
                 <p>Details of the 5 most recent bookings</p>
                 <div id="overviewRecentBookings">
                   Loading bookings...
                 </div>
-                <div class="admin-quick-actions">
+              </div>
+              <div class="admin-quick-actions">
                   <h3>Quick Actions</h3>
                   <p>Shortcuts for common tasks</p>
 
@@ -4398,7 +5325,6 @@
                       🎫 View All Bookings
                     </button>
                   </div>
-                </div>
               </div>
             </div>
 
@@ -4512,7 +5438,17 @@
             </div>
             <div class="admin-section-view" data-admin-view="notifications">
               <hr />
-              <h3>Notifications</h3>
+              <div class="notification-heading-row">
+                <h3>Notifications</h3>
+                <div class="notification-actions">
+                  <button id="refreshNotificationsBtn" class="notification-icon-button" type="button" aria-label="Refresh notifications" title="Refresh notifications">
+                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.6 9a7 7 0 0 1 11.8-2L20 12M4 12l2.6 5a7 7 0 0 0 11.8-2"/></svg>
+                  </button>
+                  <button id="markAllNotificationsReadBtn" class="notification-icon-button" type="button" aria-label="Mark all notifications as read" title="Mark all as read">
+                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 6h10M4 12h8M4 18h6"/><path d="m15 16 2.2 2.2L21 14"/></svg>
+                  </button>
+                </div>
+              </div>
               <p>
                 Recent activity for new bookings, cancellations, and payment updates.
               </p>
@@ -4522,7 +5458,7 @@
                   Unread: <span id="unreadNotificationCount">0</span>
                 </strong>
 
-                <select id="notificationFilter">
+                <select id="notificationFilter" class="notification-filter-select" aria-label="Filter notifications">
                   <option value="all">All Notifications</option>
                   <option value="new_booking">New Bookings</option>
                   <option value="booking_cancelled">Cancellations</option>
@@ -4533,13 +5469,6 @@
               <div id="adminNotifications" aria-live="polite">
                 Loading notifications...
               </div>
-
-              <button id="refreshNotificationsBtn" type="button">
-                REFRESH NOTIFICATIONS
-              </button>
-              <button id="markAllNotificationsReadBtn" type="button">
-                MARK ALL AS READ
-              </button>
             </div>
 
             <div class="admin-section-view" data-admin-view="reports">
@@ -4565,6 +5494,18 @@
               <hr />
               <h3>All Bookings</h3>
               <div id="adminBookings"></div>
+            </div>
+
+            <div class="admin-section-view" data-admin-view="booking-delete">
+              <hr />
+              <h3>Delete Test Booking</h3>
+              <p>Enter a booking PNR to permanently remove that booking and its linked seat records.</p>
+              <form id="adminDeleteBookingForm">
+                <label for="adminDeleteBookingPnr">Booking PNR</label>
+                <input id="adminDeleteBookingPnr" type="text" required autocomplete="off" spellcheck="false" placeholder="Enter booking PNR" />
+                <button id="adminDeleteBookingBtn" type="submit" class="danger">Delete Booking</button>
+                <p id="adminDeleteBookingMessage" role="status" aria-live="polite"></p>
+              </form>
             </div>
 
             <div class="admin-section-view" data-admin-view="backup">
@@ -4669,6 +5610,7 @@
         !SUPABASE_PUBLISHABLE_KEY.includes("PASTE_YOUR_");
       let busesLoading = isSupabaseConfigured;
       const CUSTOMER_SESSION_KEY = "apniBus_customer_auth_session";
+      const BOOKING_AUTH_RETURN_KEY = "apniBus_booking_auth_return_panel";
       function readDemoAuthSession() {
         try {
           const session = JSON.parse(
@@ -4703,7 +5645,18 @@
       }
       // Open the customer login panel directly. Do not simulate a tab click here:
       // the saved tab is restored before the auth click-listeners are initialized.
-      function openDemoAuth() {
+      function openDemoAuth(resumePanelOverride) {
+        const resumePanel = resumePanelOverride || [
+          "reviewPanel",
+          "passengerPanel",
+          "seatPanel",
+          "results",
+        ].find((id) => $(id) && !$(id).hidden);
+        try {
+          if (resumePanel)
+            sessionStorage.setItem(BOOKING_AUTH_RETURN_KEY, resumePanel);
+          else sessionStorage.removeItem(BOOKING_AUTH_RETURN_KEY);
+        } catch (_) {}
         [
           "searchPanel",
           "results",
@@ -4880,17 +5833,18 @@
         }
       }
       async function adminBusRequest(path, options = {}) {
+        const { includeHeaders = false, ...requestOptions } = options;
         let token = getAdminAccessToken();
         if (!token)
           throw new Error("Your admin session has expired. Please log in again.");
         const send = (accessToken) =>
           fetch(SUPABASE_URL.replace(/\/$/, "") + path, {
-            ...options,
+            ...requestOptions,
             headers: {
               apikey: SUPABASE_PUBLISHABLE_KEY,
               Authorization: "Bearer " + accessToken,
               "Content-Type": "application/json",
-              ...(options.headers || {}),
+              ...(requestOptions.headers || {}),
             },
           });
         let response = await send(token);
@@ -4914,7 +5868,7 @@
                 ? data
                 : "Supabase request failed: " + response.status),
           );
-        return data;
+        return includeHeaders ? { data, headers: response.headers } : data;
       }
       let editingBusId = null;
 
@@ -5002,7 +5956,7 @@
           }
 
           markAllNotificationsReadButton.disabled = true;
-          markAllNotificationsReadButton.textContent = "UPDATING...";
+          markAllNotificationsReadButton.setAttribute("aria-busy", "true");
 
           try {
             await adminBusRequest(
@@ -5024,41 +5978,55 @@
             alert("Could not update notifications: " + error.message);
           } finally {
             markAllNotificationsReadButton.disabled = false;
-            markAllNotificationsReadButton.textContent =
-              "MARK ALL AS READ";
+            markAllNotificationsReadButton.removeAttribute("aria-busy");
           }
         });
       }
-      async function loadAdminBookingsFromSupabase() {
+      async function loadAdminBookingsFromSupabase(limit = 25, offset = 0) {
         // current bookings are stored in app_bookings, not the legacy bookings table.
-        const rows = await adminBusRequest(
-          "/rest/v1/app_bookings?select=id,pnr,trip_id,customer_name,customer_phone,customer_email,boarding_name_snapshot,dropping_name_snapshot,seats,fare,status,payment_method,payment_status,passenger_details,created_at,cancelled_at&order=created_at.desc",
-        );
+        const [rows, operators, buses, trips] = await Promise.all([
+          adminBusRequest(
+            "/rest/v1/app_bookings?select=id,pnr,trip_id,customer_name,customer_phone,customer_email,boarding_name_snapshot,dropping_name_snapshot,seats,fare,status,payment_method,payment_status,passenger_details,created_at,cancelled_at&order=created_at.desc&limit=" +
+              encodeURIComponent(limit) +
+              "&offset=" + encodeURIComponent(offset),
+          ),
+          adminBusRequest("/rest/v1/app_operators?select=id,operator_name").catch(() => []),
+          adminBusRequest("/rest/v1/app_buses?select=id,operator_id,bus_name,bus_number,bus_type").catch(() => []),
+          adminBusRequest("/rest/v1/app_trips?select=id,bus_id").catch(() => []),
+        ]);
         if (!Array.isArray(rows)) return [];
-        return await Promise.all(
-          rows.map(async (row) => {
-            let ticket = null;
-            try {
-              const found = await adminBusRequest(
-                "/rest/v1/rpc/app_lookup_booking",
-                {
-                  method: "POST",
-                  body: JSON.stringify({ p_pnr: row.pnr }),
-                },
-              );
-              ticket = Array.isArray(found) ? found[0] : found;
-            } catch (err) {
-              console.warn("Ticket detail lookup failed for", row.pnr, err);
-            }
-            return {
+        const mappedRows = await mapWithConcurrency(rows, 6, async (row) => {
+          let ticket = null;
+          try {
+            const found = await adminBusRequest(
+              "/rest/v1/rpc/app_lookup_booking",
+              {
+                method: "POST",
+                body: JSON.stringify({ p_pnr: row.pnr }),
+              },
+            );
+            ticket = Array.isArray(found) ? found[0] : found;
+          } catch (err) {
+            console.warn("Ticket detail lookup failed for", row.pnr, err);
+          }
+          const trip = trips.find((item) => String(item.id) === String(row.trip_id));
+          const busId = row.bus_id || trip?.bus_id;
+          const busRecord = buses.find((item) => String(item.id) === String(busId));
+          const operatorRecord = operators.find(
+            (item) => String(item.id) === String(busRecord?.operator_id),
+          );
+          return {
               ...row,
-              bus_id: row.trip_id,
+              _ticket_details: ticket,
+              bus_id: busId || row.trip_id,
               bus_name:
                 ticket?.bus_name ||
-                ticket?.bus_type ||
+                busRecord?.bus_name ||
                 "Bus details unavailable",
               bus_number:
-                ticket?.bus_number || ticket?.registration_number || "—",
+                ticket?.bus_number || ticket?.registration_number || busRecord?.bus_number || "—",
+              bus_type: ticket?.bus_type || busRecord?.bus_type || "—",
+              operator_name: ticket?.operator_name || operatorRecord?.operator_name || "—",
               source:
                 ticket?.boarding_name ||
                 row.boarding_name_snapshot ||
@@ -5095,9 +6063,31 @@
                 row.customer_phone || ticket?.customer_phone || "—",
               pnr: row.pnr,
               status: row.status,
-            };
-          }),
-        );
+          };
+        });
+        return mappedRows.map((result, index) => {
+          if (result?.value) return result.value;
+          const row = rows[index];
+          return {
+            ...row,
+            bus_id: row.bus_id || row.trip_id,
+            bus_name: "Bus details unavailable",
+            bus_number: "—",
+            bus_type: "—",
+            operator_name: "—",
+            source: row.boarding_name_snapshot || "Boarding stop unavailable",
+            destination: row.dropping_name_snapshot || "Dropping stop unavailable",
+            journey_date: row.journey_date || "—",
+            total_fare: Number(row.fare || 0),
+            payment_method: row.payment_method || "pay_later",
+            payment_status: row.payment_status || "pending",
+            passenger_details: Array.isArray(row.passenger_details) ? row.passenger_details : [],
+            customer_name: row.customer_name || "—",
+            customer_phone: row.customer_phone || "—",
+            pnr: row.pnr,
+            status: row.status,
+          };
+        });
       }
       async function cancelAdminBookingOnSupabase(pnr) {
         const result = await adminBusRequest(
@@ -5479,6 +6469,9 @@
         });
       }
       function showCustomer() {
+        try {
+          sessionStorage.removeItem(BOOKING_AUTH_RETURN_KEY);
+        } catch (_) {}
         saveActiveTab("bookTab");
         ["searchPanel", "pnrPanel"].forEach((id) => {
           $(id).hidden = false;
@@ -5806,11 +6799,14 @@
           "APNI BUS BOOKING – TICKET DETAILS",
           "Booking Status: " +
             (statusOf(b) === "cancelled" ? "CANCELLED" : "CONFIRMED"),
+          statusOf(b) === "cancelled"
+            ? "Cancelled On: " + cancellationDateTimeLabel(b.cancelledAt)
+            : "",
           "PNR: " + (b.id || "—"),
           "Bus: " + (b.bus || "—"),
           "Route: " + (b.from || "—") + " → " + (b.to || "—"),
           "Journey Date: " + (b.date || "—"),
-          "Seats: " + ((b.seats || []).join(", ") || "—"),
+          "Seat No.: " + ((b.seats || []).join(", ") || "—"),
           passengerNames ? "Passenger(s): " + passengerNames : "",
           "Total Fare: " + money(b.total),
           "Payment Method: " + paymentMethodLabel(b.paymentMethod),
@@ -5866,6 +6862,19 @@
           }[value] || "PENDING – Payment Due"
         );
       }
+      function cancellationDateTimeLabel(value) {
+        if (!value) return "Not available";
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return "Not available";
+        return date.toLocaleString("en-IN", {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        });
+      }
       function renderTicket(b) {
         window.currentApniBusTicket = b;
         const generalShareButton = $("shareTicketBtn");
@@ -5905,7 +6914,7 @@
           ],
           ["Boarding Time", b.boardingTime || "—"],
           ["Dropping Time", b.droppingTime || "—"],
-          ["Seats", (b.seats || []).join(", ")],
+          ["Seat No.", (b.seats || []).join(", ")],
           ["Total Fare", money(b.total)],
           ["Payment Method", paymentMethodLabel(b.paymentMethod)],
           ["Payment Status", paymentStatusLabel(b.paymentStatus)],
@@ -5914,13 +6923,13 @@
             b.createdAt ? new Date(b.createdAt).toLocaleString("en-IN") : "—",
           ],
           [
-            "Cancellation Date",
+            "Cancelled On",
             cancelled && b.cancelledAt
-              ? new Date(b.cancelledAt).toLocaleString("en-IN")
-              : "—",
+              ? cancellationDateTimeLabel(b.cancelledAt)
+              : "Not available",
           ],
         ].forEach(([label, value]) => {
-          if (label === "Cancellation Date" && !cancelled) return;
+          if (label === "Cancelled On" && !cancelled) return;
           const row = document.createElement("p");
           row.className = "ticket-detail-row";
           row.dataset.label = label.toLowerCase().replace(/[^a-z0-9]+/g, "-");
@@ -5933,7 +6942,7 @@
         (b.people || []).forEach((p, i) => {
           const box = document.createElement("div");
           box.className = "passenger ticket-passenger-card";
-          addText("span", "SEAT " + (b.seats[i] ?? "—"), box, "ticket-seat-chip");
+          addText("span", "Seat No. " + (b.seats[i] ?? "—"), box, "ticket-seat-chip");
           addText("h4", p.name || "Passenger " + (i + 1), box, "ticket-passenger-name");
           const passengerMeta = document.createElement("div");
           passengerMeta.className = "ticket-passenger-meta";
@@ -6055,6 +7064,13 @@
 
         route.append(fromBox, toBox, busDetails);
         ticket.appendChild(route);
+        if (statusOf(booking) === "cancelled") {
+          const cancellation = document.createElement("div");
+          cancellation.className = "cpt-cancellation";
+          add("small", "CANCELLED ON", cancellation);
+          add("strong", cancellationDateTimeLabel(booking.cancelledAt), cancellation);
+          ticket.appendChild(cancellation);
+        }
         // Passenger Details
         add("strong", "PASSENGERS", ticket, "cpt-section-title");
 
@@ -6064,7 +7080,7 @@
         const thead = document.createElement("thead");
         const heading = document.createElement("tr");
 
-        ["Passenger Name", "Age", "Seat"].forEach((value) => {
+        ["Passenger Name", "Age", "Seat No."].forEach((value) => {
           add("th", value, heading);
         });
 
@@ -6281,6 +7297,104 @@
         });
       }
 
+      const adminDeleteBookingForm = $("adminDeleteBookingForm");
+      if (adminDeleteBookingForm) {
+        adminDeleteBookingForm.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          const pnrInput = $("adminDeleteBookingPnr");
+          const message = $("adminDeleteBookingMessage");
+          const button = $("adminDeleteBookingBtn");
+          const pnr = pnrInput.value.trim().toUpperCase();
+          if (!pnr) return;
+          button.disabled = true;
+          message.textContent = "Checking the booking PNR...";
+          try {
+            const matches = await adminBusRequest(
+              "/rest/v1/app_bookings?select=id,pnr&pnr=eq." +
+                encodeURIComponent(pnr),
+            );
+            if (!Array.isArray(matches) || !matches.length) {
+              message.textContent = "No booking was found for PNR " + pnr + ".";
+              return;
+            }
+            if (matches.length !== 1)
+              throw new Error("More than one booking uses this PNR; no records were deleted.");
+            if (
+              !confirm(
+                "Permanently delete booking PNR " +
+                  pnr +
+                  "? This removes the booking and linked seat records. This action cannot be undone.",
+              )
+            ) {
+              message.textContent = "Deletion cancelled. The booking is unchanged.";
+              return;
+            }
+            message.textContent = "Deleting booking...";
+            const deleted = await adminBusRequest(
+              "/rest/v1/app_bookings?pnr=eq." +
+                encodeURIComponent(pnr) +
+                "&select=id,pnr",
+              {
+                method: "DELETE",
+                headers: { Prefer: "return=representation" },
+              },
+            );
+            if (Array.isArray(deleted) && deleted.length > 1)
+              throw new Error("Multiple rows matched this PNR. Check the database before retrying.");
+            const remaining = await adminBusRequest(
+              "/rest/v1/app_bookings?select=id&pnr=eq." +
+                encodeURIComponent(pnr),
+            );
+            if (!Array.isArray(remaining) || remaining.length)
+              throw new Error("The booking still exists. Database constraints may have prevented deletion.");
+
+            const cleanupWarnings = [];
+            for (const filter of [
+              "booking_id=eq." + encodeURIComponent(matches[0].id),
+              "booking_pnr=eq." + encodeURIComponent(pnr),
+              "pnr=eq." + encodeURIComponent(pnr),
+            ]) {
+              const field = filter.split("=")[0];
+              try {
+                await adminBusRequest(
+                  "/rest/v1/app_booking_segments?" + filter,
+                  { method: "DELETE" },
+                );
+                break;
+              } catch (error) {
+                const missingColumn = new RegExp(
+                  "column .*" + field + ".*does not exist|" + field + ".*does not exist",
+                  "i",
+                ).test(error.message);
+                if (!missingColumn) {
+                  cleanupWarnings.push("Seat allocation cleanup: " + error.message);
+                  break;
+                }
+              }
+            }
+            try {
+              await adminBusRequest(
+                "/rest/v1/admin_notifications?pnr=eq." + encodeURIComponent(pnr),
+                { method: "DELETE" },
+              );
+            } catch (error) {
+              cleanupWarnings.push("Notification cleanup: " + error.message);
+            }
+            pnrInput.value = "";
+            allAdminReportRows = null;
+            message.textContent = cleanupWarnings.length
+              ? "Booking " + pnr + " was deleted. " + cleanupWarnings.join(" ")
+              : "Booking " + pnr + " and its linked records were deleted.";
+            if (typeof renderAdmin === "function") renderAdmin();
+            window.dispatchEvent(new Event("apniBus:admin-booking-data-changed"));
+          } catch (error) {
+            message.textContent = "Could not delete booking: " + error.message;
+          } finally {
+            button.disabled = false;
+          }
+        });
+      }
+
       const printButton = $("printBtn");
       if (printButton) {
         printButton.onclick = () => {
@@ -6452,6 +7566,66 @@
 ================================ */
       // Account booking history is loaded directly from the current Supabase booking tables.
       // Load authenticated customer bookings directly from the current Supabase tables.
+      async function resolveCustomerBusDetails(ticket) {
+        const details = {
+          busType: ticket?.bus_type || ticket?.busType || "—",
+          operatorName: ticket?.operator_name || ticket?.operatorName || "—",
+        };
+        try {
+          const filters = [
+            "select=id,operator_id,bus_name,bus_number,bus_type",
+            `bus_name=eq.${encodeURIComponent(ticket?.bus_name || "")}`,
+          ];
+          if (ticket?.bus_number)
+            filters.push(`bus_number=eq.${encodeURIComponent(ticket.bus_number)}`);
+          const busResponse = await fetch(
+            SUPABASE_URL.replace(/\/$/, "") + "/rest/v1/app_buses?" + filters.join("&"),
+            { headers: customerAuthHeaders() },
+          );
+          if (!busResponse.ok) return details;
+          const busRows = await busResponse.json();
+          const bus = Array.isArray(busRows) ? busRows[0] : null;
+          if (!bus) return details;
+          details.busType = ticket?.bus_type || ticket?.busType || bus.bus_type || "—";
+          if (details.operatorName === "—" && bus.operator_id) {
+            const operatorResponse = await fetch(
+              SUPABASE_URL.replace(/\/$/, "") +
+                `/rest/v1/app_operators?select=operator_name&id=eq.${encodeURIComponent(bus.operator_id)}`,
+              { headers: customerAuthHeaders() },
+            );
+            if (operatorResponse.ok) {
+              const operatorRows = await operatorResponse.json();
+              details.operatorName = operatorRows?.[0]?.operator_name || "—";
+            }
+          }
+        } catch (error) {
+          console.warn("Could not load customer ticket bus details:", error);
+        }
+        return details;
+      }
+      async function mapWithConcurrency(items, limit, mapper) {
+        const results = new Array(items.length);
+        let nextIndex = 0;
+        async function worker() {
+          while (true) {
+            const index = nextIndex++;
+            if (index >= items.length) return;
+            try {
+              results[index] = { value: await mapper(items[index], index) };
+            } catch (error) {
+              results[index] = { error };
+            }
+          }
+        }
+        await Promise.all(
+          Array.from(
+            { length: Math.min(Math.max(1, limit), items.length) },
+            worker,
+          ),
+        );
+        return results;
+      }
+      let customerBookingDisplayLimit = 25;
       async function rendercurrentAccountBookings() {
         const container = $("myBookingsList");
         const stats = $("bookingStats");
@@ -6470,7 +7644,8 @@
             SUPABASE_URL.replace(/\/$/, "") +
             "/rest/v1/app_bookings?select=pnr,status,payment_status,created_at,passenger_details&customer_user_id=eq." +
             encodeURIComponent(session.userId) +
-            "&order=created_at.desc";
+            "&order=created_at.desc&limit=" +
+            encodeURIComponent(customerBookingDisplayLimit);
           const response = await fetch(url, { headers: customerAuthHeaders() });
           const raw = await response.text();
           let rows;
@@ -6495,10 +7670,10 @@
             "PNR",
             "Booking Date",
             "Status",
-            "Bus",
+            "Bus No.",
             "Journey Date",
             "Route",
-            "Seats",
+            "Seat No.",
             "Passengers",
             "Total Fare",
             "Action",
@@ -6512,12 +7687,16 @@
           const tbody = document.createElement("tbody");
           let confirmed = 0,
             cancelled = 0;
-          for (const row of rows) {
+          const ticketLookups = await mapWithConcurrency(rows, 6, (row) =>
+            supabaseRpc("app_lookup_booking", { p_pnr: row.pnr }),
+          );
+          for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+            const row = rows[rowIndex];
             const tr = document.createElement("tr");
             try {
-              const ticketData = await supabaseRpc("app_lookup_booking", {
-                p_pnr: row.pnr,
-              });
+              if (ticketLookups[rowIndex]?.error)
+                throw ticketLookups[rowIndex].error;
+              const ticketData = ticketLookups[rowIndex]?.value;
               const item = Array.isArray(ticketData)
                 ? ticketData[0]
                 : ticketData;
@@ -6538,7 +7717,7 @@
                   ? new Date(bookingCreatedAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
                   : "—",
                 status,
-                item.bus_name || "—",
+                item.bus_number || item.busNumber || "—",
                 item.journey_date || "—",
                 (item.boarding_name || "—") +
                   " → " +
@@ -6570,12 +7749,17 @@
               view.type = "button";
               view.className = "row-action";
               view.textContent = "View Ticket";
-              view.onclick = () => {
+              view.onclick = async () => {
+                view.disabled = true;
+                view.textContent = "Loading…";
+                const busDetails = await resolveCustomerBusDetails(item);
                 const booking = {
                   id: item.booking_pnr,
                   status: item.booking_status || row.status,
                   bus: item.bus_name,
+                  busType: busDetails.busType,
                   busNumber: item.bus_number,
+                  operatorName: busDetails.operatorName,
                   from: item.boarding_name,
                   to: item.dropping_name,
                   date: item.journey_date,
@@ -6594,6 +7778,8 @@
                 renderTicket(booking);
                 $("ticketPanel").hidden = false;
                 $("ticketPanel").scrollTop = 0;
+                view.disabled = false;
+                view.textContent = "View Ticket";
               };
               action.appendChild(view);
               if (status === "confirmed") {
@@ -6659,6 +7845,17 @@
           }
           table.appendChild(tbody);
           wrap.appendChild(table);
+          if (rows.length >= customerBookingDisplayLimit) {
+            const loadMore = document.createElement("button");
+            loadMore.type = "button";
+            loadMore.className = "data-table-load-more";
+            loadMore.textContent = "Load Older Bookings";
+            loadMore.onclick = async () => {
+              customerBookingDisplayLimit += 25;
+              await rendercurrentAccountBookings();
+            };
+            wrap.appendChild(loadMore);
+          }
           if (stats) {
             const paid = rows.filter((r) => String(r.payment_status || "").toLowerCase() === "paid").length;
             const pending = rows.filter((r) =>
@@ -6666,7 +7863,7 @@
               String(r.payment_status || "").toLowerCase() !== "paid"
             ).length;
             [
-              ["Total Bookings", rows.length],
+              ["Bookings Shown", rows.length],
               ["Confirmed", confirmed],
               ["Cancelled", cancelled],
               ["Paid", paid],
@@ -6773,17 +7970,17 @@
               if (row.is_read) {
                 addText("small", "✓ Read", item);
               } else {
-                const readButton = addText(
-                  "button",
-                  "MARK AS READ",
-                  item,
-                );
-
+                const readButton = document.createElement("button");
                 readButton.type = "button";
+                readButton.className = "notification-read-icon";
+                readButton.setAttribute("aria-label", "Mark notification as read");
+                readButton.title = "Mark as read";
+                readButton.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.5"/><path d="m8.5 12 2.3 2.3 4.8-5"/></svg>';
+                item.appendChild(readButton);
 
                 readButton.onclick = async () => {
                   readButton.disabled = true;
-                  readButton.textContent = "Updating...";
+                  readButton.setAttribute("aria-busy", "true");
 
                   try {
                     await adminBusRequest(
@@ -6804,7 +8001,7 @@
                   } catch (error) {
                     alert("Could not update the notification: " + error.message);
                     readButton.disabled = false;
-                    readButton.textContent = "MARK AS READ";
+                    readButton.removeAttribute("aria-busy");
                   }
                 };
               }
@@ -6891,16 +8088,23 @@
       const reportPeriodSelect = $("bookingReportPeriod");
       const refreshReportsButton = $("refreshBookingReportsBtn");
       let latestAdminReportRows = [];
+      let allAdminReportRows = null;
+      let adminBookingDisplayLimit = 10;
+      async function loadAdminReportRows() {
+        return adminBusRequest(
+          "/rest/v1/app_bookings?select=id,status,payment_status,created_at,fare,seats&order=created_at.desc",
+        );
+      }
       if (reportPeriodSelect)
         reportPeriodSelect.addEventListener("change", () =>
-          renderBookingReports(latestAdminReportRows),
+          renderBookingReports(allAdminReportRows || []),
         );
       if (refreshReportsButton)
         refreshReportsButton.addEventListener("click", async () => {
           refreshReportsButton.disabled = true;
           try {
-            latestAdminReportRows = await loadAdminBookingsFromSupabase();
-            renderBookingReports(latestAdminReportRows);
+            allAdminReportRows = await loadAdminReportRows();
+            renderBookingReports(allAdminReportRows);
           } catch (error) {
             $("adminBookingReports").textContent =
               "Could not load the report: " + error.message;
@@ -7004,22 +8208,21 @@
             busContainer.appendChild(card);
           });
         bookingContainer.textContent = "Loading bookings from Supabase...";
-        loadAdminBookingsFromSupabase()
+        loadAdminBookingsFromSupabase(adminBookingDisplayLimit)
           .then(function (remoteBookings) {
             remoteBookings = [...remoteBookings].sort((a, b) =>
               new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
             );
             latestAdminReportRows = remoteBookings;
-            renderBookingReports(remoteBookings);
             bookingContainer.replaceChildren();
             const totalActive = remoteBookings.filter(
               (b) => b.status === "confirmed",
             ).length;
             addText(
               "p",
-              "Total bookings: " +
+              "Latest bookings shown: " +
                 remoteBookings.length +
-                " | Active bookings: " +
+                " | Active in this list: " +
                 totalActive,
               bookingContainer,
             );
@@ -7063,7 +8266,7 @@
 
             const searchInfo = document.createElement("small");
             searchInfo.textContent =
-              "Search by PNR, mobile number, trip, or route.";
+              "Showing the latest " + adminBookingDisplayLimit + " bookings. Use the controls below to load more records.";
             searchInfo.style.cssText = `
             margin-top:5px;
             color:#64748b;
@@ -7100,18 +8303,8 @@
             thead.appendChild(head);
             table.appendChild(thead);
             const tbody = document.createElement("tbody");
-            remoteBookings.forEach(async function (row) {
-              const ticketData = await adminBusRequest(
-                "/rest/v1/rpc/app_lookup_booking",
-                {
-                  method: "POST",
-                  body: JSON.stringify({ p_pnr: row.pnr }),
-                },
-              );
-
-              const ticket = Array.isArray(ticketData)
-                ? ticketData[0]
-                : ticketData;
+            remoteBookings.forEach(function (row) {
+              const ticket = row._ticket_details || {};
               const booking = adminBookingToTicket(row, ticket || {});
               const tr = document.createElement("tr");
               tr.dataset.search = [
@@ -7262,6 +8455,50 @@
             table.appendChild(tbody);
             tableWrap.appendChild(table);
             bookingContainer.appendChild(tableWrap);
+            if (remoteBookings.length >= adminBookingDisplayLimit) {
+              const controls = document.createElement("div");
+              controls.style.cssText = "display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:12px";
+              const loadMore = document.createElement("button");
+              loadMore.type = "button";
+              loadMore.className = "data-table-load-more";
+              loadMore.textContent = "Load More";
+              loadMore.onclick = () => {
+                loadMore.disabled = true;
+                adminBookingDisplayLimit += 10;
+                renderAdmin();
+              };
+              const loadAll = document.createElement("button");
+              loadAll.type = "button";
+              loadAll.className = "data-table-load-more";
+              loadAll.textContent = "Load All";
+              loadAll.onclick = async () => {
+                loadAll.disabled = true;
+                try {
+                  const countResult = await adminBusRequest(
+                    "/rest/v1/app_bookings?select=id",
+                    {
+                      method: "HEAD",
+                      includeHeaders: true,
+                      headers: {
+                        Prefer: "count=exact",
+                        Range: "0-0",
+                        "Range-Unit": "items",
+                      },
+                    },
+                  );
+                  const countText = countResult.headers.get("content-range")?.split("/").pop();
+                  const count = Number(countText);
+                  if (!Number.isFinite(count)) throw new Error("Could not determine the total booking count.");
+                  adminBookingDisplayLimit = count;
+                  renderAdmin();
+                } catch (error) {
+                  alert("Could not load all bookings: " + error.message);
+                  loadAll.disabled = false;
+                }
+              };
+              controls.append(loadMore, loadAll);
+              bookingContainer.appendChild(controls);
+            }
           })
           .catch(function (error) {
             bookingContainer.replaceChildren();
@@ -7307,15 +8544,27 @@
       }
       
       // Export bookings as CSV
-      $("exportBookingsBtn").onclick = function () {
-        const exportRows = latestAdminReportRows || [];
+      $("exportBookingsBtn").onclick = async function () {
+        const button = $("exportBookingsBtn");
+        const originalText = button.textContent;
+        button.disabled = true;
+        button.textContent = "Preparing export...";
+        try {
+          const exportRows = [];
+          const pageSize = 50;
+          let offset = 0;
+          let page;
+          do {
+            page = await loadAdminBookingsFromSupabase(pageSize, offset);
+            exportRows.push(...page);
+            offset += page.length;
+          } while (page.length === pageSize);
+          if (!exportRows.length) {
+            alert("There are no bookings to export.");
+            return;
+          }
 
-        if (!exportRows.length) {
-          alert("There are no bookings to export.");
-          return;
-        }
-
-        const headers = [
+          const headers = [
           "PNR",
           "Status",
           "Bus",
@@ -7329,41 +8578,47 @@
           "Total Fare",
           "Booking Created At",
           "Cancelled At",
-        ];
-
-        const rows = exportRows.map(function (b) {
-          const people = b.people || [];
-
-          return [
-            b.pnr || b.id || "",
-            String(b.status || "").toUpperCase(),
-            b.bus_number || b.bus || "",
-            b.from_city || b.from || "",
-            b.to_city || b.to || "",
-            b.journey_date || b.date || "",
-            (b.seats || []).join(", "),
-            people.map((p) => p.name || "").join(", "),
-            people.map((p) => p.age || "").join(", "),
-            people.map((p) => p.phone || "").join(", "),
-            b.total_fare ?? b.total ?? "",
-            b.created_at || b.createdAt || "",
-            b.cancelled_at || b.cancelledAt || "",
           ];
-        });
 
-        const csv =
-          "\uFEFF" +
-          [headers, ...rows]
-            .map((row) => row.map(csvCell).join(","))
-            .join("\r\n");
+          const rows = exportRows.map(function (b) {
+            const people = b.passenger_details || b.people || [];
 
-        downloadFile(
-          "apni-bus-bookings-" + today() + ".csv",
-          csv,
-          "text/csv;charset=utf-8;",
-        );
+            return [
+              b.pnr || b.id || "",
+              String(b.status || "").toUpperCase(),
+              b.bus_number || b.bus_name || b.bus || "",
+              b.source || b.boarding_name_snapshot || b.from || "",
+              b.destination || b.dropping_name_snapshot || b.to || "",
+              b.journey_date || b.date || "",
+              (b.seats || []).join(", "),
+              people.map((p) => p.name || "").join(", "),
+              people.map((p) => p.age || "").join(", "),
+              people.map((p) => p.phone || "").join(", "),
+              b.total_fare ?? b.fare ?? b.total ?? "",
+              b.created_at || b.createdAt || "",
+              b.cancelled_at || b.cancelledAt || "",
+            ];
+          });
 
-        alert("Bookings CSV download started.");
+          const csv =
+            "\uFEFF" +
+            [headers, ...rows]
+              .map((row) => row.map(csvCell).join(","))
+              .join("\r\n");
+
+          downloadFile(
+            "apni-bus-bookings-" + today() + ".csv",
+            csv,
+            "text/csv;charset=utf-8;",
+          );
+
+          alert("Bookings CSV download started.");
+        } catch (error) {
+          alert("Could not export bookings: " + error.message);
+        } finally {
+          button.disabled = false;
+          button.textContent = originalText;
+        }
       };
 
       const restoreFileInput = $("restoreBackupFile");
@@ -7934,7 +9189,20 @@
           loginForm.reset();
           registerForm.reset();
           refreshAuthStatus();
-          showDashboard();
+          let resumePanel = null;
+          try {
+            resumePanel = sessionStorage.getItem(BOOKING_AUTH_RETURN_KEY);
+            sessionStorage.removeItem(BOOKING_AUTH_RETURN_KEY);
+          } catch (_) {}
+          if (["results", "seatPanel", "passengerPanel", "reviewPanel"].includes(resumePanel)) {
+            window.dispatchEvent(
+              new CustomEvent("apniBus:customer-authenticated-for-booking", {
+                detail: { panel: resumePanel },
+              }),
+            );
+          } else {
+            showDashboard();
+          }
         }
         customerTab.addEventListener("click", async function () {
           saveActiveTab("customerTab");
@@ -7957,6 +9225,11 @@
         el("bookTab").addEventListener("click", function () {
           authPanel.hidden = true;
           showCustomer();
+        });
+        el("authNewTicketBtn").addEventListener("click", function () {
+          authPanel.hidden = true;
+          showCustomer();
+          window.scrollTo({ top: 0, behavior: "smooth" });
         });
         authSwitchBtn.addEventListener("click", function () {
           setMode(!registerMode);
@@ -8214,7 +9487,10 @@
           });
         const logoutButton = document.createElement("button");
         logoutButton.type = "button";
-        logoutButton.textContent = "Admin Logout";
+        logoutButton.setAttribute("aria-label", "Logout");
+        logoutButton.title = "Logout";
+        logoutButton.innerHTML =
+          '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M10.09 15.59 11.5 17l5-5-5-5-1.41 1.41L12.67 11H3v2h9.67zM19 3H5c-1.1 0-2 .9-2 2v4h2V5h14v14H5v-4H3v4c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/></svg>';
         logoutButton.id = "adminLogoutBtn";
         logoutButton.addEventListener("click", async function () {
           const token = getAdminAccessToken();
@@ -8235,16 +9511,17 @@
           openAdminLogin();
           message.textContent = "Admin logged out.";
         });
-        const adminHeaderActions = document.createElement("div");
-        adminHeaderActions.className = "admin-header-actions";
-        adminHeaderActions.appendChild(logoutButton);
+        const adminHeaderActions =
+          adminPanel.querySelector(".admin-header-actions") ||
+          document.createElement("div");
+        adminHeaderActions.classList.add("admin-header-actions");
         const notificationTopbar = adminPanel.querySelector(".admin-topbar");
         const notificationBell = notificationTopbar?.querySelector(
           "#adminNotificationBell",
         );
         if (notificationBell) adminHeaderActions.appendChild(notificationBell);
+        adminHeaderActions.appendChild(logoutButton);
         notificationTopbar?.remove();
-        adminPanel.prepend(adminHeaderActions);
 
         // Restore the Admin screen AFTER its event handlers are initialized.
         // The earlier page-level tab restore runs before this initializer and
@@ -8305,6 +9582,7 @@
           });
           if ([...el.options].some((o) => o.value === old)) el.value = old;
         };
+        const exhaustedAdminTablePages = new Set();
         const list = (id, rows, render) => {
           const el = $a(id);
           if (!el) return;
@@ -8536,6 +9814,84 @@
           table.appendChild(tbody);
           wrap.appendChild(table);
           el.appendChild(wrap);
+          const queryFor = () => {
+            const queries = {
+              currentOperators: "app_operators?select=id,operator_name,phone,email,active&order=operator_name",
+              currentBuses: "app_buses?select=id,operator_id,bus_name,bus_number,bus_type,total_seats,active&order=bus_name",
+              currentRoutes: "app_routes?select=id,bus_id,route_name,fare_type,active&order=route_name",
+              currentRouteStops: "app_route_stops?select=id,route_id,stop_order,stop_name,arrival_time,departure_time&order=stop_order",
+              currentTripsAdmin: "app_trips?select=id,route_id,bus_id,journey_date,status&order=journey_date.desc",
+            };
+            if (id === "currentTripFares") {
+              const tripId = $a("currentFareTrip")?.value;
+              return tripId
+                ? "app_trip_fares?select=id,trip_id,boarding_stop_id,dropping_stop_id,fare&trip_id=eq." + enc(tripId)
+                : "";
+            }
+            return queries[id] || "";
+          };
+          const setRows = (nextRows) => {
+            if (id === "currentOperators") operators = nextRows;
+            else if (id === "currentBuses") buses = nextRows;
+            else if (id === "currentRoutes") routes = nextRows;
+            else if (id === "currentRouteStops") routeStops = nextRows;
+            else if (id === "currentTripsAdmin") trips = nextRows;
+            else if (id === "currentTripFares") tripFares = nextRows;
+          };
+          if (rows.length >= 10 && !exhaustedAdminTablePages.has(id)) {
+            const controls = document.createElement("div");
+            controls.className = "admin-table-pagination";
+            controls.style.cssText = "display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:12px";
+            const loadPage = async (loadAll) => {
+              const path = queryFor();
+              if (!path) return;
+              for (let offset = rows.length; ; ) {
+                const batchSize = loadAll ? 1000 : 10;
+                const nextRows = await req(path + "&limit=" + batchSize + "&offset=" + offset);
+                if (!Array.isArray(nextRows) || !nextRows.length) {
+                  exhaustedAdminTablePages.add(id);
+                  break;
+                }
+                rows.push(...nextRows);
+                offset += nextRows.length;
+                if (nextRows.length < batchSize) {
+                  exhaustedAdminTablePages.add(id);
+                  break;
+                }
+                if (!loadAll) break;
+              }
+              setRows(rows);
+              if (id === "currentOperators") {
+                fill("currentBusOperator", operators, "id", (item) => item.operator_name);
+              } else if (id === "currentBuses") {
+                fill("currentRouteBus", buses, "id", (item) => item.bus_name + " (" + (item.bus_number || "No number") + ")");
+              } else if (id === "currentRoutes") {
+                fill("currentStopRoute", routes, "id", (item) => item.route_name);
+                fill("currentTripRoute", routes, "id", (item) => item.route_name);
+              } else if (id === "currentTripsAdmin") {
+                fill("currentFareTrip", trips, "id", (item) => item.journey_date + " | " + (routes.find((route) => route.id === item.route_id)?.route_name || item.id));
+              }
+              list(id, rows, render);
+            };
+            const loadMore = document.createElement("button");
+            loadMore.type = "button";
+            loadMore.className = "data-table-load-more";
+            loadMore.textContent = "Load More";
+            loadMore.onclick = async () => {
+              loadMore.disabled = true;
+              try { await loadPage(false); } catch (error) { msg("Could not load more rows: " + error.message, true); loadMore.disabled = false; }
+            };
+            const loadAll = document.createElement("button");
+            loadAll.type = "button";
+            loadAll.className = "data-table-load-more";
+            loadAll.textContent = "Load All";
+            loadAll.onclick = async () => {
+              loadAll.disabled = true;
+              try { await loadPage(true); } catch (error) { msg("Could not load all rows: " + error.message, true); loadAll.disabled = false; }
+            };
+            controls.append(loadMore, loadAll);
+            el.appendChild(controls);
+          }
         };
         let operators = [],
           buses = [],
@@ -8548,23 +9904,32 @@
           editingBusRecordId = null,
           editingRouteId = null,
           editingStopId = null;
-        async function loadAll() {
+        let adminLoadPromise = null;
+        function loadAll() {
+          if (adminLoadPromise) return adminLoadPromise;
+          adminLoadPromise = loadAllData().finally(() => {
+            adminLoadPromise = null;
+          });
+          return adminLoadPromise;
+        }
+        async function loadAllData() {
           try {
+            ["currentOperators", "currentBuses", "currentRoutes", "currentRouteStops", "currentTripsAdmin", "currentTripFares"].forEach((id) => exhaustedAdminTablePages.delete(id));
             [operators, buses, routes, routeStops, trips] = await Promise.all([
               req(
-                "app_operators?select=id,operator_name,phone,email,active&order=operator_name",
+                "app_operators?select=id,operator_name,phone,email,active&order=operator_name&limit=10",
               ),
               req(
-                "app_buses?select=id,operator_id,bus_name,bus_number,bus_type,total_seats,active&order=bus_name",
+                "app_buses?select=id,operator_id,bus_name,bus_number,bus_type,total_seats,active&order=bus_name&limit=10",
               ),
               req(
-                "app_routes?select=id,bus_id,route_name,fare_type,active&order=route_name",
+                "app_routes?select=id,bus_id,route_name,fare_type,active&order=route_name&limit=10",
               ),
               req(
-                "app_route_stops?select=id,route_id,stop_order,stop_name,arrival_time,departure_time&order=stop_order",
+                "app_route_stops?select=id,route_id,stop_order,stop_name,arrival_time,departure_time&order=stop_order&limit=10",
               ),
               req(
-                "app_trips?select=id,route_id,bus_id,journey_date,status&order=journey_date.desc&limit=200",
+                "app_trips?select=id,route_id,bus_id,journey_date,status&order=journey_date.desc&limit=10",
               ),
             ]);
             // UPDATE OVERVIEW STATISTICS
@@ -8577,27 +9942,69 @@
             setOverviewStat("overviewBuses", buses.length);
             setOverviewStat("overviewRoutes", routes.length);
             setOverviewStat("overviewTrips", trips.length);
+            const countTables = [
+              ["overviewOperators", "app_operators"],
+              ["overviewBuses", "app_buses"],
+              ["overviewRoutes", "app_routes"],
+              ["overviewTrips", "app_trips"],
+            ];
+            const countResults = await Promise.allSettled(
+              countTables.map(([, table]) =>
+                req(table + "?select=id", {
+                  method: "HEAD",
+                  includeHeaders: true,
+                  headers: {
+                    Prefer: "count=exact",
+                    Range: "0-0",
+                    "Range-Unit": "items",
+                  },
+                }),
+              ),
+            );
+            countResults.forEach((result, index) => {
+              if (result.status !== "fulfilled") return;
+              const countText = result.value?.headers?.get("content-range")?.split("/").pop();
+              const count = Number(countText);
+              if (Number.isFinite(count)) setOverviewStat(countTables[index][0], count);
+            });
 
             try {
-              const bookingRows = await req(
-                "app_bookings?select=id,created_at,status,payment_status,fare,seats",
-              );
-
-              setOverviewStat("overviewBookings", bookingRows.length);
-
               const today = new Date().toLocaleDateString("en-CA", {
                 timeZone: "Asia/Kolkata",
               });
+              const tomorrow = new Date(
+                new Date(today + "T00:00:00Z").getTime() + 86400000,
+              ).toISOString().slice(0, 10);
+              const todayStart = encodeURIComponent(today + "T00:00:00+05:30");
+              const tomorrowStart = encodeURIComponent(tomorrow + "T00:00:00+05:30");
+              const [bookingCountResult, todayRows] = await Promise.all([
+                req("app_bookings?select=id", {
+                  method: "HEAD",
+                  includeHeaders: true,
+                  headers: {
+                    Prefer: "count=exact",
+                    Range: "0-0",
+                    "Range-Unit": "items",
+                  },
+                }),
+                req(
+                  "app_bookings?select=status,payment_status,fare,seats&created_at=gte." +
+                    todayStart +
+                    "&created_at=lt." +
+                    tomorrowStart,
+                ),
+              ]);
+              const countRange = bookingCountResult?.headers?.get("content-range") || "";
+              const countText = countRange.split("/").pop();
+              const totalBookingCount = countText && countText !== "*" ? Number(countText) : NaN;
+              setOverviewStat(
+                "overviewBookings",
+                Number.isFinite(totalBookingCount) ? totalBookingCount : "—",
+              );
 
-              const todayBookings = bookingRows.filter((booking) => {
-                const bookingDate = new Date(
-                  booking.created_at,
-                ).toLocaleDateString("en-CA", {
-                  timeZone: "Asia/Kolkata",
-                });
-
-                return bookingDate === today && booking.status !== "cancelled";
-              });
+              const todayBookings = (Array.isArray(todayRows) ? todayRows : []).filter(
+                (booking) => booking.status !== "cancelled",
+              );
 
               setOverviewStat("overviewTodayBookings", todayBookings.length);
 
@@ -8977,8 +10384,9 @@ if (recentContainer) {
             );
             tripFares = await req(
               "app_trip_fares?select=id,trip_id,boarding_stop_id,dropping_stop_id,fare&trip_id=eq." +
-                enc(tripId),
+                enc(tripId) + "&limit=10",
             );
+            exhaustedAdminTablePages.delete("currentTripFares");
             list(
               "currentTripFares",
               tripFares,
@@ -9185,6 +10593,9 @@ if (recentContainer) {
               if (!$a("adminPanel").hidden && getAdminAccessToken()) loadAll();
             }, 100);
           });
+        window.addEventListener("apniBus:admin-booking-data-changed", () => {
+          if (!$a("adminPanel").hidden && getAdminAccessToken()) loadAll();
+        });
 
         window.addEventListener("load", () => {
           setTimeout(() => {
@@ -9217,6 +10628,30 @@ if (recentContainer) {
                 view.dataset.adminView === target,
               );
             });
+            if (
+              target === "reports" &&
+              allAdminReportRows === null &&
+              refreshReportsButton
+            )
+              refreshReportsButton.click();
+
+            if (window.matchMedia("(max-width: 760px)").matches) {
+              const sidebar = button.closest(".admin-sidebar");
+              if (sidebar) {
+                const sidebarRect = sidebar.getBoundingClientRect();
+                const buttonRect = button.getBoundingClientRect();
+                sidebar.scrollTo({
+                  left: Math.max(
+                    0,
+                    sidebar.scrollLeft +
+                      buttonRect.left -
+                      sidebarRect.left -
+                      (sidebar.clientWidth - button.clientWidth) / 2,
+                  ),
+                  behavior: "smooth",
+                });
+              }
+            }
           });
         });
 
@@ -9255,6 +10690,7 @@ if (recentContainer) {
         };
         let currentTrips = [],
           currentTrip = null,
+          pendingAuthTrip = null,
           currentStops = [],
           currentFares = [],
           currentBookedSegments = [],
@@ -9491,7 +10927,7 @@ if (recentContainer) {
             for (const item of cards) {
               const card = document.createElement("div");
               card.className = "bus bus-result-card";
-              const title = addText("h3", "Bus Name: " + item.bus.bus_name, card);
+              const title = addText("h3", item.bus.bus_name, card);
               title.className = "bus-card-title";
               const facts = document.createElement("div");
               facts.className = "bus-card-facts";
@@ -9513,7 +10949,18 @@ if (recentContainer) {
               const btn = addText("button", "Select Seats", card);
               btn.type = "button";
               btn.className = "bus-card-select";
-              btn.onclick = () => openTrip(item, card);
+              btn.onclick = () => {
+                if (!readDemoAuthSession()) {
+                  const shouldLogin = confirm(
+                    "Please log in or create a customer account to continue to seat selection. Continue to login?",
+                  );
+                  if (!shouldLogin) return;
+                  pendingAuthTrip = { item, card };
+                  openDemoAuth("seatPanel");
+                  return;
+                }
+                openTrip(item, card);
+              };
               list.appendChild(card);
             }
           } catch (err) {
@@ -9638,11 +11085,6 @@ if (recentContainer) {
           q("passengerPanel").scrollIntoView({ behavior: "smooth" });
         };
         q("continueBtn").onclick = function () {
-          if (!readDemoAuthSession()) {
-            alert("Please log in or register in My Account before booking a ticket.");
-            openDemoAuth();
-            return;
-          }
           if (!currentTrip || !seats.length) {
             alert("Select a seat first.");
             return;
@@ -9671,7 +11113,7 @@ if (recentContainer) {
             [...seats].sort((a, b) => a - b).forEach((seat, i) => {
               const box = document.createElement("div");
               box.className = "passenger passenger-form-card";
-              addText("h3", `Passenger ${i + 1} — Seat ${seat}`, box);
+              addText("h3", `Passenger ${i + 1} — Seat No. ${seat}`, box);
               const appendField = (labelText, input, name) => {
                 const field = document.createElement("div");
                 field.className = "passenger-field" + (name === "name" ? " passenger-field-name" : "");
@@ -9783,7 +11225,7 @@ if (recentContainer) {
           addReviewDetail("Bus Name", currentTrip.bus.bus_name || "—");
           addReviewDetail("Bus Number", currentTrip.bus.bus_number || "Not provided");
           addReviewDetail("Bus Type", currentTrip.bus.bus_type || "Bus");
-          addReviewDetail("Seats", [...seats].sort((a, b) => a - b).join(", "));
+          addReviewDetail("Seat No.", [...seats].sort((a, b) => a - b).join(", "));
           addReviewDetail("Passengers", people.map((person, i) => `${i + 1}. ${person.name} (Age ${person.age}${person.is_disabled ? ", PwD" : ""})`).join("; "));
           addReviewDetail("Total Fare", money(currentFare * seats.length));
           q("passengerPanel").hidden = true;
@@ -9871,25 +11313,67 @@ if (recentContainer) {
           e.preventDefault();
           const pnr = q("lookupPnr").value.trim(),
             out = q("pnrResult");
-          out.replaceChildren();
+          const submit = q("pnrForm").querySelector('button[type="submit"]');
+          const originalText = submit.textContent;
+          submit.disabled = true;
+          submit.textContent = "Searching…";
+          showStatusMessage(out, "Looking up your booking…", "pnr-empty-state");
           try {
             const data = await rpc("app_lookup_booking", { p_pnr: pnr });
             const x = Array.isArray(data) ? data[0] : data;
             if (!x || !x.booking_pnr) {
-              showStatusMessage(out, "No booking was found for this PNR.");
+              showStatusMessage(out, "No booking was found for this PNR.", "pnr-empty-state");
               return;
             }
-            addText("h3", "Ticket Details", out);
-            [
-              ["PNR", x.booking_pnr],
-              ["Status", String(x.booking_status).toUpperCase()],
-              ["Bus", x.bus_name],
+            const card = document.createElement("div");
+            card.className = "pnr-result-card";
+            const heading = document.createElement("div");
+            heading.className = "pnr-result-heading";
+            addText("h3", "Booking Details", heading);
+            const status = addText("span", String(x.booking_status || "CONFIRMED").toUpperCase(), heading, "pnr-status-badge");
+            const isCancelled = String(x.booking_status || "").toLowerCase() === "cancelled";
+            if (isCancelled) status.classList.add("cancelled");
+            card.appendChild(heading);
+            const reference = document.createElement("div");
+            reference.className = "pnr-result-reference";
+            const pnrBlock = document.createElement("div");
+            pnrBlock.className = "pnr-reference-block";
+            addText("span", "Booking PNR", pnrBlock, "pnr-reference-label");
+            addText("strong", x.booking_pnr, pnrBlock, "pnr-reference-value");
+            reference.appendChild(pnrBlock);
+            const dateBlock = document.createElement("div");
+            dateBlock.className = "pnr-reference-block pnr-date-block";
+            addText("span", "Journey Date", dateBlock, "pnr-reference-label");
+            const journeyDateText = x.journey_date
+              ? new Date(`${x.journey_date}T00:00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
+              : "—";
+            addText("strong", journeyDateText, dateBlock, "pnr-reference-value");
+            reference.appendChild(dateBlock);
+            card.appendChild(reference);
+            const route = document.createElement("div");
+            route.className = "pnr-route-card";
+            const boarding = document.createElement("div");
+            boarding.className = "pnr-route-stop";
+            addText("span", "Boarding", boarding, "pnr-route-label");
+            addText("strong", x.boarding_name || "—", boarding, "pnr-route-name");
+            addText("span", x.boarding_time || "Time unavailable", boarding, "pnr-route-time");
+            const routeArrow = addText("span", "→", route, "pnr-route-arrow");
+            routeArrow.setAttribute("aria-hidden", "true");
+            const dropping = document.createElement("div");
+            dropping.className = "pnr-route-stop";
+            addText("span", "Dropping", dropping, "pnr-route-label");
+            addText("strong", x.dropping_name || "—", dropping, "pnr-route-name");
+            addText("span", x.dropping_time || "Time unavailable", dropping, "pnr-route-time");
+            route.prepend(boarding);
+            route.appendChild(dropping);
+            card.appendChild(route);
+            const grid = document.createElement("div");
+            grid.className = "pnr-result-grid";
+            const pnrDetails = [
+              ["Bus Name", x.bus_name],
               ["Bus Number", x.bus_number],
               ["Bus Type", x.bus_type],
-              ["Journey Date", x.journey_date],
-              ["Boarding", x.boarding_name + " — " + (x.boarding_time || "—")],
-              ["Dropping", x.dropping_name + " — " + (x.dropping_time || "—")],
-              ["Seats", (x.seats || []).join(", ")],
+              ["Seat No.", (x.seats || []).join(", ")],
               ["Total Fare", money(x.total_fare)],
               [
                 "Booked At",
@@ -9897,16 +11381,68 @@ if (recentContainer) {
                   ? new Date(x.booked_at).toLocaleString("en-IN")
                   : "—",
               ],
-            ].forEach(([k, v]) => {
-              const p = document.createElement("p");
-              addText("strong", k + ": ", p);
-              addText("span", v, p);
-              out.appendChild(p);
+            ];
+            if (isCancelled) {
+              pnrDetails.push([
+                "Cancelled On",
+                cancellationDateTimeLabel(x.cancelled_at || x.cancelledAt),
+              ]);
+            }
+            pnrDetails.forEach(([k, v]) => {
+              const item = document.createElement("div");
+              item.className = "pnr-result-item";
+              addText("span", k, item, "pnr-result-label");
+              addText("strong", v || "—", item, "pnr-result-value");
+              grid.appendChild(item);
             });
+            card.appendChild(grid);
+            out.replaceChildren(card);
           } catch (err) {
-            showStatusMessage(out, "Could not look up the PNR: " + err.message);
+            showStatusMessage(out, "Could not look up the PNR: " + err.message, "pnr-empty-state");
+          } finally {
+            submit.disabled = false;
+            submit.textContent = originalText;
           }
         };
+        window.addEventListener(
+          "apniBus:customer-authenticated-for-booking",
+          async (event) => {
+            const resumePanel = event.detail?.panel;
+            if (
+              !["results", "seatPanel", "passengerPanel", "reviewPanel"].includes(
+                resumePanel,
+              )
+            )
+              return;
+            saveActiveTab("bookTab");
+            if (resumePanel === "seatPanel" && pendingAuthTrip) {
+              q("authPanel").hidden = true;
+              const pending = pendingAuthTrip;
+              pendingAuthTrip = null;
+              await openTrip(pending.item, pending.card);
+              return;
+            }
+            [
+              "searchPanel",
+              "results",
+              "seatPanel",
+              "passengerPanel",
+              "reviewPanel",
+              "ticketPanel",
+              "pnrPanel",
+              "dashboardPanel",
+              "adminPanel",
+              "adminLoginPanel",
+              "authPanel",
+            ].forEach((id) => {
+              const panel = q(id);
+              if (panel) panel.hidden = true;
+            });
+            const panel = q(resumePanel);
+            panel.hidden = false;
+            panel.scrollIntoView({ behavior: "smooth", block: "start" });
+          },
+        );
       })();
     </script>
 
