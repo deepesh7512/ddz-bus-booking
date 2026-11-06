@@ -509,6 +509,205 @@
         }
       }
       
+      /* Refined ticket presentation */
+      #ticketPanel {
+        background: #f8fafc;
+        border: 1px solid #dbe3ed;
+        border-top: 5px solid #9f1d24;
+      }
+      #ticketPanel > h2 {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 18px;
+        color: #172033;
+        font-size: clamp(22px, 3vw, 28px);
+        letter-spacing: -0.03em;
+      }
+      #ticketPanel > h2::before {
+        content: "";
+        width: 4px;
+        height: 26px;
+        border-radius: 4px;
+        background: #c62828;
+      }
+      #ticket {
+        padding: 0 0 20px;
+        border-color: #d8e0ea;
+        border-radius: 18px;
+        box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
+      }
+      #ticket > h3:first-child {
+        display: flex;
+        align-items: center;
+        min-height: 82px;
+        margin: 0 0 18px;
+        padding: 22px 26px;
+        background: linear-gradient(120deg, #751b22 0%, #a5262d 58%, #c63b3b 100%);
+        font-size: clamp(18px, 2.5vw, 22px);
+        letter-spacing: -0.015em;
+      }
+      #ticket > .status,
+      #ticket > .cancelled {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin: 0 22px 16px;
+        padding: 11px 14px;
+        border: 1px solid #b9e8ce;
+        border-radius: 10px;
+        font-size: 13px;
+        letter-spacing: 0.01em;
+      }
+      #ticket > .status::before,
+      #ticket > .cancelled::before {
+        content: "";
+        width: 8px;
+        height: 8px;
+        flex: 0 0 8px;
+        border-radius: 50%;
+        background: currentColor;
+      }
+      #ticket > .cancelled { border-color: #fecaca; }
+      .ticket-details-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        margin: 0 22px 8px;
+      }
+      #ticket .ticket-detail-row {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 5px;
+        min-width: 0;
+        min-height: 68px;
+        margin: 0;
+        padding: 12px 13px;
+        border: 1px solid #e8edf3;
+        border-radius: 10px;
+        background: #fff;
+        overflow-wrap: anywhere;
+      }
+      #ticket .ticket-detail-row > strong {
+        flex: none;
+        color: #718096;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.055em;
+        text-transform: uppercase;
+      }
+      #ticket .ticket-detail-row > span {
+        text-align: left;
+        color: #172033;
+        font-size: 14px;
+        font-weight: 650;
+        line-height: 1.4;
+      }
+      #ticket .ticket-detail-row[data-label="pnr"] {
+        grid-column: 1 / -1;
+        min-height: 76px;
+        border-color: #f3c8ca;
+        background: linear-gradient(110deg, #fff8f8, #fff);
+      }
+      #ticket .ticket-detail-row[data-label="pnr"] > span {
+        color: #9f1d24;
+        font-size: 21px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+      }
+      #ticket .ticket-detail-row[data-label="route"] {
+        grid-column: 1 / -1;
+        background: #f8fafc;
+      }
+      #ticket .ticket-detail-row[data-label="total-fare"] {
+        border-color: #d6e8dd;
+        background: #f4fbf6;
+      }
+      #ticket > h3:not(:first-child) {
+        margin: 20px 22px 12px;
+        padding: 12px 14px;
+        border: 0;
+        border-left: 4px solid #a5262d;
+        border-radius: 8px;
+        background: #f8fafc;
+        color: #263244;
+        font-size: 15px;
+        letter-spacing: 0.01em;
+      }
+      #ticket .ticket-passenger-card {
+        margin: 10px 22px;
+        padding: 16px 18px;
+        border-color: #e2e8f0;
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.035);
+      }
+      .ticket-seat-chip {
+        display: inline-flex;
+        align-items: center;
+        min-height: 25px;
+        padding: 4px 9px;
+        border-radius: 999px;
+        background: #fff1f2;
+        color: #9f1d24;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+      }
+      .ticket-passenger-name {
+        margin: 9px 0 12px;
+        color: #172033;
+        font-size: 16px;
+        font-weight: 750;
+      }
+      .ticket-passenger-meta {
+        display: grid;
+        grid-template-columns: auto 1fr auto 1fr;
+        align-items: baseline;
+        gap: 6px 10px;
+        padding-top: 10px;
+        border-top: 1px solid #edf1f5;
+      }
+      .ticket-passenger-meta p {
+        margin: 0;
+        color: #718096;
+        font-size: 12px;
+      }
+      .ticket-passenger-meta strong {
+        min-width: 0;
+        color: #334155;
+        font-size: 13px;
+        overflow-wrap: anywhere;
+      }
+      #ticket > p:not(.status):not(.cancelled) {
+        margin: 14px 22px 0;
+        color: #64748b;
+        font-size: 12px;
+      }
+      @media (max-width: 600px) {
+        #ticketPanel { padding: 14px; }
+        #ticket { border-radius: 14px; }
+        #ticket > h3:first-child { min-height: 70px; padding: 18px; }
+        .ticket-details-grid {
+          grid-template-columns: minmax(0, 1fr);
+          gap: 8px;
+          margin: 0 13px 8px;
+        }
+        #ticket .ticket-detail-row,
+        #ticket .ticket-detail-row[data-label="pnr"],
+        #ticket .ticket-detail-row[data-label="route"] {
+          grid-column: auto;
+          min-height: 60px;
+        }
+        #ticket .ticket-detail-row[data-label="pnr"] > span { font-size: 19px; }
+        #ticket > .status,
+        #ticket > .cancelled { margin: 0 13px 12px; }
+        #ticket > h3:not(:first-child) { margin: 16px 13px 10px; }
+        #ticket .ticket-passenger-card { margin: 9px 13px; padding: 14px; }
+        #ticket > p:not(.status):not(.cancelled) { margin-right: 13px; margin-left: 13px; }
+      }
+
       #adminBookingReports {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -1942,7 +2141,50 @@
           font-size: 14px !important;
         }
       }
-
+      /* Print only the generated ticket to avoid blank pages from hidden panels. */
+      @media print {
+        html, body {
+          width: 100% !important;
+          height: auto !important;
+          min-height: 0 !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          overflow: visible !important;
+        }
+        body > :not(#directPrintContainer) { display: none !important; }
+        #directPrintContainer {
+          position: fixed !important;
+          inset: 0 auto auto 0 !important;
+          width: 100% !important;
+        }
+      }
+      @media print {
+        html, body {
+          display: block !important;
+          width: auto !important;
+          height: auto !important;
+          min-height: 0 !important;
+          max-height: none !important;
+          overflow: visible !important;
+        }
+        body > :not(#directPrintContainer) { display: none !important; }
+        #directPrintContainer {
+          display: block !important;
+          position: static !important;
+          inset: auto !important;
+          width: 100% !important;
+          height: auto !important;
+          max-height: none !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          break-after: avoid-page !important;
+          page-break-after: avoid !important;
+        }
+        .compact-print-ticket {
+          break-after: avoid-page !important;
+          page-break-after: avoid !important;
+        }
+      }
       /* Lock background while ticket is open */
       body:has(#ticketPanel:not([hidden])) {
         overflow: hidden !important;
@@ -3185,6 +3427,58 @@
         return data;
       }
       let editingBusId = null;
+
+      // Realtime listener for admin notification inserts and read-state updates.
+      let adminNotificationRealtimeClient = null;
+      let adminNotificationRealtimeChannel = null;
+      let adminNotificationRealtimeToken = "";
+      let adminNotificationRefreshTimer = null;
+      async function startAdminNotificationRealtime() {
+        const token = getAdminAccessToken();
+        if (!token || !isSupabaseConfigured || !window.supabase?.createClient)
+          return;
+        if (adminNotificationRealtimeChannel && adminNotificationRealtimeToken === token)
+          return;
+        if (adminNotificationRealtimeChannel) {
+          await adminNotificationRealtimeClient.removeChannel(adminNotificationRealtimeChannel);
+          adminNotificationRealtimeChannel = null;
+        }
+        if (!adminNotificationRealtimeClient) {
+          adminNotificationRealtimeClient = window.supabase.createClient(
+            SUPABASE_URL,
+            SUPABASE_PUBLISHABLE_KEY,
+            { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } },
+          );
+        }
+        adminNotificationRealtimeToken = token;
+        // Realtime must use the logged-in Admin JWT so Supabase applies table RLS.
+        await adminNotificationRealtimeClient.realtime.setAuth(token);
+        adminNotificationRealtimeChannel = adminNotificationRealtimeClient
+          .channel("admin-notifications-live")
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "admin_notifications" },
+            () => {
+              clearTimeout(adminNotificationRefreshTimer);
+              adminNotificationRefreshTimer = setTimeout(() => {
+                loadAdminNotifications();
+              }, 250);
+            },
+          )
+          .subscribe((status) => {
+            if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+              console.warn("Admin notification Realtime status:", status);
+            }
+          });
+      }
+      async function stopAdminNotificationRealtime() {
+        clearTimeout(adminNotificationRefreshTimer);
+        if (adminNotificationRealtimeChannel && adminNotificationRealtimeClient) {
+          await adminNotificationRealtimeClient.removeChannel(adminNotificationRealtimeChannel);
+        }
+        adminNotificationRealtimeChannel = null;
+        adminNotificationRealtimeToken = "";
+      }
       const refreshNotificationsButton = $("refreshNotificationsBtn");
       if (refreshNotificationsButton)
         refreshNotificationsButton.addEventListener(
@@ -4076,6 +4370,8 @@
           ticket,
         );
         status.className = cancelled ? "cancelled" : "status";
+        const detailsGrid = document.createElement("div");
+        detailsGrid.className = "ticket-details-grid";
         [
           ["PNR", b.id],
           ["Bus", b.bus],
@@ -4108,18 +4404,26 @@
         ].forEach(([label, value]) => {
           if (label === "Cancellation Date" && !cancelled) return;
           const row = document.createElement("p");
-          addText("strong", label + ": ", row);
+          row.className = "ticket-detail-row";
+          row.dataset.label = label.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+          addText("strong", label, row);
           addText("span", value, row);
-          ticket.appendChild(row);
+          detailsGrid.appendChild(row);
         });
+        ticket.appendChild(detailsGrid);
         addText("h3", "Passenger Details", ticket);
         (b.people || []).forEach((p, i) => {
           const box = document.createElement("div");
-          box.className = "passenger";
-          addText("p", "Seat: " + (b.seats[i] ?? "—"), box);
-          addText("p", "Name: " + p.name, box);
-          addText("p", "Age: " + p.age, box);
-          addText("p", "Mobile: " + p.phone, box);
+          box.className = "passenger ticket-passenger-card";
+          addText("span", "SEAT " + (b.seats[i] ?? "—"), box, "ticket-seat-chip");
+          addText("h4", p.name || "Passenger " + (i + 1), box, "ticket-passenger-name");
+          const passengerMeta = document.createElement("div");
+          passengerMeta.className = "ticket-passenger-meta";
+          addText("p", "Age", passengerMeta);
+          addText("strong", p.age || "—", passengerMeta);
+          addText("p", "Mobile", passengerMeta);
+          addText("strong", p.phone || "—", passengerMeta);
+          box.appendChild(passengerMeta);
           ticket.appendChild(box);
         });
         if (cancelled) {
@@ -5082,6 +5386,9 @@
         // ADMIN: MANAGE BUSES & BOOKINGS
         // ===============================
       function renderAdmin() {
+        startAdminNotificationRealtime().catch((error) =>
+          console.warn("Admin notification Realtime setup failed:", error),
+        );
         loadAdminNotifications();
         const busContainer = $("adminBuses");
         const bookingContainer = $("adminBookings");
@@ -6394,6 +6701,7 @@
             sessionStorage.removeItem("apniBus_admin_access_token");
             sessionStorage.removeItem("apniBus_admin_refresh_token");
           } catch (_) {}
+          await stopAdminNotificationRealtime();
           adminPanel.hidden = true;
           openAdminLogin();
           message.textContent = "Admin logout ho gaya.";
