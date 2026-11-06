@@ -25,7 +25,7 @@
         font-weight: 600;
         cursor: pointer;
       }
-      button:not(#adminPanel table button):not(#dashboardPanel table button):hover {
+      button:not(#adminPanel table button):not(#dashboardPanel table button):not(#seatList .seat):hover {
         transform: translateY(-1px);
       }
       button:focus-visible,
@@ -2376,6 +2376,42 @@
     transition: 0.2s ease;
 }
 
+      .admin-header-actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        width: 100%;
+        margin: 0 0 18px;
+      }
+
+      .admin-header-actions #adminLogoutBtn {
+        margin: 0;
+      }
+
+      .customer-header-actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        width: 100%;
+        margin: 0 0 12px;
+      }
+
+      .customer-header-actions #dashboardLogoutBtn {
+        margin: 0;
+      }
+
+      .admin-header-actions .admin-notification-bell {
+        position: relative;
+        flex: 0 0 46px;
+        width: 46px;
+        height: 46px;
+        min-height: 46px;
+        padding: 0 !important;
+        font-size: 25px !important;
+        line-height: 1;
+      }
+
       .admin-notification-bell:hover {
         background: #fff1f2;
         border-color: #fecaca;
@@ -2403,6 +2439,1125 @@
 
       #adminNotificationBadge[hidden] {
         display: none;
+      }
+
+      /* Results, seat selection, and passenger booking flow. */
+      #results,
+      #seatPanel,
+      #passengerPanel {
+        width: 100%;
+        max-width: 1220px;
+        margin: 22px auto 36px;
+        padding: clamp(18px, 3vw, 32px);
+        border: 1px solid #e1e7ef;
+        border-top: 4px solid #a5262d;
+        border-radius: 22px;
+        background: #fff;
+        box-shadow: 0 14px 38px rgba(15, 23, 42, 0.07);
+      }
+      #results > h2,
+      #seatPanel > h2,
+      #passengerPanel > h2 {
+        margin: 0 0 20px;
+        color: #182234;
+        font-size: clamp(23px, 3vw, 30px);
+        font-weight: 750;
+        letter-spacing: -0.04em;
+      }
+      #results > h2::before,
+      #seatPanel > h2::before,
+      #passengerPanel > h2::before {
+        content: "";
+        display: inline-block;
+        width: 4px;
+        height: 25px;
+        margin: 0 11px 0 1px;
+        vertical-align: -4px;
+        border-radius: 5px;
+        background: #b4232d;
+      }
+      #busList {
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 290px), 1fr));
+        align-items: stretch;
+        gap: 16px;
+      }
+      #busList > .bus {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        padding: 21px;
+        border: 1px solid #e3e9f0;
+        border-radius: 17px;
+        background: linear-gradient(180deg, #fff 0%, #fcfdff 100%);
+        box-shadow: 0 7px 22px rgba(17, 24, 39, 0.055);
+        transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+      }
+      #busList > .bus:hover {
+        transform: translateY(-3px);
+        border-color: #e8c4c6;
+        box-shadow: 0 14px 30px rgba(89, 24, 30, 0.1);
+      }
+      #busList > .bus > h3:first-child {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        margin: 0 0 11px;
+        color: #182234;
+        font-size: 19px;
+        line-height: 1.35;
+        overflow-wrap: anywhere;
+      }
+      #busList > .bus > h3:first-child::before {
+        content: "🚌";
+        flex: 0 0 auto;
+        font-size: 20px;
+      }
+      #busList > .bus > p {
+        margin: 7px 0;
+        color: #64748b;
+        font-size: 13px;
+        line-height: 1.55;
+        overflow-wrap: anywhere;
+      }
+      #busList > .bus > h3:nth-of-type(2) {
+        margin: auto 0 5px;
+        padding: 14px 0 0;
+        border-top: 1px solid #edf1f5;
+        color: #167144;
+        font-size: 20px;
+        font-weight: 800;
+      }
+      #busList > .bus > p:last-of-type {
+        color: #537160;
+        font-size: 12px;
+        font-weight: 650;
+      }
+      #busList > .bus > button {
+        width: 100%;
+        min-height: 46px;
+        margin: 13px 0 0;
+        border-radius: 13px !important;
+      }
+      #busList > #seatPanel {
+        grid-column: 1 / -1;
+        width: 100%;
+        max-width: none;
+        margin: 4px 0 14px;
+        padding: clamp(18px, 3vw, 30px);
+        background: linear-gradient(180deg, #fff 0%, #fbfcfe 100%);
+      }
+      #busInfo {
+        margin: 0 0 14px;
+        padding: 15px 17px;
+        border: 1px solid #f0d5d7;
+        border-radius: 13px;
+        background: #fff7f7;
+        color: #7f1d1d;
+        font-size: 14px;
+        line-height: 1.55;
+      }
+      #currentStopControls {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px 14px;
+        max-width: 700px;
+        margin: 0 0 16px;
+        padding: 17px;
+        border: 1px solid #e7ebf1;
+        border-radius: 14px;
+        background: #fff;
+      }
+      #currentStopControls label {
+        margin: 0;
+        color: #64748b;
+        font-size: 11px;
+        font-weight: 750;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+      #currentStopControls select {
+        min-width: 0;
+        min-height: 46px;
+        margin: 0 0 4px;
+        border-radius: 11px;
+      }
+      .seat-legend {
+        align-items: center;
+        gap: 10px 17px;
+        margin: 15px 0 12px;
+        color: #64748b;
+        font-size: 12px;
+      }
+      .seat-legend span {
+        padding: 7px 10px;
+        border: 1px solid #e9edf2;
+        border-radius: 999px;
+        background: #fff;
+      }
+      .legend-seat { width: 12px; height: 12px; border-radius: 4px; }
+      #seatList {
+        width: 100%;
+        max-width: 520px;
+        min-height: 90px;
+        margin: 0 auto;
+        padding: 18px;
+        gap: 10px;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        background: linear-gradient(180deg, #f8fafc, #fff);
+      }
+      #seatList .seat {
+        min-width: 0;
+        min-height: 46px;
+        border: 1px solid #d6e5dc;
+        border-radius: 12px !important;
+        background: #effaf3;
+        color: #286443;
+        font-size: 13px !important;
+        font-weight: 700;
+        box-shadow: none;
+      }
+      #seatList .seat:hover:not(:disabled) {
+        border-color: #96c6a9;
+        background: #e2f5e9;
+        box-shadow: 0 4px 10px rgba(22, 113, 68, 0.12);
+      }
+      #seatList .seat.selected {
+        border-color: #8e2028;
+        background: #9f232d;
+        color: #fff;
+        box-shadow: 0 5px 13px rgba(159, 35, 45, 0.22);
+      }
+      #seatList .seat:disabled {
+        border-color: #e1e5eb;
+        background: #edf0f4;
+        color: #98a2b1;
+      }
+      #total {
+        width: min(100%, 520px);
+        margin: 16px auto 0;
+        padding: 14px 17px;
+        border: 1px solid #d9e8df;
+        border-radius: 13px;
+        background: #f1faf4;
+        color: #17613b;
+        font-size: 15px;
+        font-weight: 750;
+      }
+      #seatPanel > #continueBtn {
+        display: flex;
+        width: min(100%, 520px);
+        min-height: 50px;
+        margin: 15px auto 0;
+        border-radius: 14px !important;
+      }
+      #passengerForm {
+        max-width: none;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        box-shadow: none;
+      }
+      #passengers {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+        gap: 14px;
+      }
+      #passengers .passenger {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px 12px;
+        min-width: 0;
+        margin: 0;
+        padding: 17px;
+        border: 1px solid #e3e9f0;
+        border-radius: 15px;
+        background: #fff;
+        box-shadow: 0 5px 16px rgba(15, 23, 42, 0.045);
+      }
+      #passengers .passenger h3 {
+        grid-column: 1 / -1;
+        margin: 0 0 4px;
+        padding: 0 0 10px;
+        border-bottom: 1px solid #edf1f5;
+        color: #344256;
+        font-size: 15px;
+      }
+      #passengers .passenger input {
+        min-width: 0;
+        min-height: 46px;
+        margin: 0;
+        border-radius: 11px;
+      }
+      #bookingSummary {
+        margin: 18px 0;
+        padding: 15px 17px;
+        border: 1px solid #f0d5d7;
+        border-radius: 13px;
+        background: #fff7f7;
+        color: #78232a;
+        font-size: 14px;
+        line-height: 1.65;
+        overflow-wrap: anywhere;
+      }
+      #passengerForm > label {
+        color: #475569;
+        font-size: 12px;
+        font-weight: 750;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      #passengerForm > select,
+      #passengerForm > #paymentMethod {
+        max-width: 520px;
+        min-height: 48px;
+        margin: 7px 0 10px;
+        border-radius: 11px;
+      }
+      #passengerForm > .muted {
+        max-width: 700px;
+        color: #64748b;
+        font-size: 13px;
+        line-height: 1.6;
+      }
+      #passengerForm > button[type="submit"] {
+        width: min(100%, 520px);
+        min-height: 50px;
+        margin: 14px 0 0;
+        border-radius: 14px !important;
+      }
+      @media (max-width: 720px) {
+        #results,
+        #seatPanel,
+        #passengerPanel {
+          margin: 16px auto 24px;
+          padding: 18px;
+          border-radius: 18px;
+        }
+        #busList { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+        #busList > #seatPanel { margin-top: 2px; }
+        #currentStopControls { padding: 13px; gap: 7px 10px; }
+        #seatList { padding: 13px; gap: 8px; }
+        #passengers { grid-template-columns: minmax(0, 1fr); }
+      }
+      @media (max-width: 440px) {
+        #currentStopControls { grid-template-columns: minmax(0, 1fr); }
+        #passengers .passenger { grid-template-columns: minmax(0, 1fr); }
+        #passengers .passenger h3 { grid-column: auto; }
+        #seatList { padding: 10px; gap: 6px; }
+      }
+
+      /* Sharper bus service cards with route, fare, and seat availability cues. */
+      #busList > .bus-result-card {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-rows: auto auto minmax(60px, auto) auto auto;
+        gap: 9px 12px;
+        padding: 21px;
+        border-radius: 18px;
+        background: #fff;
+      }
+      #busList > .bus-result-card > .bus-card-title {
+        grid-column: 1 / -1;
+        margin: 0;
+        padding: 0 0 12px;
+        border-bottom: 1px solid #edf1f5;
+        color: #182234;
+        font-size: 18px;
+      }
+      #busList > .bus-result-card > .bus-card-meta {
+        grid-column: 1 / -1;
+        justify-self: start;
+        margin: 0;
+        padding: 6px 10px;
+        border: 1px solid #e8edf3;
+        border-radius: 999px;
+        background: #f8fafc;
+        color: #66758a;
+        font-size: 11px;
+        font-weight: 650;
+      }
+      #busList > .bus-result-card > .bus-card-route {
+        grid-column: 1 / -1;
+        display: flex;
+        align-items: center;
+        min-height: 66px;
+        margin: 0;
+        padding: 14px;
+        border: 1px solid #f0e1e2;
+        border-radius: 13px;
+        background: linear-gradient(100deg, #fff8f8, #fffdfd);
+        color: #6f2830;
+        font-size: 14px;
+        font-weight: 750;
+        line-height: 1.5;
+      }
+      #busList > .bus-result-card > .bus-card-route::before {
+        content: "ROUTE";
+        flex: 0 0 auto;
+        margin-right: 11px;
+        padding-right: 11px;
+        border-right: 1px solid #ecd5d7;
+        color: #9a6a6e;
+        font-size: 9px;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+      }
+      #busList > .bus-result-card > .bus-card-fare {
+        align-self: end;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        color: #17613b;
+        font-size: 19px;
+        line-height: 1.3;
+      }
+      #busList > .bus-result-card > .bus-card-availability {
+        align-self: end;
+        justify-self: end;
+        margin: 0;
+        padding: 6px 9px;
+        border-radius: 999px;
+        background: #effaf3;
+        color: #286443;
+        font-size: 11px;
+        font-weight: 700;
+        text-align: right;
+      }
+      #busList > .bus-result-card > .bus-card-availability::before {
+        content: "";
+        display: inline-block;
+        width: 7px;
+        height: 7px;
+        margin-right: 6px;
+        border-radius: 50%;
+        background: #39a56a;
+        vertical-align: 1px;
+      }
+      #busList > .bus-result-card > .bus-card-select {
+        grid-column: 1 / -1;
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        min-height: 47px;
+        margin: 3px 0 0;
+        padding: 11px 15px !important;
+        border-radius: 13px !important;
+        background: linear-gradient(135deg, #8b1c25, #b72b35);
+        color: #fff;
+        box-shadow: 0 7px 16px rgba(139, 28, 37, 0.16);
+      }
+      #busList > .bus-result-card > .bus-card-select::after {
+        content: "→";
+        font-size: 18px;
+        font-weight: 400;
+        transition: transform 0.2s ease;
+      }
+      #busList > .bus-result-card > .bus-card-select:hover::after { transform: translateX(4px); }
+      #busList > .bus-result-card > .bus-card-select:disabled {
+        background: #e8ebf0;
+        color: #8b95a4;
+        box-shadow: none;
+      }
+
+      /* Render the seat grid like a compact two-side bus cabin. */
+      #seatList {
+        position: relative;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 24px minmax(0, 1fr) minmax(0, 1fr);
+        max-width: 440px;
+        padding: 64px 20px 20px;
+        gap: 10px 7px;
+        border: 1px solid #dce4ec;
+        border-radius: 28px 28px 18px 18px;
+        background: linear-gradient(180deg, #f5f8fb 0%, #fff 100%);
+        box-shadow: inset 0 1px 0 #fff, 0 9px 25px rgba(20, 35, 50, 0.06);
+      }
+      #seatList::before {
+        content: "FRONT  ·  DRIVER";
+        position: absolute;
+        top: 17px;
+        right: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 96px;
+        height: 28px;
+        padding: 0 10px;
+        border: 1px solid #dce4ec;
+        border-radius: 999px;
+        background: #fff;
+        color: #718096;
+        font-size: 9px;
+        font-weight: 800;
+        letter-spacing: 0.09em;
+      }
+      #seatList::after {
+        content: "";
+        position: absolute;
+        top: 30px;
+        left: 18px;
+        width: 38px;
+        height: 5px;
+        border-radius: 99px;
+        background: #dce4ec;
+      }
+      #seatList .seat {
+        min-height: 48px;
+        padding: 8px 3px !important;
+        border: 1px solid #a9d7b9;
+        border-top: 4px solid #76b98f;
+        border-radius: 10px 10px 8px 8px !important;
+        background: linear-gradient(180deg, #f1fbf4, #e4f5e9);
+        color: #246341;
+        font-size: 11px !important;
+        font-weight: 750;
+        line-height: 1.15;
+        box-shadow: 0 3px 7px rgba(29, 96, 57, 0.07);
+      }
+      #seatList .seat:hover:not(:disabled):not(.selected) {
+        transform: translateY(-2px);
+        border-color: #93c5fd;
+        border-top-color: #60a5fa;
+        background: #dbeafe;
+        color: #1e40af;
+      }
+      #seatList .seat.selected {
+        border-color: #1d4ed8;
+        border-top-color: #1e3a8a;
+        background: linear-gradient(180deg, #3b82f6, #2563eb);
+        color: #fff;
+        box-shadow: 0 5px 12px rgba(37, 99, 235, 0.28);
+      }
+      #seatList .seat.selected:hover:not(:disabled) {
+        transform: none;
+        border-color: #1d4ed8;
+        border-top-color: #1e3a8a;
+        background: linear-gradient(180deg, #3b82f6, #2563eb);
+        color: #fff;
+        filter: none;
+        box-shadow: 0 5px 12px rgba(37, 99, 235, 0.28);
+      }
+      #seatList .seat:disabled {
+        border-color: #e0e5eb;
+        border-top-color: #c8d0d9;
+        background: linear-gradient(180deg, #f0f2f5, #e7ebef);
+        color: #98a2b1;
+        opacity: 1;
+        box-shadow: none;
+      }
+      #seatList .seat-aisle {
+        grid-column: 3;
+        min-height: 44px;
+        border-left: 1px dashed #d8e0e8;
+        border-right: 1px dashed #d8e0e8;
+      }
+      #seatList > p { grid-column: 1 / -1; }
+      @media (max-width: 720px) {
+        #busList > .bus-result-card { padding: 17px; }
+        #seatList { padding: 62px 14px 16px; gap: 9px 5px; }
+      }
+      @media (max-width: 380px) {
+        #seatList { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 18px minmax(0, 1fr) minmax(0, 1fr); padding-left: 9px; padding-right: 9px; }
+        #seatList .seat { font-size: 10px !important; }
+      }
+
+      /* Full-screen split login and registration pages. */
+      /* Professional booking search landing page. */
+      #searchPanel {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(420px, 0.92fr);
+        align-items: center;
+        gap: clamp(28px, 5vw, 72px);
+        width: 100%;
+        max-width: 1320px;
+        margin: 28px auto 48px;
+        padding: clamp(28px, 5vw, 64px);
+        overflow: hidden;
+        border: 0;
+        border-radius: 30px;
+        background: linear-gradient(128deg, #67171e 0%, #8d2029 58%, #a12a32 100%);
+        box-shadow: 0 26px 70px rgba(85, 23, 31, 0.2);
+      }
+      .booking-hero-copy {
+        position: relative;
+        min-width: 0;
+        color: #fff;
+      }
+      .booking-hero-eyebrow {
+        display: inline-block;
+        margin-bottom: 20px;
+        color: #ffd2bb;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.18em;
+      }
+      .booking-hero-copy h2 {
+        max-width: 580px;
+        margin: 0;
+        color: #fff;
+        font-size: clamp(38px, 5vw, 66px);
+        font-weight: 750;
+        letter-spacing: -0.055em;
+        line-height: 1.03;
+      }
+      .booking-hero-copy > p {
+        max-width: 430px;
+        margin: 18px 0 0;
+        color: rgba(255, 255, 255, 0.78);
+        font-size: clamp(15px, 1.5vw, 18px);
+        line-height: 1.7;
+      }
+      .booking-route-illustration {
+        position: relative;
+        height: 190px;
+        margin-top: 28px;
+      }
+      .booking-route-track {
+        position: absolute;
+        top: 102px;
+        left: 7%;
+        right: 8%;
+        border-top: 2px dashed rgba(255, 255, 255, 0.42);
+      }
+      .booking-route-stop {
+        position: absolute;
+        top: 94px;
+        width: 17px;
+        height: 17px;
+        border: 3px solid rgba(255, 255, 255, 0.9);
+        border-radius: 50%;
+        background: #8d2029;
+      }
+      .booking-route-stop-start { left: 7%; }
+      .booking-route-stop-end { right: 8%; background: #ffc79e; }
+      .booking-route-bus {
+        position: absolute;
+        top: 39px;
+        left: 7%;
+        font-size: 50px;
+        filter: drop-shadow(0 12px 15px rgba(35, 7, 11, 0.25));
+        animation: bookingBusMove 6.5s ease-in-out infinite;
+      }
+      .booking-route-label {
+        position: absolute;
+        top: 126px;
+        color: rgba(255, 255, 255, 0.66);
+        font-size: 9px;
+        font-weight: 750;
+        letter-spacing: 0.15em;
+      }
+      .booking-route-label-start { left: 4%; }
+      .booking-route-label-end { right: 3%; }
+      .booking-hero-points {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      .booking-hero-points span {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 9px 12px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.08);
+        color: rgba(255, 255, 255, 0.86);
+        font-size: 12px;
+      }
+      .booking-hero-points i {
+        display: grid;
+        width: 18px;
+        height: 18px;
+        place-items: center;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.18);
+        color: #ffd2bb;
+        font-size: 11px;
+        font-style: normal;
+        font-weight: 800;
+      }
+      .booking-search-card {
+        min-width: 0;
+        padding: clamp(22px, 3vw, 36px);
+        border: 1px solid rgba(226, 232, 240, 0.85);
+        border-radius: 24px;
+        background: #fff;
+        box-shadow: 0 18px 50px rgba(28, 15, 17, 0.18);
+      }
+      .booking-search-heading {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 22px;
+      }
+      .booking-search-icon {
+        display: grid;
+        width: 46px;
+        height: 46px;
+        flex: 0 0 46px;
+        place-items: center;
+        border-radius: 14px;
+        background: #fff1f2;
+        color: #a11d27;
+        font-size: 30px;
+        font-weight: 500;
+        line-height: 1;
+      }
+      .booking-search-heading h2 {
+        margin: 0;
+        color: #172033;
+        font-size: 24px;
+        letter-spacing: -0.035em;
+      }
+      .booking-search-heading p {
+        margin: 4px 0 0;
+        color: #718096;
+        font-size: 13px;
+      }
+      #searchForm {
+        display: block;
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+      }
+      .booking-search-fields {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px 12px;
+      }
+      .booking-field label,
+      .booking-date-field > label {
+        margin: 0 0 7px;
+        color: #475569;
+        font-size: 12px;
+        font-weight: 750;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      .booking-field input {
+        min-height: 50px;
+        margin: 0;
+        border-radius: 12px;
+        background: #fbfcfe;
+        font-size: 15px;
+        font-weight: 600;
+      }
+      .booking-date-field { grid-column: 1 / -1; min-width: 0; }
+      .booking-date-field .journey-date-wrap {
+        display: block;
+        margin: 0;
+      }
+      .booking-date-field .journey-date-trigger {
+        width: 100%;
+        min-height: 58px;
+        padding: 11px 14px;
+        border: 1px solid #d9e0e9;
+        border-radius: 12px;
+        background: #fbfcfe;
+      }
+      .booking-date-field .journey-date-trigger:hover {
+        border-color: #cbd5e1;
+        background: #f8fafc;
+      }
+      .booking-date-field .journey-date-suggestions {
+        margin-top: 9px;
+      }
+      #searchForm .booking-search-submit {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        min-height: 54px;
+        margin: 18px 0 0;
+        padding: 12px 18px !important;
+        border: 1px solid #9c1d27;
+        border-radius: 14px !important;
+        background: linear-gradient(135deg, #8b1c25, #b72b35);
+        color: #fff;
+        box-shadow: 0 8px 18px rgba(139, 28, 37, 0.2);
+      }
+      #searchForm .booking-search-submit span {
+        font-size: 20px;
+        font-weight: 400;
+        line-height: 1;
+        transition: transform 0.2s ease;
+      }
+      #searchForm .booking-search-submit:hover span { transform: translateX(4px); }
+      @keyframes bookingBusMove {
+        0%, 8% { transform: translateX(0); }
+        48%, 58% { transform: translateX(min(26vw, 280px)); }
+        92%, 100% { transform: translateX(0); }
+      }
+      @media (max-width: 900px) {
+        #searchPanel {
+          grid-template-columns: minmax(0, 1fr) minmax(350px, 0.95fr);
+          gap: 24px;
+          padding: 28px;
+        }
+      }
+      @media (max-width: 720px) {
+        #searchPanel {
+          grid-template-columns: minmax(0, 1fr);
+          gap: 18px;
+          margin: 16px auto 30px;
+          padding: 22px 18px;
+          border-radius: 22px;
+        }
+        .booking-hero-copy h2 { max-width: 520px; font-size: clamp(34px, 9vw, 48px); }
+        .booking-hero-copy > p { max-width: 420px; margin-top: 11px; font-size: 15px; }
+        .booking-route-illustration { height: 140px; margin-top: 8px; }
+        .booking-route-track { top: 76px; }
+        .booking-route-stop { top: 68px; width: 16px; height: 16px; }
+        .booking-route-bus { top: 17px; font-size: 42px; }
+        .booking-route-label { top: 99px; }
+        .booking-search-card { padding: 22px 18px; border-radius: 18px; }
+      }
+      @media (max-width: 420px) {
+        .booking-search-fields { grid-template-columns: minmax(0, 1fr); }
+        .booking-date-field { grid-column: auto; }
+        .booking-hero-points { gap: 7px; }
+        .booking-hero-points span { padding: 8px 10px; font-size: 11px; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .booking-route-bus { animation: none; }
+        #searchForm .booking-search-submit span { transition: none; }
+      }
+
+      /* Full-screen split login and registration pages. */
+      body:has(#authPanel:not([hidden])) > header,
+      body:has(#adminLoginPanel:not([hidden])) > header {
+        display: none;
+      }
+      body:has(#authPanel:not([hidden])) main,
+      body:has(#adminLoginPanel:not([hidden])) main {
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        padding: 0;
+      }
+      #authPanel:not([hidden]),
+      #adminLoginPanel:not([hidden]) {
+        display: grid;
+        grid-template-columns: minmax(0, 1.1fr) minmax(400px, 0.9fr);
+        align-items: stretch;
+        gap: clamp(22px, 4vw, 64px);
+        width: 100%;
+        max-width: none;
+        min-height: 100vh;
+        min-height: 100dvh;
+        margin: 0;
+        padding: clamp(20px, 3vw, 42px);
+        border: 0;
+        border-radius: 0;
+        background:
+          radial-gradient(circle at 80% 12%, rgba(226, 75, 75, 0.08), transparent 30%),
+          #f4f6fa;
+        box-shadow: none;
+      }
+      .auth-visual {
+        position: relative;
+        isolation: isolate;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-width: 0;
+        min-height: calc(100dvh - 84px);
+        padding: clamp(30px, 4vw, 60px);
+        overflow: hidden;
+        border-radius: 28px;
+        background: linear-gradient(140deg, #681920 0%, #8c2028 54%, #b63237 100%);
+        color: #fff;
+        box-shadow: 0 24px 70px rgba(73, 20, 27, 0.2);
+      }
+      .auth-visual::before,
+      .auth-visual::after {
+        position: absolute;
+        z-index: -1;
+        content: "";
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 50%;
+        pointer-events: none;
+      }
+      .auth-visual::before {
+        width: 440px;
+        height: 440px;
+        right: -150px;
+        top: -160px;
+      }
+      .auth-visual::after {
+        width: 590px;
+        height: 590px;
+        right: -220px;
+        bottom: -350px;
+      }
+      .auth-visual-brand {
+        font-size: 14px;
+        font-weight: 800;
+        letter-spacing: 0.16em;
+      }
+      .auth-visual-brand span {
+        color: #ffd7bd;
+        font-weight: 500;
+      }
+      .auth-visual-copy {
+        position: relative;
+        z-index: 1;
+        max-width: 560px;
+        margin-top: auto;
+        padding-top: 52px;
+      }
+      .auth-visual-eyebrow {
+        display: inline-block;
+        margin-bottom: 18px;
+        color: #ffd6c3;
+        font-size: 11px;
+        font-weight: 750;
+        letter-spacing: 0.17em;
+      }
+      .auth-visual-title {
+        max-width: 560px;
+        font-size: clamp(38px, 5vw, 66px);
+        font-weight: 750;
+        letter-spacing: -0.055em;
+        line-height: 1.04;
+      }
+      .auth-visual-copy p {
+        max-width: 460px;
+        margin: 18px 0 0;
+        color: rgba(255, 255, 255, 0.78);
+        font-size: clamp(15px, 1.4vw, 18px);
+        line-height: 1.7;
+      }
+      .auth-visual-art {
+        position: relative;
+        height: 190px;
+        margin-top: 20px;
+      }
+      .auth-route-line {
+        position: absolute;
+        top: 88px;
+        left: 8%;
+        right: 8%;
+        border-top: 2px dashed rgba(255, 255, 255, 0.4);
+      }
+      .auth-route-stop {
+        position: absolute;
+        top: 81px;
+        width: 15px;
+        height: 15px;
+        border: 3px solid rgba(255, 255, 255, 0.86);
+        border-radius: 50%;
+        background: #a52a31;
+      }
+      .auth-route-stop-one { left: 8%; }
+      .auth-route-stop-two { left: 51%; background: #ffc79e; }
+      .auth-route-stop-three { right: 8%; }
+      .auth-route-city {
+        position: absolute;
+        top: 110px;
+        color: rgba(255, 255, 255, 0.66);
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.13em;
+      }
+      .auth-route-city-one { left: 5%; }
+      .auth-route-city-two { right: 4%; }
+      .auth-moving-bus {
+        position: absolute;
+        top: 36px;
+        left: 8%;
+        font-size: 48px;
+        filter: drop-shadow(0 10px 14px rgba(34, 9, 12, 0.24));
+        animation: authBusRide 7s ease-in-out infinite;
+      }
+      .auth-float-card {
+        position: absolute;
+        right: 12%;
+        top: 0;
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding: 11px 15px;
+        border: 1px solid rgba(255, 255, 255, 0.24);
+        border-radius: 13px;
+        background: rgba(255, 255, 255, 0.13);
+        color: #fff;
+        font-size: 12px;
+        font-weight: 650;
+        backdrop-filter: blur(9px);
+        animation: authCardFloat 4s ease-in-out infinite;
+      }
+      .auth-float-card span { color: #ffd6a8; font-size: 16px; }
+      .auth-visual-footer {
+        color: rgba(255, 255, 255, 0.66);
+        font-size: 12px;
+        letter-spacing: 0.025em;
+      }
+      .auth-visual-footer span {
+        margin-right: 7px;
+        color: #fff;
+        font-weight: 700;
+      }
+      .auth-form-side {
+        align-self: center;
+        justify-self: center;
+        width: min(100%, 480px);
+        padding: clamp(26px, 3vw, 42px);
+        border: 1px solid #e3e8ef;
+        border-radius: 24px;
+        background: #fff;
+        box-shadow: 0 18px 55px rgba(24, 35, 54, 0.09);
+      }
+      .auth-form-side h2 {
+        margin: 0 0 9px;
+        color: #182234;
+        font-size: clamp(26px, 3vw, 32px);
+        letter-spacing: -0.035em;
+      }
+      .auth-form-side > p:not([hidden]) {
+        color: #64748b;
+        line-height: 1.6;
+      }
+      .auth-form-side form {
+        width: 100%;
+        max-width: none;
+        padding: 0;
+        margin: 18px 0;
+        border: 0;
+        background: transparent;
+        box-shadow: none;
+      }
+      .auth-form-side label { color: #344256; }
+      .auth-form-side input {
+        min-height: 48px;
+        border-radius: 12px;
+        background: #fbfcfe;
+      }
+      .auth-form-side #authMessage,
+      .auth-form-side #adminLoginMessage {
+        border: 1px solid #e8edf3;
+        background: #f8fafc;
+        color: #475569;
+      }
+      @keyframes authBusRide {
+        0%, 8% { transform: translateX(0); }
+        48%, 58% { transform: translateX(min(29vw, 310px)); }
+        92%, 100% { transform: translateX(0); }
+      }
+      @keyframes authCardFloat {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-8px); }
+      }
+      @media (max-width: 900px) {
+        #authPanel:not([hidden]),
+        #adminLoginPanel:not([hidden]) {
+          grid-template-columns: minmax(0, 1fr) minmax(360px, 0.9fr);
+          gap: 18px;
+          padding: 18px;
+        }
+        .auth-visual { padding: 30px; }
+      }
+      @media (max-width: 700px) {
+        #authPanel:not([hidden]),
+        #adminLoginPanel:not([hidden]) {
+          grid-template-columns: minmax(0, 1fr);
+          align-content: start;
+          gap: 0;
+          padding: 0 0 24px;
+        }
+        .auth-visual {
+          min-height: 250px;
+          padding: 22px 24px;
+          border-radius: 0 0 24px 24px;
+        }
+        .auth-visual-copy {
+          max-width: 64%;
+          margin-top: 34px;
+          padding: 0;
+        }
+        .auth-visual-eyebrow { margin-bottom: 10px; font-size: 9px; }
+        .auth-visual-title { font-size: clamp(27px, 8vw, 38px); }
+        .auth-visual-copy p { margin-top: 9px; font-size: 13px; line-height: 1.45; }
+        .auth-visual-art {
+          position: absolute;
+          right: 4px;
+          bottom: 12px;
+          width: 43%;
+          height: 115px;
+          margin: 0;
+          transform: scale(0.82);
+          transform-origin: right bottom;
+        }
+        .auth-route-line { top: 58px; }
+        .auth-route-stop { top: 51px; width: 13px; height: 13px; }
+        .auth-route-city { top: 76px; font-size: 7px; }
+        .auth-moving-bus { top: 10px; font-size: 36px; }
+        .auth-float-card { right: 8%; top: -1px; padding: 7px 9px; font-size: 9px; }
+        .auth-visual-footer { display: none; }
+        .auth-form-side {
+          width: calc(100% - 32px);
+          max-width: 520px;
+          margin: -12px auto 0;
+          padding: 25px 21px;
+          border-radius: 20px;
+          position: relative;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .auth-moving-bus,
+        .auth-float-card { animation: none; }
+      }
+
+      /* Purposeful logout controls for customer and admin sessions. */
+      #logoutBtn,
+      #dashboardLogoutBtn,
+      #adminLogoutBtn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 9px;
+        width: auto;
+        min-width: 118px;
+        min-height: 44px;
+        margin: 8px 0;
+        padding: 10px 16px !important;
+        border: 1px solid #e6b9bc;
+        border-radius: 14px !important;
+        background: linear-gradient(135deg, #fff7f7, #fff);
+        color: #8f1d25;
+        font-size: 14px !important;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+        box-shadow: 0 4px 12px rgba(127, 29, 29, 0.09);
+        transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease,
+          box-shadow 0.2s ease, transform 0.2s ease;
+      }
+      #logoutBtn::before,
+      #dashboardLogoutBtn::before,
+      #adminLogoutBtn::before {
+        content: "↪";
+        display: inline-block;
+        font-size: 19px;
+        font-weight: 700;
+        line-height: 1;
+      }
+      #logoutBtn:hover,
+      #dashboardLogoutBtn:hover,
+      #adminLogoutBtn:hover {
+        border-color: #b91c1c;
+        background: linear-gradient(135deg, #b91c1c, #d93636);
+        color: #fff;
+        box-shadow: 0 7px 16px rgba(185, 28, 28, 0.2);
+      }
+      #logoutBtn:active,
+      #dashboardLogoutBtn:active,
+      #adminLogoutBtn:active {
+        transform: translateY(0) scale(0.98);
       }
 
       /* Keep the shared Back-style treatment limited to ticket actions. */
@@ -2448,7 +3603,7 @@
       <div class="app-busy-card">
         <div class="app-busy-spinner" aria-hidden="true"></div>
         <div class="app-busy-title">Please wait…</div>
-        <div class="app-busy-subtitle">Aapka request process ho raha hai</div>
+        <div class="app-busy-subtitle">Your request is being processed</div>
       </div>
     </div>
 
@@ -2456,18 +3611,50 @@
       <h1>🚌 Apni Bus Booking</h1>
       <p>Book your journey easily</p>
       <nav>
-        <button id="bookTab" type="button">Customer Website</button>
+        <button id="bookTab" type="button">New Ticket</button>
         <button id="customerTab" type="button">My Account</button>
         <button id="adminTab" type="button">Admin Panel</button>
       </nav>
     </header>
     <main>
       <section id="searchPanel">
-        <h2>Search Buses</h2>
+        <div class="booking-hero-copy">
+          <span class="booking-hero-eyebrow">APNI BUS BOOKING</span>
+          <h2>Every journey starts with a plan.</h2>
+          <p>Find the right bus, pick your seats, and get ready to go.</p>
+          <div class="booking-route-illustration" aria-hidden="true">
+            <div class="booking-route-track"></div>
+            <span class="booking-route-stop booking-route-stop-start"></span>
+            <span class="booking-route-stop booking-route-stop-end"></span>
+            <span class="booking-route-bus">🚌</span>
+            <span class="booking-route-label booking-route-label-start">YOUR START</span>
+            <span class="booking-route-label booking-route-label-end">YOUR DESTINATION</span>
+          </div>
+          <div class="booking-hero-points">
+            <span><i>✓</i> Choose your route</span>
+            <span><i>✓</i> Pick your seat</span>
+          </div>
+        </div>
+        <div class="booking-search-card">
+          <div class="booking-search-heading">
+            <span class="booking-search-icon" aria-hidden="true">⌕</span>
+            <div>
+              <h2>Search Buses</h2>
+              <p>Enter your trip details to get started.</p>
+            </div>
+          </div>
         <form id="searchForm">
-          <label>From</label><input id="from" value="Shahdol" required />
-          <label>To</label><input id="to" value="Rewa" required />
-          <label>Journey Date</label>
+          <div class="booking-search-fields">
+            <div class="booking-field">
+              <label for="from">From</label>
+              <input id="from" value="Shahdol" required />
+            </div>
+            <div class="booking-field">
+              <label for="to">To</label>
+              <input id="to" value="Rewa" required />
+            </div>
+            <div class="booking-date-field">
+              <label>Journey Date</label>
           <div class="journey-date-wrap">
             <button
               id="dateDisplay"
@@ -2520,12 +3707,35 @@
               </p>
             </div>
           </div>
+            </div>
           <input id="date" type="hidden" />
-          <button type="submit">Search Buses</button>
+          </div>
+          <button class="booking-search-submit" type="submit">Search Buses <span aria-hidden="true">→</span></button>
         </form>
+        </div>
       </section>
       <!-- Step 10A: Customer Login and Registration -->
       <section id="authPanel" hidden>
+        <div class="auth-visual auth-visual-customer" aria-hidden="true">
+          <div class="auth-visual-brand">APNI BUS <span>BOOKING</span></div>
+          <div class="auth-visual-copy">
+            <span class="auth-visual-eyebrow">YOUR JOURNEY STARTS HERE</span>
+            <div class="auth-visual-title">Travel with ease.</div>
+            <p>Find your bus, choose your seat, and keep every trip in one place.</p>
+          </div>
+          <div class="auth-visual-art">
+            <div class="auth-route-line"></div>
+            <i class="auth-route-stop auth-route-stop-one"></i>
+            <i class="auth-route-stop auth-route-stop-two"></i>
+            <i class="auth-route-stop auth-route-stop-three"></i>
+            <span class="auth-route-city auth-route-city-one">YOUR CITY</span>
+            <span class="auth-route-city auth-route-city-two">NEXT STOP</span>
+            <span class="auth-moving-bus">🚌</span>
+            <div class="auth-float-card"><span>✦</span> Your next trip awaits</div>
+          </div>
+          <div class="auth-visual-footer"><span>Simple booking.</span> More time for the journey.</div>
+        </div>
+        <div class="auth-form-side">
         <h2 id="authTitle">Customer Login</h2>
         <p id="authMessage" role="status">
           Login or create your customer account.
@@ -2595,16 +3805,19 @@
         <p id="authSwitchText">New customer?</p>
         <button type="button" id="authSwitchBtn">Create Account</button>
         <button type="button" id="logoutBtn" hidden>Logout</button>
+        </div>
       </section>
       <section id="dashboardPanel" hidden>
-        <h2>My Bookings</h2>
-        <button id="dashboardLogoutBtn" type="button">Logout</button>
+        <div class="customer-header-actions">
+          <button id="dashboardLogoutBtn" type="button">Logout</button>
+        </div>
+        <h2>Customer Dashboard</h2>
         <p>
           View your bookings, ticket status and journey details across devices.
         </p>
         <div id="bookingStats" class="summary"></div>
         <div id="myBookingsList"></div>
-        <button id="dashboardSearchBtn" type="button">Search New Bus</button>
+        <button id="dashboardSearchBtn" type="button">New Ticket</button>
       </section>
       <section id="results" hidden>
         <h2>Available Buses</h2>
@@ -2636,8 +3849,8 @@
             </option>
           </select>
           <p class="muted">
-            Payment abhi website par collect nahi hoga. Selected method bus
-            operator ko bataya jayega.
+            Payment will not be collected on the website. The selected method will be shared with the bus
+            operator.
           </p>
           <button type="submit">Book Ticket</button>
         </form>
@@ -2661,6 +3874,26 @@
       </section>
       <!-- Admin Login Panel -->
       <section id="adminLoginPanel" hidden>
+        <div class="auth-visual auth-visual-admin" aria-hidden="true">
+          <div class="auth-visual-brand">APNI BUS <span>BOOKING</span></div>
+          <div class="auth-visual-copy">
+            <span class="auth-visual-eyebrow">OPERATIONS DASHBOARD</span>
+            <div class="auth-visual-title">Everything in motion.</div>
+            <p>Manage routes, trips, bookings, and payments from one clear workspace.</p>
+          </div>
+          <div class="auth-visual-art">
+            <div class="auth-route-line"></div>
+            <i class="auth-route-stop auth-route-stop-one"></i>
+            <i class="auth-route-stop auth-route-stop-two"></i>
+            <i class="auth-route-stop auth-route-stop-three"></i>
+            <span class="auth-route-city auth-route-city-one">OPERATIONS</span>
+            <span class="auth-route-city auth-route-city-two">ON TRACK</span>
+            <span class="auth-moving-bus">🚌</span>
+            <div class="auth-float-card"><span>✓</span> All trips in view</div>
+          </div>
+          <div class="auth-visual-footer"><span>Clear oversight.</span> Smoother journeys.</div>
+        </div>
+        <div class="auth-form-side">
         <h2>Admin Login</h2>
         <p id="adminLoginMessage" role="status">Enter Admin credentials...</p>
         <form id="adminLoginForm">
@@ -2681,7 +3914,8 @@
           />
           <button type="submit">Login as Admin</button>
         </form>
-        <button type="button" id="adminLoginBackBtn">Back to Home</button>
+        <button type="button" id="adminLoginBackBtn">New Ticket</button>
+        </div>
       </section>
       <section id="adminPanel" hidden>
         <h2>Admin Panel & Dashboard</h2>
@@ -2800,7 +4034,7 @@
             <div class="admin-section-view active" data-admin-view="overview">
               <h3>Dashboard Overview</h3>
               <p>Welcome to Apni Bus Booking Admin Dashboard.</p>
-              <p>अपना Management Section देखने के लिए बाईं ओर Menu चुनें।</p>
+              <p>Choose a menu item on the left to view its management section.</p>
 
               <div
                 id="adminOverviewPnrCard"
@@ -2937,13 +4171,13 @@
               </div>
               <div class="admin-recent-bookings">
                 <h3>Recent Bookings</h3>
-                <p>हाल की 5 बुकिंग की जानकारी</p>
+                <p>Details of the 5 most recent bookings</p>
                 <div id="overviewRecentBookings">
-                  Bookings load हो रही हैं...
+                  Loading bookings...
                 </div>
                 <div class="admin-quick-actions">
                   <h3>Quick Actions</h3>
-                  <p>महत्वपूर्ण कामों के लिए Shortcut</p>
+                  <p>Shortcuts for common tasks</p>
 
                   <div class="quick-actions-grid">
                     <button
@@ -3094,8 +4328,7 @@
               <hr />
               <h3>Notifications</h3>
               <p>
-                New bookings, cancellations aur payment updates ki recent
-                activity.
+                Recent activity for new bookings, cancellations, and payment updates.
               </p>
 
               <div class="notification-toolbar">
@@ -3112,7 +4345,7 @@
               </div>
 
               <div id="adminNotifications" aria-live="polite">
-                Notifications load ho rahi hain...
+                Loading notifications...
               </div>
 
               <button id="refreshNotificationsBtn" type="button">
@@ -3128,7 +4361,7 @@
               <h3>Booking & Revenue Reports</h3>
               <p>
                 Daily, weekly aur monthly booking, collection aur pending
-                payment ka summary.
+                summary of payments.
               </p>
               <label for="bookingReportPeriod">Report Period</label>
               <select id="bookingReportPeriod">
@@ -3168,7 +4401,7 @@
                   <span class="backup-upload-icon">📁</span>
                   <span>
                     <strong>Choose Backup File</strong>
-                    <small>JSON backup file select karein</small>
+                    <small>Select a JSON backup file</small>
                   </span>
                 </label>
 
@@ -3429,7 +4662,7 @@
         const refreshToken = getAdminRefreshToken();
         if (!refreshToken)
           throw new Error(
-            "Admin session expire ho gaya. Ek baar dobara login karein.",
+            "Your admin session has expired. Please log in again.",
           );
         adminRefreshInProgress = (async () => {
           const data = await adminAuthRequest(
@@ -3441,7 +4674,7 @@
           );
           if (!data.access_token || !data.refresh_token)
             throw new Error(
-              "Session refresh nahi ho paya. Dobara login karein.",
+              "The session could not be refreshed. Please log in again.",
             );
           sessionStorage.setItem(
             "apniBus_admin_access_token",
@@ -3462,7 +4695,7 @@
       async function adminBusRequest(path, options = {}) {
         let token = getAdminAccessToken();
         if (!token)
-          throw new Error("Admin session expire ho gaya. Dobara login karein.");
+          throw new Error("Your admin session has expired. Please log in again.");
         const send = (accessToken) =>
           fetch(SUPABASE_URL.replace(/\/$/, "") + path, {
             ...options,
@@ -3577,7 +4810,7 @@
 
       if (markAllNotificationsReadButton) {
         markAllNotificationsReadButton.addEventListener("click", async () => {
-          if (!confirm("Kya aap sabhi unread notifications ko read karna chahte hain?")) {
+          if (!confirm("Mark all unread notifications as read?")) {
             return;
           }
 
@@ -3599,9 +4832,9 @@
             );
 
             await loadAdminNotifications();
-            alert("Sabhi notifications read ho gayi hain.");
+            alert("All notifications have been marked as read.");
           } catch (error) {
-            alert("Notifications update nahi hui: " + error.message);
+            alert("Could not update notifications: " + error.message);
           } finally {
             markAllNotificationsReadButton.disabled = false;
             markAllNotificationsReadButton.textContent =
@@ -3812,7 +5045,7 @@
         } catch (error) {
           console.error(error);
           alert(
-            "Supabase se bus list load nahi hui. Project URL, Publishable key aur buses table ki SELECT policy check karein.",
+            "Could not load the bus list from Supabase. Check the project URL, publishable key, and SELECT policy for the buses table.",
           );
         } finally {
           busesLoading = false;
@@ -3831,7 +5064,7 @@
           localStorage.setItem("apniBus_bookings", JSON.stringify(bookings));
           return true;
         } catch {
-          alert("Data save nahi hua. Browser storage check karein.");
+          alert("Could not save the data. Check your browser storage settings.");
           return false;
         }
       }
@@ -4151,7 +5384,7 @@
         e.preventDefault();
         if (busesLoading) {
           alert(
-            "Bus list load ho rahi hai. 2-3 second baad dobara Search karein.",
+            "The bus list is still loading. Please search again in 2–3 seconds.",
           );
           return;
         }
@@ -4159,11 +5392,11 @@
         to = $("to").value.trim();
         journeyDate = $("date").value;
         if (from.toLowerCase() === to.toLowerCase()) {
-          alert("From aur To alag chunein.");
+          alert("Choose different origin and destination stops.");
           return;
         }
         if (!journeyDate || journeyDate < today()) {
-          alert("Valid journey date select karein.");
+          alert("Select a valid journey date.");
           return;
         }
         const busList = $("busList");
@@ -4174,24 +5407,34 @@
             b.to.trim().toLowerCase() === to.toLowerCase(),
         );
         if (!matches.length)
-          addText("p", "Is route par koi bus nahi mili.", busList);
+          addText("p", "No buses were found for this route.", busList);
         try {
           for (const b of matches) {
             const booked = await getBookedSeatsFromSupabase(b.id, journeyDate);
             const card = document.createElement("div");
-            card.className = "bus";
-            addText("h3", b.name, card);
-            addText(
+            card.className = "bus bus-result-card";
+            const title = addText("h3", b.name, card);
+            title.className = "bus-card-title";
+            const service = addText(
               "p",
               b.type + " | " + b.departure + " - " + b.arrival,
               card,
             );
-            addText("p", from + " → " + to, card);
-            addText("h3", money(b.fare) + " per seat", card);
+            service.className = "bus-card-meta";
+            const route = addText("p", from + " → " + to, card);
+            route.className = "bus-card-route";
+            const fare = addText("h3", money(b.fare) + " per seat", card);
+            fare.className = "bus-card-fare";
             const available = (b.totalSeats || 20) - booked.length;
-            addText("p", Math.max(0, available) + " seats available", card);
+            const availability = addText(
+              "p",
+              Math.max(0, available) + " seats available",
+              card,
+            );
+            availability.className = "bus-card-availability";
             const btn = addText("button", "Select Seats", card);
             btn.type = "button";
+            btn.className = "bus-card-select";
             btn.disabled = available <= 0;
             btn.onclick = () => openSeats(b, card);
             busList.appendChild(card);
@@ -4199,7 +5442,7 @@
         } catch (error) {
           console.error(error);
           alert(
-            "Seat availability load nahi hui. Supabase get_booked_seats function aur permissions check karein. Details: " +
+            "Could not load seat availability. Check the Supabase get_booked_seats function and permissions. Details: " +
               error.message,
           );
           return;
@@ -4218,7 +5461,7 @@
         const list = $("seatList");
         list.replaceChildren();
         $("seatPanel").hidden = false;
-        addText("p", "Seat availability refresh ho rahi hai…", list);
+        addText("p", "Refreshing seat availability…", list);
         try {
           const booked = await getBookedSeatsFromSupabase(bus.id, journeyDate);
           list.replaceChildren();
@@ -4242,12 +5485,18 @@
                 updateTotal();
               };
             }
+            if (i % 4 === 2) {
+              const aisle = document.createElement("span");
+              aisle.className = "seat-aisle";
+              aisle.setAttribute("aria-hidden", "true");
+              list.appendChild(aisle);
+            }
           }
         } catch (error) {
           list.replaceChildren();
-          addText("p", "Seat map load nahi hua: " + error.message, list);
+          addText("p", "Could not load the seat map: " + error.message, list);
           alert(
-            "Seat availability load nahi hui. Supabase setup check karein.",
+            "Could not load seat availability. Check your Supabase setup.",
           );
           return;
         }
@@ -4283,14 +5532,14 @@
               !/^[6-9][0-9]{9}$/.test(p.phone),
           )
         ) {
-          alert("Passenger details check karein.");
+          alert("Check the passenger details.");
           return;
         }
         const submitButton = $("passengerForm").querySelector(
           'button[type="submit"]',
         );
         submitButton.disabled = true;
-        submitButton.textContent = "Booking ho rahi hai…";
+        submitButton.textContent = "Booking in progress…";
         try {
           const result = await supabaseRpc("reserve_bus_seats", {
             p_bus_id: Number(bus.id),
@@ -4302,7 +5551,7 @@
             p_passenger_details: people,
           });
           if (!result || !result.pnr)
-            throw new Error("Booking response mein PNR nahi mila.");
+            throw new Error("The booking response did not include a PNR.");
           const selectedPaymentMethod = $("paymentMethod").value || "pay_later";
           await supabaseRpc("save_booking_payment_method", {
             p_pnr: result.pnr,
@@ -4335,9 +5584,9 @@
         } catch (error) {
           console.error(error);
           alert(
-            "Booking nahi hui: " +
+            "Booking failed: " +
               error.message +
-              "\nAgar seat kisi aur ne pehle book ki hai, seats refresh karke dobara try karein.",
+              "\nIf someone else has already booked a seat, refresh seat availability and try again.",
           );
           try {
             await openSeats(bus);
@@ -4377,7 +5626,7 @@
       }
       function shareTicketOnWhatsApp(b) {
         if (!b || !b.id) {
-          alert("Ticket details available nahi hain.");
+          alert("Ticket details are unavailable.");
           return;
         }
         const url =
@@ -4522,7 +5771,7 @@
       // =====================================
       function printBookingTicket(booking) {
         if (!booking) {
-          alert("Ticket details nahi mili.");
+          alert("Ticket details were not found.");
           return;
         }
 
@@ -4766,7 +6015,7 @@
               openAdminTicket(booking, false);
               renderAdmin();
             } catch (error) {
-              alert("Cancellation fail: " + error.message);
+              alert("Cancellation failed: " + error.message);
               cancelButton.disabled = false;
               cancelButton.textContent = "CANCEL BOOKING";
             }
@@ -4794,7 +6043,7 @@
           const result = $("adminOverviewPnrResult");
           const button = $("adminOverviewPnrBtn");
 
-          result.textContent = "Ticket details search ho rahi hain...";
+          result.textContent = "Searching for ticket details...";
           button.disabled = true;
 
           try {
@@ -4807,7 +6056,7 @@
             );
             const ticket = Array.isArray(found) ? found[0] : found;
             if (!ticket || !ticket.booking_pnr) {
-              result.textContent = "Is PNR se koi booking nahi mili.";
+              result.textContent = "No booking was found for this PNR.";
               return;
             }
             const cachedRow = (latestAdminReportRows || []).find(
@@ -4927,7 +6176,7 @@
             !Number.isInteger(fare) ||
             fare < 1
           ) {
-            alert("Bus details check karein.");
+            alert("Check the bus details.");
             return;
           }
           const payload = {
@@ -4963,14 +6212,14 @@
                   body: JSON.stringify(payload),
                 },
               );
-              alert("Bus details Supabase mein update ho gayi!");
+              alert("Bus details were updated in Supabase.");
             } else {
               await adminBusRequest("/rest/v1/buses", {
                 method: "POST",
                 headers: { Prefer: "return=representation" },
                 body: JSON.stringify(payload),
               });
-              alert("Bus Supabase mein successfully add ho gayi!");
+              alert("The bus was added to Supabase.");
             }
             editingBusId = null;
             $("busForm").reset();
@@ -4982,9 +6231,9 @@
           } catch (error) {
             console.error(error);
             alert(
-              "Bus save nahi hui: " +
+              "Could not save the bus: " +
                 error.message +
-                "\nSupabase mein buses table ke Admin INSERT/UPDATE permissions check karein.",
+                "\nCheck the Admin INSERT/UPDATE permissions for the buses table in Supabase.",
             );
           } finally {
             submitButton.disabled = false;
@@ -5027,7 +6276,7 @@
               rows?.message || rows?.details || String(raw || response.status),
             );
           if (!Array.isArray(rows) || !rows.length) {
-            wrap.textContent = "Is account se abhi koi booking nahi hui hai.";
+            wrap.textContent = "There are no bookings for this account yet.";
             return;
           }
           const table = document.createElement("table");
@@ -5177,14 +6426,14 @@
                           String(result || r.status),
                       );
                     alert(
-                      "Booking cancel ho gayi. PNR: " +
+                      "Booking cancelled. PNR: " +
                         (Array.isArray(result)
                           ? result[0]?.booking_pnr
                           : item.booking_pnr),
                     );
                     await rendercurrentAccountBookings();
                   } catch (err) {
-                    alert("Cancellation nahi hui: " + err.message);
+                    alert("Cancellation failed: " + err.message);
                     cancel.disabled = false;
                   }
                 };
@@ -5195,7 +6444,7 @@
               const td = document.createElement("td");
               td.colSpan = 10;
               td.textContent =
-                "PNR " + row.pnr + " load nahi hua: " + err.message;
+                "PNR " + row.pnr + " could not be loaded: " + err.message;
               tr.appendChild(td);
             }
             tbody.appendChild(tr);
@@ -5226,7 +6475,7 @@
             });
           }
         } catch (err) {
-          wrap.textContent = "Booking history load nahi hui: " + err.message;
+          wrap.textContent = "Could not load booking history: " + err.message;
         }
       }
 
@@ -5237,7 +6486,7 @@
 
         if (!container) return;
 
-        container.textContent = "Notifications load ho rahi hain...";
+        container.textContent = "Loading notifications...";
 
         try {
           const rows = await adminBusRequest(
@@ -5278,7 +6527,7 @@
             });
 
             if (!filteredRows.length) {
-              addText("p", "Is filter mein koi notification nahi hai.", container);
+              addText("p", "There are no notifications for this filter.", container);
               return;
             }
 
@@ -5345,7 +6594,7 @@
 
                     await loadAdminNotifications();
                   } catch (error) {
-                    alert("Notification update nahi hui: " + error.message);
+                    alert("Could not update the notification: " + error.message);
                     readButton.disabled = false;
                     readButton.textContent = "MARK AS READ";
                   }
@@ -5363,9 +6612,9 @@
           renderNotifications();
         } catch (error) {
           container.textContent =
-            "Notifications load nahi hui: " +
+            "Could not load notifications: " +
             error.message +
-            ". Supabase notification settings check karein.";
+            ". Check your Supabase notification settings.";
         }
       }
 
@@ -5427,7 +6676,7 @@
         note.style.gridColumn = "1 / -1";
         note.textContent =
           periodLabel +
-          " | Report booking creation date ke basis par hai. Collection mein sirf confirmed + paid tickets shamil hain.";
+          " | The report is based on booking creation date. Collection includes confirmed and paid tickets only.";
         container.appendChild(note);
       }
 
@@ -5446,7 +6695,7 @@
             renderBookingReports(latestAdminReportRows);
           } catch (error) {
             $("adminBookingReports").textContent =
-              "Report load nahi hui: " + error.message;
+              "Could not load the report: " + error.message;
           } finally {
             refreshReportsButton.disabled = false;
           }
@@ -5515,7 +6764,7 @@
             deleteButton.onclick = async function () {
               if (
                 !confirm(
-                  "Is bus ko Supabase se delete karein? Is bus ki booking history rahegi, lekin future bookings par asar ho sakta hai.",
+                  "Delete this bus from Supabase? Its booking history will remain, but this may affect future bookings.",
                 )
               )
                 return;
@@ -5537,16 +6786,16 @@
               } catch (error) {
                 console.error(error);
                 alert(
-                  "Bus delete nahi hui: " +
+                  "Could not delete the bus: " +
                     error.message +
-                    "\nAgar is bus ki bookings hain, database foreign-key restriction ki wajah se delete rok sakta hai.",
+                    "\nIf this bus has bookings, a database foreign-key constraint may prevent deletion.",
                 );
                 deleteButton.disabled = false;
               }
             };
             busContainer.appendChild(card);
           });
-        bookingContainer.textContent = "Supabase bookings load ho rahi hain...";
+        bookingContainer.textContent = "Loading bookings from Supabase...";
         loadAdminBookingsFromSupabase()
           .then(function (remoteBookings) {
             remoteBookings = [...remoteBookings].sort((a, b) =>
@@ -5569,7 +6818,7 @@
             if (!remoteBookings.length) {
               addText(
                 "p",
-                "Supabase mein abhi koi booking nahi hai.",
+                "There are no bookings in Supabase yet.",
                 bookingContainer,
               );
               return;
@@ -5606,7 +6855,7 @@
 
             const searchInfo = document.createElement("small");
             searchInfo.textContent =
-              "PNR, Mobile Number, Trip ya Route se search karein.";
+              "Search by PNR, mobile number, trip, or route.";
             searchInfo.style.cssText = `
             margin-top:5px;
             color:#64748b;
@@ -5750,7 +6999,7 @@
                   )
                 ) {
                   alert(
-                    "Refund sirf Cancelled aur Paid booking par hi kar sakte hain.",
+                    "Refunds are available only for cancelled and paid bookings.",
                   );
                   return;
                 }
@@ -5769,8 +7018,8 @@
                     },
                   );
                   if (!Array.isArray(updated) || updated.length !== 1)
-                    throw new Error("Booking payment status update nahi hua.");
-                  alert("Payment status save ho gaya.");
+                    throw new Error("Could not update the booking payment status.");
+                  alert("Payment status saved.");
                   renderAdmin();
                 } catch (e) {
                   alert("Payment update error: " + e.message);
@@ -5800,7 +7049,7 @@
 
               searchInfo.textContent = query
                 ? visible + " matching booking(s) found."
-                : "PNR, Mobile, Trip ID, Bus Number, Route ya Journey Date se booking khojein.";
+                : "Search bookings by PNR, mobile number, trip ID, bus number, route, or journey date.";
             });
             table.appendChild(tbody);
             tableWrap.appendChild(table);
@@ -5810,12 +7059,12 @@
             bookingContainer.replaceChildren();
             addText(
               "p",
-              "Supabase bookings load nahi hui: " + error.message,
+              "Could not load bookings from Supabase: " + error.message,
               bookingContainer,
             );
             addText(
               "p",
-              "SQL policies aur Admin login setup check karein.",
+              "Check the SQL policies and Admin login setup.",
               bookingContainer,
             );
           });
@@ -5854,7 +7103,7 @@
         const exportRows = latestAdminReportRows || [];
 
         if (!exportRows.length) {
-          alert("Export karne ke liye koi booking nahi hai.");
+          alert("There are no bookings to export.");
           return;
         }
 
@@ -5941,7 +7190,7 @@
         ];
 
         if (!getAdminAccessToken()) {
-          alert("Login to Admin panel for current Backup.");
+          alert("Log in to the Admin Panel to create a current backup.");
           return;
         }
 
@@ -5958,7 +7207,7 @@
 
         button.disabled = true;
         const originalText = button.textContent;
-        button.textContent = "Backup ban raha hai...";
+        button.textContent = "Creating backup...";
 
         try {
           const tables = {};
@@ -5982,7 +7231,7 @@
               );
 
               if (!Array.isArray(rows)) {
-                throw new Error(table + " se valid data nahi mila.");
+                throw new Error(table + " did not return valid data.");
               }
 
               allRows.push(...rows);
@@ -6019,7 +7268,7 @@
           );
 
           alert(
-            "Current Backup download started!\n\n" +
+            "Current backup download started!\n\n" +
               "Total tables: " +
               backupTables.length +
               "\n" +
@@ -6029,7 +7278,7 @@
         } catch (error) {
           console.error("Current Backup failed:", error);
           alert(
-            "Current Backup nahi ban saka.\n\n" +
+            "Could not create the current backup.\n\n" +
               error.message +
               "\n\nNo partial backup downloaded.",
           );
@@ -6050,7 +7299,7 @@
           !data.tables ||
           typeof data.tables !== "object"
         ) {
-          return "Invalid current backup file select karein.";
+          return "Select a valid current backup file.";
         }
 
         const requiredTables = [
@@ -6068,12 +7317,12 @@
         ];
 
         if (!data.rowCounts || typeof data.rowCounts !== "object") {
-          return "Backup rowCounts missing ya invalid hai.";
+          return "Backup row counts are missing or invalid.";
         }
 
         for (const table of requiredTables) {
           if (!Array.isArray(data.tables[table])) {
-            return "Backup mein " + table + " ka data missing ya invalid hai.";
+            return "In the backup, " + table + " has missing or invalid data.";
           }
 
           if (
@@ -6081,24 +7330,24 @@
             data.rowCounts[table] !== data.tables[table].length
           ) {
             return (
-              table + " ke rowCounts aur actual records match nahi kar rahe."
+              table + " row counts do not match the actual records."
             );
           }
 
           for (const row of data.tables[table]) {
             if (!row || typeof row !== "object" || Array.isArray(row)) {
-              return table + " mein invalid record mila.";
+              return table + " contains an invalid record.";
             }
 
             if (typeof row.id !== "string" || !row.id.trim()) {
-              return table + " mein invalid record ID mili.";
+              return table + " contains an invalid record ID.";
             }
           }
         }
 
         for (const booking of data.tables.app_bookings) {
           if (typeof booking.pnr !== "string" || !booking.pnr.trim()) {
-            return "Backup mein booking PNR invalid hai.";
+            return "The backup contains an invalid booking PNR.";
           }
         }
 
@@ -6114,17 +7363,17 @@
         message.textContent = "";
 
         if (!getAdminAccessToken()) {
-          message.textContent = "Pehle Admin Login karein.";
+          message.textContent = "Please log in as an Admin first.";
           return;
         }
 
         if (!file) {
-          message.textContent = "Pehle JSON backup file choose karein.";
+          message.textContent = "Please choose a JSON backup file first.";
           return;
         }
 
         if (!file.name.toLowerCase().endsWith(".json")) {
-          message.textContent = "Sirf .json backup file select karein.";
+          message.textContent = "Select a .json backup file.";
           return;
         }
 
@@ -6133,7 +7382,7 @@
         try {
           data = JSON.parse(await file.text());
         } catch {
-          message.textContent = "File read nahi hui ya JSON invalid hai.";
+          message.textContent = "The file could not be read or contains invalid JSON.";
           return;
         }
 
@@ -6145,14 +7394,14 @@
         }
 
         if (typeof data.exportedAt !== "string" || !data.exportedAt.trim()) {
-          message.textContent = "Backup date missing hai.";
+          message.textContent = "The backup date is missing.";
           return;
         }
 
         const backupDate = new Date(data.exportedAt);
 
         if (Number.isNaN(backupDate.getTime())) {
-          message.textContent = "Backup date invalid hai.";
+          message.textContent = "The backup date is invalid.";
           return;
         }
 
@@ -6177,7 +7426,7 @@
 
         if (totalRecords === 0) {
           message.textContent =
-            "Backup mein restore karne ke liye data nahi hai.";
+            "There is no data to restore from this backup.";
           return;
         }
 
@@ -6187,16 +7436,16 @@
             totalRecords +
             "\n\n" +
             "IMPORTANT:\n" +
-            "1. Existing records delete nahi honge.\n" +
-            "2. Existing records update nahi honge.\n" +
-            "3. Sirf naye records insert honge.\n" +
-            "4. Duplicate records skip honge.\n" +
+            "1. Existing records will not be deleted.\n" +
+            "2. Existing records will not be updated.\n" +
+            "3. Only new records will be inserted.\n" +
+            "4. Duplicate records will be skipped.\n" +
             "5. Original IDs aur PNR preserve rahenge.\n\n" +
-            "Kya aap restore shuru karna chahte hain?",
+            "Do you want to start the restore?",
         );
 
         if (!confirmed) {
-          message.textContent = "Restore cancel kar diya gaya.";
+          message.textContent = "Restore cancelled.";
           return;
         }
 
@@ -6214,14 +7463,14 @@
             for (let start = 0; start < rows.length; start += 100) {
               const chunk = rows.slice(start, start + 100);
               message.textContent =
-                "Restore chal raha hai: " +
+                "Restore in progress: " +
                 table +
                 "\nProcessed: " +
                 processed +
                 " / " +
                 totalRecords;
               try {
-                // STEP 1: Supabase mein existing IDs check karein
+                // STEP 1: Check existing IDs in Supabase
                 const idFilter = chunk
                   .map((row) => encodeURIComponent(row.id))
                   .join(",");
@@ -6232,12 +7481,12 @@
 
                 const existingIds = new Set(existingRows.map((row) => row.id));
 
-                // STEP 2: Sirf naye records alag karein
+                // STEP 2: Keep only new records
                 const newRows = chunk.filter((row) => !existingIds.has(row.id));
 
                 skipped += chunk.length - newRows.length;
 
-                // STEP 3: Naye records insert karein
+                // STEP 3: Insert new records
                 if (newRows.length > 0) {
                   try {
                     const result = await adminBusRequest(
@@ -6259,7 +7508,7 @@
                     inserted += insertedNow;
                     skipped += newRows.length - insertedNow;
                   } catch (batchError) {
-                    // Batch fail hone par individual records try karein
+                    // If the batch fails, try each record individually
                     for (const row of newRows) {
                       try {
                         const result = await adminBusRequest(
@@ -6318,15 +7567,15 @@
             (errors.length ? "\n\nSample errors:\n" + errors.join("\n") : "");
 
           if (failed === 0) {
-            alert("Restore process complete ho gaya.");
+            alert("Restore completed.");
           } else {
             alert(
-              "Restore complete hua, lekin kuch records fail hue. Details Restore Message mein dekhein.",
+              "Restore completed, but some records failed. See the Restore Message for details.",
             );
           }
         } catch (error) {
           message.textContent =
-            "Restore process mein error:\n" +
+            "Error during restore:\n" +
             String(error?.message || error) +
             "\n\nInserted: " +
             inserted +
@@ -6366,7 +7615,7 @@
         }
         function saveSession(data) {
           if (!data?.access_token || !data?.user?.id)
-            throw new Error("Supabase session token nahi mila.");
+            throw new Error("The Supabase session token was not found.");
           if (!data.expires_at && data.expires_in)
             data.expires_at =
               Math.floor(Date.now() / 1000) + Number(data.expires_in);
@@ -6432,8 +7681,8 @@
             : "New customer?";
           showMessage(
             registerMode
-              ? "Apna account banayein."
-              : "Supabase customer account se login karein.",
+              ? "Create your account."
+              : "Log in with your Supabase customer account.",
           );
         }
         function refreshAuthStatus() {
@@ -6444,7 +7693,7 @@
             authSwitchBtn.hidden = true;
             authSwitchText.hidden = true;
           } else {
-            showMessage("Login ya naya customer account banayein.");
+            showMessage("Log in or create a new customer account.");
             logoutBtn.hidden = true;
             authSwitchBtn.hidden = false;
             authSwitchText.hidden = false;
@@ -6490,9 +7739,9 @@
             localStorage.removeItem(SESSION_KEY);
             openAuth();
             showMessage(
-              "Session refresh nahi hua: " +
+              "The session could not be refreshed: " +
                 err.message +
-                ". Dobara login karein.",
+                ". Please log in again.",
             );
           }
         });
@@ -6514,24 +7763,24 @@
             password = el("regPassword").value,
             confirmPassword = el("regConfirmPassword").value;
           if (!name || name.length > 80) {
-            showMessage("Valid full name enter karein.");
+            showMessage("Enter a valid full name.");
             return;
           }
           if (!/^[6-9][0-9]{9}$/.test(mobile)) {
-            showMessage("Mobile number exactly 10 digits ka hona chahiye.");
+            showMessage("The mobile number must contain exactly 10 digits.");
             return;
           }
           if (password.length < 6) {
-            showMessage("Password minimum 6 characters ka hona chahiye.");
+            showMessage("The password must be at least 6 characters long.");
             return;
           }
           if (password !== confirmPassword) {
-            showMessage("Dono passwords match nahi karte.");
+            showMessage("The passwords do not match.");
             return;
           }
           const button = registerForm.querySelector('button[type="submit"]');
           button.disabled = true;
-          showMessage("Account create ho raha hai...");
+          showMessage("Creating account...");
           try {
             const data = await authRequest("signup", {
               email,
@@ -6540,16 +7789,16 @@
             });
             if (data.access_token && data.user?.id) {
               await completeLogin(data);
-              alert("Customer account successfully create ho gaya.");
+              alert("Customer account created successfully.");
             } else {
               registerForm.reset();
               setMode(false);
               showMessage(
-                "Account create ho gaya. Email verification link check karke phir login karein.",
+                "Account created. Check your email for the verification link, then log in.",
               );
             }
           } catch (err) {
-            showMessage("Registration fail: " + err.message);
+            showMessage("Registration failed: " + err.message);
           } finally {
             button.disabled = false;
           }
@@ -6560,7 +7809,7 @@
             password = el("loginPassword").value;
           const button = loginForm.querySelector('button[type="submit"]');
           button.disabled = true;
-          showMessage("Login ho raha hai...");
+          showMessage("Logging in...");
           try {
             const data = await authRequest("token?grant_type=password", {
               email,
@@ -6568,7 +7817,7 @@
             });
             await completeLogin(data);
           } catch (err) {
-            showMessage("Login fail: " + err.message);
+            showMessage("Login failed: " + err.message);
           } finally {
             button.disabled = false;
           }
@@ -6584,7 +7833,7 @@
           if (dashboard) dashboard.hidden = true;
           refreshAuthStatus();
           openAuth();
-          showMessage("Aap logout ho gaye hain.");
+          showMessage("You have been logged out.");
         }
         logoutBtn.addEventListener("click", logout);
         if (dashboardLogoutBtn)
@@ -6599,7 +7848,7 @@
           } catch (err) {
             localStorage.removeItem(SESSION_KEY);
             refreshAuthStatus();
-            showMessage("Session expire ho gaya. Dobara login karein.");
+            showMessage("Your session has expired. Please log in again.");
           }
         })();
       })();
@@ -6687,14 +7936,14 @@
           const password = document.getElementById("adminPassword").value;
           const submit = loginForm.querySelector('button[type="submit"]');
           submit.disabled = true;
-          message.textContent = "Login ho raha hai...";
+          message.textContent = "Logging in...";
           try {
             const data = await adminAuthRequest(
               "/auth/v1/token?grant_type=password",
               { method: "POST", body: JSON.stringify({ email, password }) },
             );
             if (!data.access_token || !data.user?.id)
-              throw new Error("Login token nahi mila.");
+              throw new Error("The login response did not include a token.");
             // Authentication alone is not Admin authorization. Verify membership server-side.
             const roleResponse = await fetch(
               SUPABASE_URL.replace(/\/$/, "") + "/rest/v1/rpc/app_is_admin",
@@ -6723,7 +7972,7 @@
                 });
               } catch (_) {}
               throw new Error(
-                "Is account ko Admin permission nahi hai. Customer account se Admin Panel mein login nahi kar sakte.",
+                "This account does not have Admin permissions. Customer accounts cannot access the Admin Panel.",
               );
             }
             sessionStorage.setItem(
@@ -6739,7 +7988,7 @@
             loginForm.reset();
             openAdminPanel();
           } catch (error) {
-            message.textContent = "Admin login fail: " + error.message;
+            message.textContent = "Admin login failed: " + error.message;
           } finally {
             submit.disabled = false;
           }
@@ -6774,9 +8023,18 @@
           await stopAdminNotificationRealtime();
           adminPanel.hidden = true;
           openAdminLogin();
-          message.textContent = "Admin logout ho gaya.";
+          message.textContent = "Admin logged out.";
         });
-        adminPanel.prepend(logoutButton);
+        const adminHeaderActions = document.createElement("div");
+        adminHeaderActions.className = "admin-header-actions";
+        adminHeaderActions.appendChild(logoutButton);
+        const notificationTopbar = adminPanel.querySelector(".admin-topbar");
+        const notificationBell = notificationTopbar?.querySelector(
+          "#adminNotificationBell",
+        );
+        if (notificationBell) adminHeaderActions.appendChild(notificationBell);
+        notificationTopbar?.remove();
+        adminPanel.prepend(adminHeaderActions);
 
         // Restore the Admin screen AFTER its event handlers are initialized.
         // The earlier page-level tab restore runs before this initializer and
@@ -7004,7 +8262,7 @@
                       "") +
                     " | " +
                     x.status +
-                    ". Trip edit karne ke liye schedule dobara banane ki jagah database-safe update option agle step mein add karenge.",
+                    ". A database-safe trip update option will be added in a future update.",
                 );
               } else {
                 fill(
@@ -7037,7 +8295,7 @@
             del.onclick = async () => {
               if (
                 !confirm(
-                  "Is record ko delete karna hai? Isse judi bookings/records hone par database deletion rok sakta hai.",
+                  "Delete this record? The database may block deletion if related bookings or records exist.",
                 )
               )
                 return;
@@ -7057,7 +8315,7 @@
                 msg("Record deleted.");
                 await loadAll();
               } catch (e) {
-                msg("Delete nahi hua: " + e.message, true);
+                msg("Could not delete: " + e.message, true);
                 del.disabled = false;
               }
             };
@@ -7172,7 +8430,7 @@ if (recentContainer) {
 
     if (!recentRows.length) {
       recentContainer.textContent =
-        "Abhi koi booking available nahi hai.";
+        "No bookings are available yet.";
     } else {
       const tableWrap = document.createElement("div");
       tableWrap.className = "data-table-wrap";
@@ -7275,7 +8533,7 @@ if (recentContainer) {
               const ticket = Array.isArray(found) ? found[0] : found;
 
               if (!ticket?.booking_pnr) {
-                throw new Error("Is PNR ki ticket details nahi mili.");
+                throw new Error("Ticket details were not found for this PNR.");
               }
 
               const cachedRow = (latestAdminReportRows || []).find(
@@ -7291,7 +8549,7 @@ if (recentContainer) {
 
               openAdminTicket(ticketBooking, false);
             } catch (error) {
-              alert("Ticket open nahi ho paya: " + error.message);
+              alert("Could not open the ticket: " + error.message);
             } finally {
               openBookings.disabled = false;
               openBookings.textContent = "View";
@@ -7636,13 +8894,13 @@ if (recentContainer) {
         bind("currentTripForm", async () => {
           const routeId = $a("currentTripRoute").value;
           const route = routes.find((x) => x.id === routeId);
-          if (!route) throw Error("Route select karein.");
+          if (!route) throw Error("Select a route.");
           const stops = routeStops
             .filter((x) => x.route_id === routeId)
             .sort((a, b) => a.stop_order - b.stop_order);
           if (stops.length < 2)
             throw Error(
-              "Trip banane se pehle route mein kam se kam 2 stoppages add karein.",
+              "Add at least two stops to the route before creating a trip.",
             );
           const date = $a("currentTripDate").value;
           const created = await req("app_trips", {
@@ -7671,10 +8929,10 @@ if (recentContainer) {
             });
           } catch (e) {
             await req("app_trips?id=eq." + enc(trip.id), { method: "DELETE" });
-            throw Error("Trip stoppages copy nahi hue: " + e.message);
+            throw Error("Could not copy the trip stops: " + e.message);
           }
           msg(
-            "Trip created. Ab Trip Fares section mein har required boarding-dropping pair ka fare add karein.",
+            "Trip created. Add a fare for each required boarding and drop-off pair in the Trip Fares section.",
           );
         });
         bind("currentTripFareForm", async () => {
@@ -7684,7 +8942,7 @@ if (recentContainer) {
           const a = tripStops.find((x) => x.id === boarding),
             b = tripStops.find((x) => x.id === dropping);
           if (!a || !b || a.stop_order >= b.stop_order)
-            throw Error("Boarding aur dropping stop ka order sahi chunein.");
+            throw Error("Choose boarding and drop-off stops in the correct order.");
           const amount = Number($a("currentFareAmount").value);
           const existing = tripFares.find(
             (x) =>
@@ -7876,7 +9134,7 @@ if (recentContainer) {
           );
           if (!bs || !ds || bs.stop_order >= ds.stop_order || !fare) {
             currentFare = 0;
-            q("total").textContent = "Is stop pair ka fare available nahi hai.";
+            q("total").textContent = "Fare is unavailable for this stop pair.";
             q("seatList").replaceChildren();
             return;
           }
@@ -7913,6 +9171,12 @@ if (recentContainer) {
                 updateTotal();
               };
             list.appendChild(btn);
+            if (i % 4 === 2) {
+              const aisle = document.createElement("span");
+              aisle.className = "seat-aisle";
+              aisle.setAttribute("aria-hidden", "true");
+              list.appendChild(aisle);
+            }
           }
           updateTotal();
         }
@@ -7923,14 +9187,14 @@ if (recentContainer) {
             t = q("to").value.trim(),
             date = q("date").value;
           if (!f || !t || f.toLowerCase() === t.toLowerCase() || !date) {
-            alert("From, To aur journey date sahi bharein.");
+            alert("Enter a valid origin, destination, and journey date.");
             return;
           }
           if (date < today()) {
             q("date").value = "";
             q("journeyDateLabel").textContent = "Select your journey date";
             alert(
-              "Pichhli date par booking nahi ho sakti. Aaj ya aane wali date chunein.",
+              "Bookings cannot be made for past dates. Choose today or a future date.",
             );
             return;
           }
@@ -7985,32 +9249,38 @@ if (recentContainer) {
             if (!cards.length)
               showStatusMessage(
                 list,
-                "Is date aur route par koi scheduled bus nahi mili.",
+                "No scheduled buses were found for this date and route.",
               );
             for (const item of cards) {
               const card = document.createElement("div");
-              card.className = "bus";
-              addText("h3", item.bus.bus_name, card);
-              addText(
+              card.className = "bus bus-result-card";
+              const title = addText("h3", item.bus.bus_name, card);
+              title.className = "bus-card-title";
+              const service = addText(
                 "p",
                 `${item.bus.bus_type || "Bus"} | ${item.bus.bus_number || ""}`,
                 card,
               );
-              addText(
+              service.className = "bus-card-meta";
+              const route = addText(
                 "p",
                 `${f} (${stopTime(item.boarding, "departure_time")}) → ${t} (${stopTime(item.dropping, "arrival_time")})`,
                 card,
               );
-              addText("p", `Journey date: ${date}`, card);
-              addText("h3", money(item.fare) + " per seat", card);
+              route.className = "bus-card-route";
+              const tripDate = addText("p", `Journey date: ${date}`, card);
+              tripDate.className = "bus-card-meta bus-card-date";
+              const fare = addText("h3", money(item.fare) + " per seat", card);
+              fare.className = "bus-card-fare";
               const btn = addText("button", "Select Seats", card);
               btn.type = "button";
+              btn.className = "bus-card-select";
               btn.onclick = () => openTrip(item, card);
               list.appendChild(card);
             }
           } catch (err) {
             console.error(err);
-            showStatusMessage(list, "Trips load nahi ho payi: " + err.message);
+            showStatusMessage(list, "Could not load trips: " + err.message);
           }
           q("results").hidden = false;
           q("seatPanel").hidden = true;
@@ -8084,7 +9354,7 @@ if (recentContainer) {
           } catch (err) {
             showStatusMessage(
               q("seatList"),
-              "Seat availability check nahi ho payi: " + err.message,
+              "Could not check seat availability: " + err.message,
             );
             return;
           }
@@ -8097,13 +9367,13 @@ if (recentContainer) {
         q("continueBtn").onclick = function () {
           if (!readDemoAuthSession()) {
             alert(
-              "Ticket book karne ke liye pehle My Account mein login ya registration karein.",
+              "Please log in or register in My Account before booking a ticket.",
             );
             openDemoAuth();
             return;
           }
           if (!currentTrip || !seats.length) {
-            alert("Pehle seat select karein.");
+            alert("Select a seat first.");
             return;
           }
           const bs = currentStops.find(
@@ -8119,7 +9389,7 @@ if (recentContainer) {
                 x.boarding_stop_id === bs.id && x.dropping_stop_id === ds.id,
             )
           ) {
-            alert("Valid boarding aur dropping stop chunein.");
+            alert("Choose valid boarding and drop-off stops.");
             return;
           }
           currentBoarding = bs.id;
@@ -8169,7 +9439,7 @@ if (recentContainer) {
         q("passengerForm").onsubmit = async function (e) {
           e.preventDefault();
           if (!readDemoAuthSession()) {
-            alert("Booking ke liye customer login zaroori hai.");
+            alert("Customer login is required to book.");
             openDemoAuth();
             return;
           }
@@ -8189,7 +9459,7 @@ if (recentContainer) {
                 !/^[6-9][0-9]{9}$/.test(p.phone),
             )
           ) {
-            alert("Passenger details check karein.");
+            alert("Check the passenger details.");
             return;
           }
           const submit = q("passengerForm").querySelector(
@@ -8216,7 +9486,7 @@ if (recentContainer) {
             });
             const row = Array.isArray(data) ? data[0] : data;
             if (!row?.booking_pnr)
-              throw new Error("Booking PNR response nahi mila.");
+              throw new Error("The booking response did not include a PNR.");
             const selectedBoarding = currentStops.find(
                 (x) => x.id === currentBoarding,
               ),
@@ -8252,9 +9522,9 @@ if (recentContainer) {
             seats = [];
           } catch (err) {
             alert(
-              "Booking nahi hui: " +
+              "Booking failed: " +
                 err.message +
-                ". Seat refresh karke try karein.",
+                ". Refresh seat availability and try again.",
             );
             try {
               await openTrip(
@@ -8275,7 +9545,7 @@ if (recentContainer) {
             const data = await rpc("app_lookup_booking", { p_pnr: pnr });
             const x = Array.isArray(data) ? data[0] : data;
             if (!x || !x.booking_pnr) {
-              showStatusMessage(out, "Is PNR se booking nahi mili.");
+              showStatusMessage(out, "No booking was found for this PNR.");
               return;
             }
             addText("h3", "Ticket Details", out);
@@ -8303,7 +9573,7 @@ if (recentContainer) {
               out.appendChild(p);
             });
           } catch (err) {
-            showStatusMessage(out, "PNR lookup nahi ho paya: " + err.message);
+            showStatusMessage(out, "Could not look up the PNR: " + err.message);
           }
         };
       })();
